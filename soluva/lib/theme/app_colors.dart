@@ -8,5 +8,10 @@ class AppColors {
   static const Color error = Color(0xFFEF4444);
   static const Color button = Color.fromARGB(255, 67, 137, 218);
   static const Color buttonText = Color.fromARGB(255, 2, 2, 2);
+    // static const Color background = Color(0xFF121212);
+    // static const Color primary = Color(0xFF6200EE);
+    static const Color white = Colors.white;
+    static const Color textPrimary = Colors.black;
+    static const Color textSecondary = Colors.grey;
 
 }

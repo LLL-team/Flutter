@@ -1,5 +1,6 @@
 // lib/screens/auth_screen.dart
 import 'package:flutter/material.dart';
+import 'package:soluva/theme/app_colors.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -14,14 +15,14 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black87,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Row(
           children: [
             Expanded(
               child: Container(
                 padding: const EdgeInsets.all(32),
-                color: Colors.white,
+                color: AppColors.white,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -52,7 +53,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 Container(
                                   height: 3,
                                   width: 60,
-                                  color: Colors.deepPurple,
+                                  color: AppColors.primary,
                                   margin: const EdgeInsets.only(top: 4),
                                 ),
                             ],
