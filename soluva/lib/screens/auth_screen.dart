@@ -1,6 +1,7 @@
 // lib/screens/auth_screen.dart
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
+import '../api_services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,6 +12,11 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool isSignIn = true;
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -91,16 +97,19 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     const SizedBox(height: 24),
                     TextField(
+                      controller: emailController,
                       decoration: const InputDecoration(labelText: 'Email'),
                     ),
                     const SizedBox(height: 16),
                     TextField(
+                      controller: passwordController,
                       obscureText: true,
                       decoration: const InputDecoration(labelText: 'Password'),
                     ),
                     if (!isSignIn) const SizedBox(height: 16),
                     if (!isSignIn)
                       TextField(
+                        controller: confirmPasswordController,
                         obscureText: true,
                         decoration: const InputDecoration(
                           labelText: 'Confirm Password',
@@ -108,7 +117,37 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        final email = emailController.text.trim();
+                        final password = passwordController.text;
+
+                        if (isSignIn) {
+                          await AuthService.login(
+                            email: email,
+                            password: password,
+                          );
+                          // Podés agregar navegación o feedback aquí
+                        } else {
+                          final confirmPassword =
+                              confirmPasswordController.text;
+                          if (password != confirmPassword) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Passwords do not match'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          await AuthService.register(
+                            email: email,
+                            password: password,
+                          );
+                          // Podés agregar navegación o feedback aquí
+                        }
+
+                        //TODO
+                      },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
                         backgroundColor: Colors.deepPurple,
