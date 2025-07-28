@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthService {
-  static final String _baseUrl = "http://127.0.0.1:8000/api";
+  static String get _baseUrl => dotenv.env['BASE_URL'] ?? '';
 
   static Future<Map<String, dynamic>?> login({
     required String email,
