@@ -3,6 +3,7 @@ import 'screens/auth_screen.dart';
 import 'theme/app_text_styles.dart';
 import 'theme/app_colors.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'screens/profile_screen.dart';
 
 void main() async {
   await dotenv.load();
@@ -49,14 +50,27 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Página Principal')),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AuthScreen()),
-            );
-          },
-          child: const Text('Ir a Login'),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                );
+              },
+              child: const Text('Ir a Login'),
+            ),ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+              child: const Text('Perfil'),
+            ),
+          ],
         ),
       ),
     );
