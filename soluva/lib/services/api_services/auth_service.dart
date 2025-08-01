@@ -30,7 +30,10 @@ class AuthService {
   }
 
   //TODO PEDIR NOMBRE Y APELLIDO
+
   static Future<Map<String, dynamic>?> register({
+    required String name,
+    required String lastName,
     required String email,
     required String password,
   }) async {
@@ -40,8 +43,8 @@ class AuthService {
       Uri.parse("$_baseUrl/auth/register"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "name": "pepe",
-        "last_name": "Rodriguez",
+        "name": name,
+        "last_name": lastName,
         "email": email,
         "password": password,
       }),
@@ -58,4 +61,5 @@ class AuthService {
       return null;
     }
   }
+
 }
