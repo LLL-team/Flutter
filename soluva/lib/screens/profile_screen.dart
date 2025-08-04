@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_services/user_service.dart';
+import 'package:soluva/screens/home_screen.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -19,7 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> loadUser() async {
-    final data = await UserService.getUserProfile();
+    final data = await ApiService.getUserProfile();
     if (mounted) {
       setState(() {
         user = data;
@@ -97,7 +98,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Cerrar sesión'),
               onTap: () {
-                // Acción de logout
+                ApiService.logout(); // Método para cerrar sesión
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                );
               },
             ),
           ],

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:soluva/screens/home_screen.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/theme/app_text_styles.dart';
-import 'package:soluva/services/api_services/auth_service.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -17,7 +18,8 @@ class _AuthScreenState extends State<AuthScreen> {
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 24),
                     Text(
                       "Let's get started by filling out the form below.",
-                      style: AppTextStyles.bodyText.copyWith(color: Colors.grey[700]),
+                      style: AppTextStyles.bodyText.copyWith(
+                        color: Colors.grey[700],
+                      ),
                     ),
                     const SizedBox(height: 24),
                     if (!isSignIn)
@@ -54,12 +58,16 @@ class _AuthScreenState extends State<AuthScreen> {
                         children: [
                           TextField(
                             controller: nameController,
-                            decoration: const InputDecoration(labelText: 'First Name'),
+                            decoration: const InputDecoration(
+                              labelText: 'First Name',
+                            ),
                           ),
                           const SizedBox(height: 16),
                           TextField(
                             controller: lastNameController,
-                            decoration: const InputDecoration(labelText: 'Last Name'),
+                            decoration: const InputDecoration(
+                              labelText: 'Last Name',
+                            ),
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -79,7 +87,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       TextField(
                         controller: confirmPasswordController,
                         obscureText: true,
-                        decoration: const InputDecoration(labelText: 'Confirm Password'),
+                        decoration: const InputDecoration(
+                          labelText: 'Confirm Password',
+                        ),
                       ),
                     const SizedBox(height: 24),
                     ElevatedButton(
@@ -181,24 +191,25 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = passwordController.text;
 
     if (isSignIn) {
-      await AuthService.login(
-        email: email,
-        password: password,
+      await ApiService.login(email: email, password: password);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
       );
-      // Redirección o feedback
     } else {
       final confirmPassword = confirmPasswordController.text;
       final name = nameController.text.trim();
       final lastName = lastNameController.text.trim();
 
       if (password != confirmPassword) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Passwords do not match')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+
         return;
       }
 
-      await AuthService.register(
+      await ApiService.register(
         email: email,
         password: password,
         name: name,
@@ -206,7 +217,9 @@ class _AuthScreenState extends State<AuthScreen> {
       );
       // Redirección o feedback
     }
-
-    // TODO: navegación, token, home...
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+    );
   }
 }

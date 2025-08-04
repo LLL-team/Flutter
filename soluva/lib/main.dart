@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mi App',
+      title: 'SoluVa',
       debugShowCheckedModeBanner: false,
       home: const HomePage() // o tu LoginScreen, etc.
     );

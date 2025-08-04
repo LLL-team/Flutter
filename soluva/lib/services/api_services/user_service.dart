@@ -12,26 +12,7 @@ class UserService {
     return prefs.getString('auth_token');
   }
 
-  static Future<Map<String, dynamic>?> getUserProfile() async {
-    final token = await _getToken();
-    if (token == null) {
-      return null;
-    }
-    final response = await http.get(
-      Uri.parse('$baseUrl/profile/myProfile'),
-      headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      print(
-        "Failed to get user profile: ${response.statusCode} - ${response.body}",
-      );
-      return null;
-    }
-  }
-
+ 
   // Editar perfil del usuario
   static Future<bool> editUserProfile({
     required String? name,

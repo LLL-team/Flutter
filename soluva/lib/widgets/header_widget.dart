@@ -24,7 +24,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
 
   Future<void> _checkToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('auth_token');
     setState(() {
       isAuthenticated = token != null;
     });

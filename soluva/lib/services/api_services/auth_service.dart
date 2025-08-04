@@ -63,4 +63,20 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
   }
+
+  static Future<void> logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return;
+   
+    final response = await http.post(
+      Uri.parse("$baseUrl/auth/logout"),
+      headers: {"Authorization": "Bearer $token"},
+    );
+    if (response.statusCode == 200) {
+      await prefs.remove('auth_token');
+    } else {
+      print("Logout failed: ${response.statusCode} - ${response.body}");
+    }
+  }
 }
