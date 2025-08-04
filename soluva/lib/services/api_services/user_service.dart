@@ -8,6 +8,7 @@ class UserService {
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
+    print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
 
@@ -17,7 +18,7 @@ class UserService {
       return null;
     }
     final response = await http.get(
-      Uri.parse('$baseUrl/profile/get'),
+      Uri.parse('$baseUrl/profile/myProfile'),
       headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
     );
 

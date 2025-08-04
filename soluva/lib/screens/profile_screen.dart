@@ -1,15 +1,50 @@
 import 'package:flutter/material.dart';
+import '../services/api_services/user_service.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? user;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUser();
+  }
+
+  Future<void> loadUser() async {
+    final data = await UserService.getUserProfile();
+    if (mounted) {
+      setState(() {
+        user = data;
+        loading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('No se pudo cargar el perfil')),
+      );
+    }
+
+    final fullName = "${user!['name'] ?? ''} ${user!['last_name'] ?? ''}"
+        .trim();
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Perfil'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Perfil'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -17,26 +52,25 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 20),
             const CircleAvatar(
               radius: 60,
-              backgroundImage: NetworkImage(
-                'https://i.pravatar.cc/300', // Puedes reemplazar esto con una imagen local o de usuario real
-              ),
+              backgroundImage: NetworkImage('https://i.pravatar.cc/300'),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Nombre del Usuario',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+            Text(
+              fullName.isNotEmpty ? fullName : 'Nombre no disponible',
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'usuario@email.com',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+            Text(
+              user!['email'] ?? 'Email no disponible',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
+            if (user!['descripcion'] != null) ...[
+              const SizedBox(height: 20),
+              Text(
+                user!['descripcion'],
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+            ],
             const SizedBox(height: 30),
             ElevatedButton.icon(
               onPressed: () {
@@ -45,13 +79,15 @@ class ProfileScreen extends StatelessWidget {
               icon: const Icon(Icons.edit),
               label: const Text('Editar Perfil'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
             ),
             const SizedBox(height: 30),
             const Divider(),
             const SizedBox(height: 20),
-            // Aquí puedes agregar más información del perfil
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Configuración'),
