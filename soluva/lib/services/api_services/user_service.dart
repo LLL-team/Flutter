@@ -2,21 +2,22 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
 class UserService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
+    return prefs.getString('auth_token');
   }
 
   static Future<Map<String, dynamic>?> getUserProfile() async {
     final token = await _getToken();
     if (token == null) {
-      return null; 
+      return null;
     }
     final response = await http.get(
-      Uri.parse('$baseUrl/user/get'),
+      Uri.parse('$baseUrl/profile/get'),
       headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
     );
 
@@ -32,9 +33,9 @@ class UserService {
 
   // Editar perfil del usuario
   static Future<bool> editUserProfile({
-    required String ?name,
-    required String ?lastName,
-    required String ?descripcion,
+    required String? name,
+    required String? lastName,
+    required String? descripcion,
   }) async {
     final token = await _getToken();
     if (token == null) {
