@@ -22,7 +22,7 @@ class HomePage extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => const AuthScreen()),
                 );
               },
-              child: const Text('Ir a Login'),
+              child: const Text('Quiero trabajar'),
             ),
             ElevatedButton(
               onPressed: () {

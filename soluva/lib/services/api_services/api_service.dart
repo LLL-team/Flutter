@@ -1,15 +1,13 @@
 import 'package:soluva/services/api_services/auth_service.dart';
 import 'package:soluva/services/api_services/profile_service.dart';
 
-import 'user_service.dart';
-
 class ApiService {
   static Future<bool> editUserProfile({
     required String name,
     required String lastName,
     String? descripcion,
   }) {
-    return UserService.editUserProfile(
+    return ProfileService.editUserProfile(
       name: name,
       lastName: lastName,
       descripcion: descripcion,
