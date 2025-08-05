@@ -1,5 +1,6 @@
 import 'package:soluva/services/api_services/auth_service.dart';
 import 'package:soluva/services/api_services/profile_service.dart';
+import 'package:soluva/services/api_services/user_service.dart';
 
 class ApiService {
   static Future<bool> editUserProfile({
@@ -47,5 +48,13 @@ class ApiService {
       name: name,
       lastName: lastName,
     );
+  }
+
+  static Future<void> uploadProfileImage(String path) async {
+    await UserService.uploadProfileImage(path);
+  }
+
+  static Future getFoto(String uuid) async {
+    return UserService.getFoto(uuid);
   }
 }

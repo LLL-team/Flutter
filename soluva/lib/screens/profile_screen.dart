@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/screens/home_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:soluva/widgets/header_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,6 +15,24 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? user;
   bool loading = true;
+  final ImagePicker _picker = ImagePicker();
+  XFile? _imageFile;
+  String? profileImageUrl;
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = pickedFile;
+      });
+
+      // Subir la imagen al servidor
+      await ApiService.uploadProfileImage(_imageFile!.path);
+
+      // Volver a cargar los datos del usuario para actualizar la imagen
+      await loadUser();
+    }
+  }
 
   @override
   void initState() {
@@ -19,15 +40,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     loadUser();
   }
 
-  Future<void> loadUser() async {
-    final data = await ApiService.getUserProfile();
+ Future<void> loadUser() async {
+  final data = await ApiService.getUserProfile();
+  if (mounted) {
+    setState(() {
+      user = data;
+      loading = false;
+    });
+  }
+
+  // Si hay uuid, buscar la imagen después
+  if (data != null && data['uuid'] != null) {
+    final fotoUrl = await ApiService.getFoto(data['uuid']);
     if (mounted) {
       setState(() {
-        user = data;
-        loading = false;
+        profileImageUrl = fotoUrl;
       });
     }
   }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +83,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            const CircleAvatar(
-              radius: 60,
-              backgroundImage: NetworkImage('https://i.pravatar.cc/300'),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundColor: Colors.grey.shade300,
+                    backgroundImage: _imageFile != null
+                        ? FileImage(File(_imageFile!.path))
+                        : (profileImageUrl != null
+                                  ? NetworkImage(profileImageUrl!)
+                                  : null)
+                              as ImageProvider<Object>?,
+                    child: (_imageFile == null && profileImageUrl == null)
+                        ? const Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white,
+                      child: const Icon(Icons.camera_alt, size: 20),
+                    ),
+                  ),
+                ],
+              ),
             ),
+
             const SizedBox(height: 20),
             Text(
               fullName.isNotEmpty ? fullName : 'Nombre no disponible',
