@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/screens/auth_screen.dart';
 import 'package:soluva/screens/profile_screen.dart';
+import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/widgets/header_widget.dart';
 
 
@@ -19,7 +20,7 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                  MaterialPageRoute(builder: (_) => const WorkerApplicationScreen()),
                 );
               },
               child: const Text('Quiero trabajar'),

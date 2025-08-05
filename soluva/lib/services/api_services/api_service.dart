@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:soluva/services/api_services/auth_service.dart';
 import 'package:soluva/services/api_services/profile_service.dart';
 import 'package:soluva/services/api_services/user_service.dart';
+import 'package:soluva/services/api_services/worker_service.dart';
 
 class ApiService {
   static Future<bool> editUserProfile({
@@ -56,5 +59,25 @@ class ApiService {
 
   static Future getFoto(String uuid) async {
     return UserService.getFoto(uuid);
+  }
+
+  static void enviarSolicitudTrabajador({
+    required String nationalId,
+    required String trade,
+    required String taskDescription,
+    String? description,
+    File? facePhoto,
+    required certifications,
+    required String token,
+  }) {
+    WorkerService.enviarSolicitudTrabajador(
+      nationalId: nationalId,
+      trade: trade,
+      taskDescription: taskDescription,
+      description: description,
+      facePhoto: facePhoto,
+      certifications: certifications,
+      token: token,
+    );
   }
 }
