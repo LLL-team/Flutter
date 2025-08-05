@@ -12,7 +12,6 @@ class UserService {
     return prefs.getString('auth_token');
   }
 
- 
   // Editar perfil del usuario
   static Future<bool> editUserProfile({
     required String? name,
@@ -25,7 +24,7 @@ class UserService {
     }
 
     final response = await http.put(
-      Uri.parse('$baseUrl/user/edit'),
+      Uri.parse('$baseUrl/profile/edit'),
       headers: {
         "Accept": "application/json",
         "Content-Type": "application/json",
