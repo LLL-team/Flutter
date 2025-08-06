@@ -7,14 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProfileService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
-  static Future<String?> _getToken() async {
+  static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
 
   static Future<Map<String, dynamic>?> getUserProfile() async {
-    final token = await _getToken();
+    final token = await getToken();
     if (token == null) {
       return null;
     }
@@ -32,13 +32,14 @@ class ProfileService {
       return null;
     }
   }
+
   // Editar perfil del usuario
   static Future<bool> editUserProfile({
     required String? name,
     required String? lastName,
     required String? descripcion,
   }) async {
-    final token = await _getToken();
+    final token = await getToken();
     if (token == null) {
       return false;
     }

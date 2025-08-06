@@ -22,6 +22,7 @@ class WorkerService {
   }) async {
     print("Enviando solicitud de trabajador con los siguientes datos:");
     print("National ID: $nationalId");
+    print(token);
     final uri = Uri.parse('$baseUrl/worker/new');
 
     final request = http.MultipartRequest('POST', uri)

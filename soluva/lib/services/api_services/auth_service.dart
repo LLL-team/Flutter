@@ -48,7 +48,7 @@ class AuthService {
 
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      final token = data['token'];
+      final token = data['accessToken'];
       if (token != null) {
         await _saveToken(token);
       }
@@ -68,7 +68,7 @@ class AuthService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
     if (token == null) return;
-   
+
     final response = await http.post(
       Uri.parse("$baseUrl/auth/logout"),
       headers: {"Authorization": "Bearer $token"},
