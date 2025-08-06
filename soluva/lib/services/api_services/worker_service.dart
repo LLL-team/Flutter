@@ -27,6 +27,7 @@ class WorkerService {
 
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
+      ..headers['Accept'] = 'application/json'
       ..fields['national_id'] = nationalId
       ..fields['trade'] = trade
       ..fields['task_description'] = taskDescription;
