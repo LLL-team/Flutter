@@ -25,6 +25,22 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
   File? _facePhoto;
   Uint8List? _webImageBytes;
+  bool _isAuthenticated = false;
+  bool _loadingAuth = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  Future<void> _checkAuthentication() async {
+    final token = await ProfileService.getToken();
+    setState(() {
+      _isAuthenticated = token != null && token.isNotEmpty;
+      _loadingAuth = false;
+    });
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -46,54 +62,47 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   }
 
   void _submitApplication() async {
-    // Validación del formulario
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please complete all required fields.")),
-      );
-      return;
-    }
+    if (_formKey.currentState!.validate() &&
+        (_facePhoto != null || _webImageBytes != null)) {
+      final token = await ProfileService.getToken();
+      if (token == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error: not authenticated")),
+        );
+        return;
+      }
 
-    // Validación de imagen
-    if (_facePhoto == null && _webImageBytes == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please upload a face photo.")),
+      final response = await ApiService.enviarSolicitudTrabajador(
+        nationalId: _dniController.text,
+        trade: _occupationController.text,
+        taskDescription: _descriptionController.text,
+        description: _certificationController.text.isNotEmpty
+            ? _certificationController.text
+            : null,
+        facePhoto: _facePhoto,
+        webImageBytes: _webImageBytes,
+        certifications: null,
+        token: token,
       );
-      return;
-    }
 
-    final token = await ProfileService.getToken();
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error: not authenticated")),
-      );
-      return;
-    }
-
-    final response = await ApiService.enviarSolicitudTrabajador(
-      nationalId: _dniController.text,
-      trade: _occupationController.text,
-      taskDescription: _descriptionController.text,
-      description: _certificationController.text.isNotEmpty
-          ? _certificationController.text
-          : null,
-      facePhoto: _facePhoto,
-      webImageBytes: _webImageBytes,
-      certifications: null,
-      token: token,
-    );
-
-    if (response['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("✅ Tu perfil fue enviado a revisión."),
-        ),
-      );
-      Navigator.of(context).pop(); // Opcional: volver a pantalla anterior
+      if (response['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Your application has been submitted for review."),
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${response['message']}"),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Error: ${response['message']}"),
+        const SnackBar(
+          content: Text("Please fill all required fields and upload a photo."),
         ),
       );
     }
@@ -109,17 +118,32 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   }
 
   Widget _buildImagePreview() {
-    if (kIsWeb && _webImageBytes != null) {
-      return Image.memory(_webImageBytes!, fit: BoxFit.cover);
-    } else if (_facePhoto != null) {
-      return Image.file(_facePhoto!, fit: BoxFit.cover);
+    if (kIsWeb) {
+      if (_webImageBytes != null) {
+        return Image.memory(_webImageBytes!, fit: BoxFit.cover);
+      }
     } else {
-      return const Center(child: Text("Tap to upload face photo"));
+      if (_facePhoto != null) {
+        return Image.file(_facePhoto!, fit: BoxFit.cover);
+      }
     }
+    return const Center(child: Text("Tap to upload face photo"));
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingAuth) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!_isAuthenticated) {
+      return const Scaffold(
+        body: Center(child: Text("You must be logged in to access this page.")),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Worker Application')),
       body: Padding(
@@ -133,9 +157,10 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                 decoration: const InputDecoration(labelText: 'DNI'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'DNI is required';
-                  if (!RegExp(r'^[0-9]{8}$').hasMatch(value)) {
-                    return 'DNI must be 8 digits';
+                  if (value == null || value.isEmpty) {
+                    return 'DNI is required';
+                  } else if (value.length != 8) {
+                    return 'DNI must be exactly 8 digits';
                   }
                   return null;
                 },
@@ -157,9 +182,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
               TextFormField(
                 controller: _occupationController,
                 decoration: const InputDecoration(labelText: 'Occupation'),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Occupation is required'
-                    : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Occupation is required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
