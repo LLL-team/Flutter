@@ -29,7 +29,6 @@ class HomePage extends StatelessWidget {
           if (!loggedIn) {
             return const Center(child: Text('Por favor, iniciá sesión.'));
           }
-
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

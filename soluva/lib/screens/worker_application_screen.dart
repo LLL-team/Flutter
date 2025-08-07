@@ -46,47 +46,54 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   }
 
   void _submitApplication() async {
-    if (_formKey.currentState!.validate() &&
-        (_facePhoto != null || _webImageBytes != null)) {
-      final token = await ProfileService.getToken();
-      if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error: not authenticated")),
-        );
-        return;
-      }
-
-      final response = await ApiService.enviarSolicitudTrabajador(
-        nationalId: _dniController.text,
-        trade: _occupationController.text,
-        taskDescription: _descriptionController.text,
-        description: _certificationController.text.isNotEmpty
-            ? _certificationController.text
-            : null,
-        facePhoto: _facePhoto,
-        webImageBytes: _webImageBytes, // important!
-        certifications: null,
-        token: token,
+    // Validación del formulario
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please complete all required fields.")),
       );
+      return;
+    }
 
-      if (response['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Your application has been submitted for review."),
-          ),
-        );
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: ${response['message']}"),
-          ),
-        );
-      }
-    } else {
+    // Validación de imagen
+    if (_facePhoto == null && _webImageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload a face photo.")),
+      );
+      return;
+    }
+
+    final token = await ProfileService.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error: not authenticated")),
+      );
+      return;
+    }
+
+    final response = await ApiService.enviarSolicitudTrabajador(
+      nationalId: _dniController.text,
+      trade: _occupationController.text,
+      taskDescription: _descriptionController.text,
+      description: _certificationController.text.isNotEmpty
+          ? _certificationController.text
+          : null,
+      facePhoto: _facePhoto,
+      webImageBytes: _webImageBytes,
+      certifications: null,
+      token: token,
+    );
+
+    if (response['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please fill all required fields and upload a photo."),
+          content: Text("✅ Tu perfil fue enviado a revisión."),
+        ),
+      );
+      Navigator.of(context).pop(); // Opcional: volver a pantalla anterior
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Error: ${response['message']}"),
         ),
       );
     }
@@ -102,16 +109,13 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   }
 
   Widget _buildImagePreview() {
-    if (kIsWeb) {
-      if (_webImageBytes != null) {
-        return Image.memory(_webImageBytes!, fit: BoxFit.cover);
-      }
+    if (kIsWeb && _webImageBytes != null) {
+      return Image.memory(_webImageBytes!, fit: BoxFit.cover);
+    } else if (_facePhoto != null) {
+      return Image.file(_facePhoto!, fit: BoxFit.cover);
     } else {
-      if (_facePhoto != null) {
-        return Image.file(_facePhoto!, fit: BoxFit.cover);
-      }
+      return const Center(child: Text("Tap to upload face photo"));
     }
-    return const Center(child: Text("Tap to upload face photo"));
   }
 
   @override
@@ -128,8 +132,13 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                 controller: _dniController,
                 decoration: const InputDecoration(labelText: 'DNI'),
                 keyboardType: TextInputType.number,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'DNI is required' : null,
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'DNI is required';
+                  if (!RegExp(r'^[0-9]{8}$').hasMatch(value)) {
+                    return 'DNI must be 8 digits';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
               GestureDetector(
