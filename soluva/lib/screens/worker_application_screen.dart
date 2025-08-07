@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/services/api_services/profile_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class WorkerApplicationScreen extends StatefulWidget {
   const WorkerApplicationScreen({super.key});
@@ -24,8 +23,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  File? _facePhoto; // Para mobile
-  Uint8List? _webImageBytes; // Para web
+  File? _facePhoto;
+  Uint8List? _webImageBytes;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -49,32 +48,40 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   void _submitApplication() async {
     if (_formKey.currentState!.validate() &&
         (_facePhoto != null || _webImageBytes != null)) {
-      String? token = await ProfileService.getToken();
+      final token = await ProfileService.getToken();
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error no esta autenticaddo")),
+          const SnackBar(content: Text("Error: not authenticated")),
         );
         return;
-      } else {
-        ApiService.enviarSolicitudTrabajador(
-          nationalId: _dniController.text,
-          trade: _occupationController.text,
-          taskDescription: _descriptionController.text,
-          description: _certificationController.text.isNotEmpty
-              ? _certificationController.text
-              : null,
-          facePhoto: _facePhoto,
-          certifications:
-              null, // Podrías agregar otro picker para certificaciones si es necesario
-          token:
-              token, // Aquí deberías obtener el token de autenticación si es necesario
-        );
+      }
+
+      final response = await ApiService.enviarSolicitudTrabajador(
+        nationalId: _dniController.text,
+        trade: _occupationController.text,
+        taskDescription: _descriptionController.text,
+        description: _certificationController.text.isNotEmpty
+            ? _certificationController.text
+            : null,
+        facePhoto: _facePhoto,
+        webImageBytes: _webImageBytes, // important!
+        certifications: null,
+        token: token,
+      );
+
+      if (response['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Your application has been submitted for review."),
           ),
         );
         Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${response['message']}"),
+          ),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,92 +116,69 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: ProfileService.getToken(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final token = snapshot.data;
-
-        if (token == null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Acceso Denegado')),
-            body: const Center(
-              child: Text(
-                "Debes iniciar sesión para completar esta solicitud.",
+    return Scaffold(
+      appBar: AppBar(title: const Text('Worker Application')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              TextFormField(
+                controller: _dniController,
+                decoration: const InputDecoration(labelText: 'DNI'),
+                keyboardType: TextInputType.number,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'DNI is required' : null,
               ),
-            ),
-          );
-        }
-
-        // El token existe → usuario autenticado → mostrar formulario
-        return Scaffold(
-          appBar: AppBar(title: const Text('Worker Application')),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                children: [
-                  TextFormField(
-                    controller: _dniController,
-                    decoration: const InputDecoration(labelText: 'DNI'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'DNI is required'
-                        : null,
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    border: Border.all(),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 16),
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        border: Border.all(),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: _buildImagePreview(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _occupationController,
-                    decoration: const InputDecoration(labelText: 'Occupation'),
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Occupation is required'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _certificationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Certification (optional)',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Task Description (optional)',
-                    ),
-                    maxLines: 4,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _submitApplication,
-                    child: const Text("Submit Application"),
-                  ),
-                ],
+                  child: _buildImagePreview(),
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _occupationController,
+                decoration: const InputDecoration(labelText: 'Occupation'),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Occupation is required'
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _certificationController,
+                decoration: const InputDecoration(
+                  labelText: 'Certification (optional)',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Task Description',
+                ),
+                maxLines: 4,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Task Description is required'
+                    : null,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _submitApplication,
+                child: const Text("Submit Application"),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

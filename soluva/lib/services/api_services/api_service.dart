@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:soluva/services/api_services/auth_service.dart';
 import 'package:soluva/services/api_services/profile_service.dart';
@@ -61,7 +62,7 @@ class ApiService {
     return UserService.getFoto(uuid);
   }
 
-  static void enviarSolicitudTrabajador({
+  static Future<Map<String, dynamic>>  enviarSolicitudTrabajador({
     required String nationalId,
     required String trade,
     required String taskDescription,
@@ -69,8 +70,9 @@ class ApiService {
     File? facePhoto,
     required certifications,
     required String token,
+    required Uint8List? webImageBytes,
   }) {
-    WorkerService.enviarSolicitudTrabajador(
+    return WorkerService.enviarSolicitudTrabajador(
       nationalId: nationalId,
       trade: trade,
       taskDescription: taskDescription,
@@ -78,6 +80,7 @@ class ApiService {
       facePhoto: facePhoto,
       certifications: certifications,
       token: token,
+      webImageBytes: webImageBytes,
     );
   }
 }
