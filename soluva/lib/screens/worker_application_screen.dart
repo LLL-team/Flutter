@@ -3,39 +3,57 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:soluva/services/api_services/api_service.dart';
-import 'package:soluva/services/api_services/profile_service.dart';
-
 class WorkerApplicationScreen extends StatefulWidget {
   const WorkerApplicationScreen({super.key});
 
   @override
-  State<WorkerApplicationScreen> createState() =>
-      _WorkerApplicationScreenState();
+  State<WorkerApplicationScreen> createState() => _WorkerApplicationScreenState();
 }
 
 class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _dniController = TextEditingController();
-  final TextEditingController _occupationController = TextEditingController();
-  final TextEditingController _certificationController =
-      TextEditingController();
+  final TextEditingController _certificationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   File? _facePhoto;
   Uint8List? _webImageBytes;
   bool _isAuthenticated = false;
   bool _loadingAuth = true;
+  Map<String, List<String>> _services = {};
+  bool _loadingServices = true;
+
+  List<String> _selectedServices = [];
+  List<String> _selectedSubServices = [];
 
   @override
   void initState() {
     super.initState();
     _checkAuthentication();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    setState(() => _loadingServices = true);
+    try {
+      final services = await ApiService.getServices();
+      setState(() {
+        _services = services;
+        _loadingServices = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load services: $e")),
+      );
+      setState(() => _loadingServices = false);
+    }
   }
 
   Future<void> _checkAuthentication() async {
-    final token = await ProfileService.getToken();
+    final token = await ApiService.getToken();
     setState(() {
       _isAuthenticated = token != null && token.isNotEmpty;
       _loadingAuth = false;
@@ -63,8 +81,10 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
   void _submitApplication() async {
     if (_formKey.currentState!.validate() &&
-        (_facePhoto != null || _webImageBytes != null)) {
-      final token = await ProfileService.getToken();
+        (_facePhoto != null || _webImageBytes != null) &&
+        _selectedServices.isNotEmpty &&
+        _selectedSubServices.isNotEmpty) {
+      final token = await ApiService.getToken();
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Error: not authenticated")),
@@ -72,9 +92,17 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         return;
       }
 
+      // Create the trade map
+      Map<String, List<String>> tradeMap = {};
+      for (String service in _selectedServices) {
+        tradeMap[service] = _selectedSubServices
+            .where((subService) => _services[service]?.contains(subService) ?? false)
+            .toList();
+      }
+
       final response = await ApiService.enviarSolicitudTrabajador(
         nationalId: _dniController.text,
-        trade: _occupationController.text,
+        trade: tradeMap,
         taskDescription: _descriptionController.text,
         description: _certificationController.text.isNotEmpty
             ? _certificationController.text
@@ -94,27 +122,17 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         Navigator.of(context).pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: ${response['message']}"),
-          ),
+          SnackBar(content: Text("Error: ${response['message']}")),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please fill all required fields and upload a photo."),
+          content: Text(
+              "Please fill all required fields, upload a photo, and select services."),
         ),
       );
     }
-  }
-
-  @override
-  void dispose() {
-    _dniController.dispose();
-    _occupationController.dispose();
-    _certificationController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
   }
 
   Widget _buildImagePreview() {
@@ -132,7 +150,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingAuth) {
+    if (_loadingAuth || _loadingServices) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -179,13 +197,45 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _occupationController,
-                decoration: const InputDecoration(labelText: 'Occupation'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Occupation is required' : null,
+
+              // Multi-select para servicios
+              MultiSelectDialogField(
+                title: const Text("Select Services"),
+                buttonText: const Text("Services"),
+                items: _services.keys
+                    .map((e) => MultiSelectItem<String>(e, e))
+                    .toList(),
+                listType: MultiSelectListType.CHIP,
+                onConfirm: (values) {
+                  setState(() {
+                    _selectedServices = List<String>.from(values);
+                    _selectedSubServices.clear();
+                  });
+                },
+                validator: (values) =>
+                    (values == null || values.isEmpty) ? "Select at least one service" : null,
               ),
               const SizedBox(height: 16),
+
+              // Multi-select para subservicios
+              MultiSelectDialogField(
+                title: const Text("Select Sub-Services"),
+                buttonText: const Text("Sub-Services"),
+                items: _selectedServices
+                    .expand((service) => _services[service] ?? [])
+                    .map((sub) => MultiSelectItem<String>(sub, sub))
+                    .toList(),
+                listType: MultiSelectListType.CHIP,
+                onConfirm: (values) {
+                  setState(() {
+                    _selectedSubServices = List<String>.from(values);
+                  });
+                },
+                validator: (values) =>
+                    (values == null || values.isEmpty) ? "Select at least one sub-service" : null,
+              ),
+              const SizedBox(height: 16),
+
               TextFormField(
                 controller: _certificationController,
                 decoration: const InputDecoration(
@@ -199,9 +249,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                   labelText: 'Task Description',
                 ),
                 maxLines: 4,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Task Description is required'
-                    : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Task Description is required' : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(

@@ -5,66 +5,66 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:http_parser/http_parser.dart';
-
+import 'package:soluva/services/api_services/utils_service.dart';
 
 class WorkerService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
-static Future<Map<String, dynamic>> enviarSolicitudTrabajador({
-  required String nationalId,
-  required String trade,
-  required String taskDescription,
-  String? description,
-  File? facePhoto,
-  Uint8List? webImageBytes, // nuevo parámetro
-  File? certifications,
-  required String token,
-}) async {
-  final uri = Uri.parse('$baseUrl/worker/new');
+  static Future<Map<String, dynamic>> enviarSolicitudTrabajador({
+    required String nationalId,
+    required Map<String, List<String>> trade,
+    required String taskDescription,
+    String? description,
+    File? facePhoto,
+    required certifications,
+    required String token,
+    required Uint8List? webImageBytes,
+  }) async {
+    final url = Uri.parse('${UtilsService.baseUrl}/worker/new');
+    try {
+      var request = http.MultipartRequest('POST', url);
 
-  final request = http.MultipartRequest('POST', uri)
-    ..headers['Authorization'] = 'Bearer $token'
-    ..headers['Accept'] = 'application/json'
-    ..fields['national_id'] = nationalId
-    ..fields['trade'] = trade
-    ..fields['task_description'] = taskDescription;
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
 
-  if (description != null) {
-    request.fields['description'] = description;
-  }
-
-  if (facePhoto != null) {
-    request.files.add(await http.MultipartFile.fromPath(
-      'face_photo',
-      facePhoto.path,
-      filename: basename(facePhoto.path),
-    ));
-  } else if (webImageBytes != null) {
-    request.files.add(http.MultipartFile.fromBytes(
-      'face_photo',
-      webImageBytes,
-      filename: 'face_photo.jpg',
-      contentType: MediaType('image', 'jpeg'),
-    ));
-  }
-
-  if (certifications != null) {
-    request.files.add(await http.MultipartFile.fromPath(
-      'certifications',
-      certifications.path,
-      filename: basename(certifications.path),
-    ));
-  }
-
-  final response = await request.send();
-  final responseBody = await response.stream.bytesToString();
-
-  if (response.statusCode == 201) {
-    return {"success": true, "message": "Solicitud enviada con éxito"};
-  } else {
-    return {"success": false, "message": responseBody};
-  }
+      request.fields['national_id'] = nationalId;
+      request.fields['trade'] = jsonEncode(trade);
+      request.fields['task_description'] = taskDescription;
+      if (description != null) {
+        request.fields['description'] = description;
+      }
+     if (facePhoto != null) {
+  request.files.add(await http.MultipartFile.fromPath(
+    'face_photo',
+    facePhoto.path,
+    filename: basename(facePhoto.path),
+    contentType: _getMimeType(facePhoto.path), // ← aquí el fix
+  ));
+} else if (webImageBytes != null) {
+  request.files.add(http.MultipartFile.fromBytes(
+    'face_photo',
+    webImageBytes,
+    filename: 'face_photo.jpg',
+    contentType: MediaType('image', 'jpeg'),
+  ));
 }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return responseData;
+      } else {
+        print(responseData);
+        throw Exception('Failed to submit application: ${response.statusCode}');
+      }
+    } catch (e) {
+      print(e);
+      throw Exception('Failed to submit application: $e');
+    }
+  }
 
   // Detecta MIME basado en extensión (para cert. en PDF o imagen)
   static MediaType _getMimeType(String path) {
