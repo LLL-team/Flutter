@@ -29,6 +29,9 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   List<String> _selectedServices = [];
   List<String> _selectedSubServices = [];
 
+  File? _certificationPhoto;
+  Uint8List? _webCertificationBytes;
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +82,25 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     }
   }
 
+  Future<void> _pickCertificationImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      if (kIsWeb) {
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _webCertificationBytes = bytes;
+          _certificationPhoto = null;
+        });
+      } else {
+        setState(() {
+          _certificationPhoto = File(picked.path);
+          _webCertificationBytes = null;
+        });
+      }
+    }
+  }
+
   void _submitApplication() async {
     if (_formKey.currentState!.validate() &&
         (_facePhoto != null || _webImageBytes != null) &&
@@ -92,7 +114,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         return;
       }
 
-      // Create the trade map
+      // Crear el trade map
       Map<String, List<String>> tradeMap = {};
       for (String service in _selectedServices) {
         tradeMap[service] = _selectedSubServices
@@ -109,7 +131,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
             : null,
         facePhoto: _facePhoto,
         webImageBytes: _webImageBytes,
-        certifications: null,
+        certifications: _certificationPhoto,
+        webCertificationBytes: _webCertificationBytes, // ← nuevo parámetro
         token: token,
       );
 
@@ -146,6 +169,19 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       }
     }
     return const Center(child: Text("Tap to upload face photo"));
+  }
+
+  Widget _buildCertificationPreview() {
+    if (kIsWeb) {
+      if (_webCertificationBytes != null) {
+        return Image.memory(_webCertificationBytes!, fit: BoxFit.cover);
+      }
+    } else {
+      if (_certificationPhoto != null) {
+        return Image.file(_certificationPhoto!, fit: BoxFit.cover);
+      }
+    }
+    return const Center(child: Text("Tap to upload certification photo"));
   }
 
   @override
@@ -235,6 +271,20 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     (values == null || values.isEmpty) ? "Select at least one sub-service" : null,
               ),
               const SizedBox(height: 16),
+             // Dentro del ListView, después del SizedBox(height: 16) de la imagen:
+GestureDetector(
+  onTap: _pickCertificationImage, // ← Ahora sí puedes tocar para subir
+  child: Container(
+    height: 150,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      border: Border.all(),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: _buildCertificationPreview(),
+  ),
+),
+const SizedBox(height: 16),
 
               TextFormField(
                 controller: _certificationController,

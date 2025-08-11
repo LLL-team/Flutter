@@ -75,26 +75,21 @@ class ApiService {
     required String taskDescription,
     String? description,
     File? facePhoto,
-    required certifications,
+    Uint8List? webImageBytes,
+    File? certifications,
+    Uint8List? webCertificationBytes, 
     required String token,
-    required Uint8List? webImageBytes,
   }) {
-    print("Sending worker application...");
-    print("National ID: $nationalId");
-    print("Trade: $trade");
-    print("Task Description: $taskDescription");
-    print("Description: $description");
-    print("Face Photo: ${facePhoto?.path}");
-    print("Web Image Bytes: ${webImageBytes != null}");
     return WorkerService.enviarSolicitudTrabajador(
       nationalId: nationalId,
       trade: trade,
       taskDescription: taskDescription,
       description: description,
       facePhoto: facePhoto,
-      certifications: certifications,
-      token: token,
       webImageBytes: webImageBytes,
+      certifications: certifications,
+      webCertificationBytes: webCertificationBytes, // ← pasa el parámetro
+      token: token,
     );
   }
 

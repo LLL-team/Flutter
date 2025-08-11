@@ -16,9 +16,10 @@ class WorkerService {
     required String taskDescription,
     String? description,
     File? facePhoto,
-    required certifications,
+    Uint8List? webImageBytes,
+    File? certifications,
+    Uint8List? webCertificationBytes, // ← nuevo parámetro
     required String token,
-    required Uint8List? webImageBytes,
   }) async {
     final url = Uri.parse('${UtilsService.baseUrl}/worker/new');
     try {
@@ -33,21 +34,37 @@ class WorkerService {
       if (description != null) {
         request.fields['description'] = description;
       }
-     if (facePhoto != null) {
-  request.files.add(await http.MultipartFile.fromPath(
-    'face_photo',
-    facePhoto.path,
-    filename: basename(facePhoto.path),
-    contentType: _getMimeType(facePhoto.path), // ← aquí el fix
-  ));
-} else if (webImageBytes != null) {
-  request.files.add(http.MultipartFile.fromBytes(
-    'face_photo',
-    webImageBytes,
-    filename: 'face_photo.jpg',
-    contentType: MediaType('image', 'jpeg'),
-  ));
-}
+      if (facePhoto != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'face_photo',
+          facePhoto.path,
+          filename: basename(facePhoto.path),
+          contentType: _getMimeType(facePhoto.path),
+        ));
+      } else if (webImageBytes != null) {
+        request.files.add(http.MultipartFile.fromBytes(
+          'face_photo',
+          webImageBytes,
+          filename: 'face_photo.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      }
+      // Adjunta la foto de certificación si existe
+      if (certifications != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'certifications',
+          certifications.path,
+          filename: basename(certifications.path),
+          contentType: _getMimeType(certifications.path),
+        ));
+      } else if (webCertificationBytes != null) {
+        request.files.add(http.MultipartFile.fromBytes(
+          'certifications',
+          webCertificationBytes,
+          filename: 'certifications.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        ));
+      }
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
