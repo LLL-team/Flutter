@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:http/src/response.dart';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:soluva/services/api_services/auth_service.dart';
@@ -69,7 +71,7 @@ class ApiService {
     return UserService.getFoto(uuid);
   }
 
-  static Future<Map<String, dynamic>> enviarSolicitudTrabajador({
+  static Future<Response> enviarSolicitudTrabajador({
     required String nationalId,
     required Map<String, List<String>> trade,
     required String taskDescription,
@@ -95,5 +97,8 @@ class ApiService {
 
   static Future<Map<String, List<String>>> getServices() async {
     return UtilsService.getServices();
+  }
+  static Future<Map<String, dynamic>> getStatus() async {
+    return WorkerService.getStatus();
   }
 }

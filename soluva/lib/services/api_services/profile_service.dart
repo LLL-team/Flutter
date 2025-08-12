@@ -9,7 +9,7 @@ class ProfileService {
 
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    print(prefs.getString('auth_token'));
+    // print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
 
@@ -26,9 +26,9 @@ class ProfileService {
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      print(
-        "Failed to get user profile: ${response.statusCode} - ${response.body}",
-      );
+      // print(
+      //   "Failed to get user profile: ${response.statusCode} - ${response.body}",
+      // );
       return null;
     }
   }
@@ -61,9 +61,9 @@ class ProfileService {
     if (response.statusCode == 200) {
       return true; // Éxito
     } else {
-      print(
-        "Failed to edit user profile: ${response.statusCode} - ${response.body}",
-      );
+      // print(
+      //   "Failed to edit user profile: ${response.statusCode} - ${response.body}",
+      // );
       return false;
     }
   }

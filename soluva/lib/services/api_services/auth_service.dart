@@ -24,7 +24,7 @@ class AuthService {
       }
       return data;
     } else {
-      print("Login failed: ${response.statusCode} - ${response.body}");
+      // print("Login failed: ${response.statusCode} - ${response.body}");
       return null;
     }
   }
@@ -54,7 +54,7 @@ class AuthService {
       }
       return data;
     } else {
-      print("Register failed: ${response.statusCode} - ${response.body}");
+      // print("Register failed: ${response.statusCode} - ${response.body}");
       return null;
     }
   }
@@ -76,7 +76,7 @@ class AuthService {
     if (response.statusCode == 200) {
       await prefs.remove('auth_token');
     } else {
-      print("Logout failed: ${response.statusCode} - ${response.body}");
+      // print("Logout failed: ${response.statusCode} - ${response.body}");
     }
   }
 }

@@ -5,12 +5,13 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/services/api_services/utils_service.dart';
 
 class WorkerService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
-  static Future<Map<String, dynamic>> enviarSolicitudTrabajador({
+  static Future<http.Response> enviarSolicitudTrabajador({
     required String nationalId,
     required Map<String, List<String>> trade,
     required String taskDescription,
@@ -35,50 +36,59 @@ class WorkerService {
         request.fields['description'] = description;
       }
       if (facePhoto != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'face_photo',
-          facePhoto.path,
-          filename: basename(facePhoto.path),
-          contentType: _getMimeType(facePhoto.path),
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'face_photo',
+            facePhoto.path,
+            filename: basename(facePhoto.path),
+            contentType: _getMimeType(facePhoto.path),
+          ),
+        );
       } else if (webImageBytes != null) {
-        request.files.add(http.MultipartFile.fromBytes(
-          'face_photo',
-          webImageBytes,
-          filename: 'face_photo.jpg',
-          contentType: MediaType('image', 'jpeg'),
-        ));
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'face_photo',
+            webImageBytes,
+            filename: 'face_photo.jpg',
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
       }
       // Adjunta la foto de certificación si existe
       if (certifications != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'certifications',
-          certifications.path,
-          filename: basename(certifications.path),
-          contentType: _getMimeType(certifications.path),
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'certifications',
+            certifications.path,
+            filename: basename(certifications.path),
+            contentType: _getMimeType(certifications.path),
+          ),
+        );
       } else if (webCertificationBytes != null) {
-        request.files.add(http.MultipartFile.fromBytes(
-          'certifications',
-          webCertificationBytes,
-          filename: 'certifications.jpg',
-          contentType: MediaType('image', 'jpeg'),
-        ));
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'certifications',
+            webCertificationBytes,
+            filename: 'certifications.jpg',
+            contentType: MediaType('image', 'jpeg'),
+          ),
+        );
       }
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      final responseData = json.decode(response.body);
+      // final responseData = json.decode(response.body);
+      return response;
 
-      if (response.statusCode == 200) {
-        return responseData;
-      } else {
-        print(responseData);
-        throw Exception('Failed to submit application: ${response.statusCode}');
-      }
+      //   if (response.statusCode == 201) {
+
+      //   } else {
+      //     // print(responseData);
+      //     throw Exception('Failed to submit application: ${response.statusCode}');
+      //   }
     } catch (e) {
-      print(e);
+      // print(e);
       throw Exception('Failed to submit application: $e');
     }
   }
@@ -98,6 +108,23 @@ class WorkerService {
         return MediaType('application', 'pdf');
       default:
         return MediaType('application', 'octet-stream');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getStatus() async {
+    final url = Uri.parse('${UtilsService.baseUrl}/worker/status');
+
+    try {
+      final headers = <String, String>{
+        'Authorization': 'Bearer ${await ApiService.getToken()}',
+        'Accept': 'application/json',
+      };
+
+      final response = await http.get(url, headers: headers);
+      final responseData = json.decode(response.body);
+      return responseData;
+    } catch (e) {
+      throw Exception('Failed to load worker status: $e');
     }
   }
 }

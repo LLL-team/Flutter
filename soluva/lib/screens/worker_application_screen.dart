@@ -5,18 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+
 class WorkerApplicationScreen extends StatefulWidget {
   const WorkerApplicationScreen({super.key});
 
   @override
-  State<WorkerApplicationScreen> createState() => _WorkerApplicationScreenState();
+  State<WorkerApplicationScreen> createState() =>
+      _WorkerApplicationScreenState();
 }
 
 class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _dniController = TextEditingController();
-  final TextEditingController _certificationController = TextEditingController();
+  final TextEditingController _certificationController =
+      TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   File? _facePhoto;
@@ -35,7 +38,9 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   @override
   void initState() {
     super.initState();
+
     _checkAuthentication();
+    _checkStatus();
     _loadServices();
   }
 
@@ -48,9 +53,9 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         _loadingServices = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load services: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to load services: $e")));
       setState(() => _loadingServices = false);
     }
   }
@@ -114,13 +119,17 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         return;
       }
 
-      // Crear el trade map
       Map<String, List<String>> tradeMap = {};
       for (String service in _selectedServices) {
         tradeMap[service] = _selectedSubServices
-            .where((subService) => _services[service]?.contains(subService) ?? false)
+            .where(
+              (subService) => _services[service]?.contains(subService) ?? false,
+            )
             .toList();
       }
+      print(
+        "ä ver vamos a llmaar a la cosa :  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      );
 
       final response = await ApiService.enviarSolicitudTrabajador(
         nationalId: _dniController.text,
@@ -132,27 +141,34 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         facePhoto: _facePhoto,
         webImageBytes: _webImageBytes,
         certifications: _certificationPhoto,
-        webCertificationBytes: _webCertificationBytes, // ← nuevo parámetro
+        webCertificationBytes: _webCertificationBytes,
         token: token,
       );
+      print(
+        "response: $response AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      );
+      print(" response['statusCode']: ${response.statusCode}");
+      // 🔹 Aquí revisamos statusCode 201
+      if (response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Su solicitud fue enviada a revisión.")),
+        );
 
-      if (response['success'] == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Your application has been submitted for review."),
-          ),
-        );
-        Navigator.of(context).pop();
+        // Espera un momento para que el usuario vea el mensaje
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.of(context).pop();
+        });
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${response['message']}")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              "Please fill all required fields, upload a photo, and select services."),
+            "Please fill all required fields, upload a photo, and select services.",
+          ),
         ),
       );
     }
@@ -187,9 +203,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loadingAuth || _loadingServices) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (!_isAuthenticated) {
@@ -248,8 +262,9 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     _selectedSubServices.clear();
                   });
                 },
-                validator: (values) =>
-                    (values == null || values.isEmpty) ? "Select at least one service" : null,
+                validator: (values) => (values == null || values.isEmpty)
+                    ? "Select at least one service"
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -267,24 +282,26 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     _selectedSubServices = List<String>.from(values);
                   });
                 },
-                validator: (values) =>
-                    (values == null || values.isEmpty) ? "Select at least one sub-service" : null,
+                validator: (values) => (values == null || values.isEmpty)
+                    ? "Select at least one sub-service"
+                    : null,
               ),
               const SizedBox(height: 16),
-             // Dentro del ListView, después del SizedBox(height: 16) de la imagen:
-GestureDetector(
-  onTap: _pickCertificationImage, // ← Ahora sí puedes tocar para subir
-  child: Container(
-    height: 150,
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      border: Border.all(),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: _buildCertificationPreview(),
-  ),
-),
-const SizedBox(height: 16),
+              // Dentro del ListView, después del SizedBox(height: 16) de la imagen:
+              GestureDetector(
+                onTap:
+                    _pickCertificationImage, // ← Ahora sí puedes tocar para subir
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    border: Border.all(),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: _buildCertificationPreview(),
+                ),
+              ),
+              const SizedBox(height: 16),
 
               TextFormField(
                 controller: _certificationController,
@@ -299,8 +316,9 @@ const SizedBox(height: 16),
                   labelText: 'Task Description',
                 ),
                 maxLines: 4,
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Task Description is required' : null,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Task Description is required'
+                    : null,
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -313,4 +331,33 @@ const SizedBox(height: 16),
       ),
     );
   }
+
+void _checkStatus() async {
+  final response = await ApiService.getStatus();
+  // final data = json.decode(response.body);
+
+  print(response['status']);
+
+  if (response['status'] == 'pending') {
+    // Mostrar alerta
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Aviso"),
+          content: const Text("Ya tienes una solicitud pendiente."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();  
+              },
+              child: const Text("Aceptar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 }

@@ -8,7 +8,7 @@ class UserService {
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    print(prefs.getString('auth_token'));
+    // print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
 
@@ -31,7 +31,7 @@ class UserService {
   }
 
   static Future getFoto(String uuid) async {
-    print("UUID: $uuid");
+    // print("UUID: $uuid");
     final response = await http.get(Uri.parse('$baseUrl/img/$uuid'));
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['foto'];
