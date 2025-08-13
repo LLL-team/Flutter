@@ -1,9 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:soluva/screens/home_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:soluva/widgets/header_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,22 +16,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool loading = true;
   final ImagePicker _picker = ImagePicker();
   XFile? _imageFile;
-  String? profileImageUrl;
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = pickedFile;
-      });
-
-      // Subir la imagen al servidor
-      await ApiService.uploadProfileImage(_imageFile!.path);
-
-      // Volver a cargar los datos del usuario para actualizar la imagen
-      await loadUser();
-    }
-  }
+  Uint8List? _imageBytes; // Vista previa de imagen elegida
+  String? profileImageUrl; // URL de la imagen desde el backend
 
   @override
   void initState() {
@@ -40,26 +25,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
     loadUser();
   }
 
- Future<void> loadUser() async {
-  final data = await ApiService.getUserProfile();
-  if (mounted) {
-    setState(() {
-      user = data;
-      loading = false;
-    });
-  }
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
-  // Si hay uuid, buscar la imagen después
-  if (data != null && data['uuid'] != null) {
-    final fotoUrl = await ApiService.getFoto(data['uuid']);
-    if (mounted) {
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+
       setState(() {
-        profileImageUrl = fotoUrl;
+        _imageFile = pickedFile;
+        _imageBytes = bytes;
       });
+
+      // Subir la imagen al servidor
+      await ApiService.uploadProfileImage(bytes, pickedFile.name);
+
+      // Volver a cargar los datos del usuario
+      await loadUser();
     }
   }
-}
 
+  Future<void> loadUser() async {
+    final data = await ApiService.getUserProfile();
+    if (mounted) {
+      setState(() {
+        user = data;
+        loading = false;
+      });
+    }
+    // Si hay uuid, buscar la imagen
+    if (data != null && data['uuid'] != null) {
+      final fotoBytes = await ApiService.getFoto(data['uuid']);
+      if (mounted) {
+        setState(() {
+          _imageBytes = fotoBytes;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
+
+            // Imagen de perfil
             GestureDetector(
               onTap: _pickImage,
               child: Stack(
@@ -90,13 +94,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.grey.shade300,
-                    backgroundImage: _imageFile != null
-                        ? FileImage(File(_imageFile!.path))
+                    backgroundImage: _imageBytes != null
+                        ? MemoryImage(_imageBytes!)
                         : (profileImageUrl != null
                                   ? NetworkImage(profileImageUrl!)
                                   : null)
                               as ImageProvider<Object>?,
-                    child: (_imageFile == null && profileImageUrl == null)
+                    child: (_imageBytes == null && profileImageUrl == null)
                         ? const Icon(
                             Icons.person,
                             size: 60,
@@ -118,15 +122,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             const SizedBox(height: 20),
+
+            // Nombre
             Text(
               fullName.isNotEmpty ? fullName : 'Nombre no disponible',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
+
+            // Email
             Text(
               user!['email'] ?? 'Email no disponible',
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
+
+            // Descripción
             if (user!['descripcion'] != null) ...[
               const SizedBox(height: 20),
               Text(
@@ -134,7 +145,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
             ],
+
             const SizedBox(height: 30),
+
+            // Botón Editar Perfil
             ElevatedButton.icon(
               onPressed: () {
                 // Acción para editar el perfil
@@ -148,9 +162,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 30),
             const Divider(),
             const SizedBox(height: 20),
+
+            // Opciones
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Configuración'),

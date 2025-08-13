@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
 
 class UserService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
@@ -12,15 +13,24 @@ class UserService {
     return prefs.getString('auth_token');
   }
 
-  //falta endpont
-  static Future<void> uploadProfileImage(String imagePath) async {
-    final token = await _getToken(); // Obtener el token si lo usás
+  static Future<void> uploadProfileImage(
+    Uint8List imageBytes,
+    String fileName,
+  ) async {
+    final token = await _getToken();
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('$baseUrl/upload-profile-image'),
+      Uri.parse('$baseUrl/img/updateIMG'),
     );
 
-    request.files.add(await http.MultipartFile.fromPath('image', imagePath));
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'profile_photo',
+        imageBytes,
+        filename: fileName,
+      ),
+    );
+
     request.headers['Authorization'] = 'Bearer $token';
 
     final response = await request.send();
@@ -30,11 +40,10 @@ class UserService {
     }
   }
 
-  static Future getFoto(String uuid) async {
-    // print("UUID: $uuid");
+  static Future<Uint8List?> getFoto(String uuid) async {
     final response = await http.get(Uri.parse('$baseUrl/img/$uuid'));
     if (response.statusCode == 200) {
-      return jsonDecode(response.body)['foto'];
+      return response.bodyBytes; // <- devuelve los bytes de la imagen
     } else {
       throw Exception('Error al obtener la foto del usuario');
     }

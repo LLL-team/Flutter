@@ -11,11 +11,12 @@ import 'package:soluva/services/api_services/utils_service.dart';
 import 'package:soluva/services/api_services/worker_service.dart';
 
 class ApiService {
-    static Future<String?> getToken() async {
+  static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
+
   static Future<bool> editUserProfile({
     required String name,
     required String lastName,
@@ -63,8 +64,11 @@ class ApiService {
     );
   }
 
-  static Future<void> uploadProfileImage(String path) async {
-    await UserService.uploadProfileImage(path);
+  static Future<void> uploadProfileImage(
+    Uint8List imageBytes,
+    String fileName,
+  ) async {
+    await UserService.uploadProfileImage(imageBytes, fileName);
   }
 
   static Future getFoto(String uuid) async {
@@ -79,7 +83,7 @@ class ApiService {
     File? facePhoto,
     Uint8List? webImageBytes,
     File? certifications,
-    Uint8List? webCertificationBytes, 
+    Uint8List? webCertificationBytes,
     required String token,
   }) {
     return WorkerService.enviarSolicitudTrabajador(
@@ -98,6 +102,7 @@ class ApiService {
   static Future<Map<String, List<String>>> getServices() async {
     return UtilsService.getServices();
   }
+
   static Future<Map<String, dynamic>> getStatus() async {
     return WorkerService.getStatus();
   }
