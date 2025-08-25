@@ -106,4 +106,6 @@ class ApiService {
   static Future<Map<String, dynamic>> getStatus() async {
     return WorkerService.getStatus();
   }
+
+  workers() {}
 }

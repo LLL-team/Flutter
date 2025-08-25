@@ -127,4 +127,18 @@ class WorkerService {
       throw Exception('Failed to load worker status: $e');
     }
   }
+
+  static Future<List<dynamic>> getWorkersByCategory(String category) async {
+    final url = Uri.parse('${UtilsService.baseUrl}/workers?trade=${Uri.encodeComponent(category)}');
+    try {
+      final response = await http.get(url, headers: {'Accept': 'application/json'});
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as List<dynamic>;
+      } else {
+        throw Exception('Error al obtener trabajadores: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener trabajadores: $e');
+    }
+  }
 }

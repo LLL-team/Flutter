@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/screens/profile_screen.dart';
+import 'package:soluva/screens/search_workers_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/widgets/header_widget.dart';
 
@@ -33,6 +34,15 @@ class HomePage extends StatelessWidget {
                 );
               },
               child: const Text('Perfil'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SearchWorkersScreen()),
+                );
+              },
+              child: const Text('Buscar trabajadores'),
             ),
           ],
         ),
