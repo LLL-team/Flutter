@@ -141,4 +141,19 @@ class WorkerService {
       throw Exception('Error al obtener trabajadores: $e');
     }
   }
+
+  static Future<Map<String, dynamic>> getWorkerByUuid(String id) async {
+    print("Fetching worker with UUID: $id");
+    final url = Uri.parse('${UtilsService.baseUrl}/workers/$id');
+    try {
+      final response = await http.get(url, headers: {'Accept': 'application/json'});
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Error al obtener trabajador: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener trabajador: $e');
+    }
+  }
 }
