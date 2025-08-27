@@ -18,16 +18,18 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _dniController = TextEditingController();
-  final TextEditingController _certificationController =
-      TextEditingController();
+  final TextEditingController _certificationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   File? _facePhoto;
   Uint8List? _webImageBytes;
   bool _isAuthenticated = false;
   bool _loadingAuth = true;
-  Map<String, List<String>> _services = {};
   bool _loadingServices = true;
+  bool _loadingStatus = true;
+
+  String? _workerStatus; // ← NUEVO: Guardamos el estado del trabajador
+  Map<String, List<String>> _services = {};
 
   List<String> _selectedServices = [];
   List<String> _selectedSubServices = [];
@@ -38,10 +40,21 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   @override
   void initState() {
     super.initState();
-
     _checkAuthentication();
     _checkStatus();
     _loadServices();
+  }
+
+  Future<void> _checkStatus() async {
+    try {
+      final response = await ApiService.getStatus();
+      setState(() {
+        _workerStatus = response['status'];
+        _loadingStatus = false;
+      });
+    } catch (e) {
+      setState(() => _loadingStatus = false);
+    }
   }
 
   Future<void> _loadServices() async {
@@ -127,9 +140,6 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
             )
             .toList();
       }
-      print(
-        "ä ver vamos a llmaar a la cosa :  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      );
 
       final response = await ApiService.enviarSolicitudTrabajador(
         nationalId: _dniController.text,
@@ -144,17 +154,11 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         webCertificationBytes: _webCertificationBytes,
         token: token,
       );
-      print(
-        "response: $response AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      );
-      print(" response['statusCode']: ${response.statusCode}");
-      // 🔹 Aquí revisamos statusCode 201
+
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Su solicitud fue enviada a revisión.")),
         );
-
-        // Espera un momento para que el usuario vea el mensaje
         Future.delayed(const Duration(seconds: 2), () {
           Navigator.of(context).pop();
         });
@@ -174,35 +178,9 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     }
   }
 
-  Widget _buildImagePreview() {
-    if (kIsWeb) {
-      if (_webImageBytes != null) {
-        return Image.memory(_webImageBytes!, fit: BoxFit.cover);
-      }
-    } else {
-      if (_facePhoto != null) {
-        return Image.file(_facePhoto!, fit: BoxFit.cover);
-      }
-    }
-    return const Center(child: Text("Tap to upload face photo"));
-  }
-
-  Widget _buildCertificationPreview() {
-    if (kIsWeb) {
-      if (_webCertificationBytes != null) {
-        return Image.memory(_webCertificationBytes!, fit: BoxFit.cover);
-      }
-    } else {
-      if (_certificationPhoto != null) {
-        return Image.file(_certificationPhoto!, fit: BoxFit.cover);
-      }
-    }
-    return const Center(child: Text("Tap to upload certification photo"));
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_loadingAuth || _loadingServices) {
+    if (_loadingAuth || _loadingServices || _loadingStatus) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
@@ -212,6 +190,21 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       );
     }
 
+    // 🔹 SI EL ESTADO ES APPROVED → SOLO MOSTRAR MENSAJE
+    if (_workerStatus == "approved") {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Estado de tu perfil")),
+        body: const Center(
+          child: Text(
+            "✅ Tu perfil de trabajador ya fue aprobado",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    // 🔹 SI NO ESTÁ APROBADO → MOSTRAR FORMULARIO NORMAL
     return Scaffold(
       appBar: AppBar(title: const Text('Worker Application')),
       body: Padding(
@@ -243,12 +236,15 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     border: Border.all(),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: _buildImagePreview(),
+                  child: _webImageBytes != null
+                      ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
+                      : _facePhoto != null
+                          ? Image.file(_facePhoto!, fit: BoxFit.cover)
+                          : const Center(
+                              child: Text("Tap to upload face photo")),
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Multi-select para servicios
               MultiSelectDialogField(
                 title: const Text("Select Services"),
                 buttonText: const Text("Services"),
@@ -267,8 +263,6 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     : null,
               ),
               const SizedBox(height: 16),
-
-              // Multi-select para subservicios
               MultiSelectDialogField(
                 title: const Text("Select Sub-Services"),
                 buttonText: const Text("Sub-Services"),
@@ -287,10 +281,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     : null,
               ),
               const SizedBox(height: 16),
-              // Dentro del ListView, después del SizedBox(height: 16) de la imagen:
               GestureDetector(
-                onTap:
-                    _pickCertificationImage, // ← Ahora sí puedes tocar para subir
+                onTap: _pickCertificationImage,
                 child: Container(
                   height: 150,
                   decoration: BoxDecoration(
@@ -298,11 +290,15 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     border: Border.all(),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: _buildCertificationPreview(),
+                  child: _webCertificationBytes != null
+                      ? Image.memory(_webCertificationBytes!, fit: BoxFit.cover)
+                      : _certificationPhoto != null
+                          ? Image.file(_certificationPhoto!, fit: BoxFit.cover)
+                          : const Center(
+                              child: Text("Tap to upload certification photo")),
                 ),
               ),
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _certificationController,
                 decoration: const InputDecoration(
@@ -331,33 +327,4 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       ),
     );
   }
-
-void _checkStatus() async {
-  final response = await ApiService.getStatus();
-  // final data = json.decode(response.body);
-
-  print(response['status']);
-
-  if (response['status'] == 'pending') {
-    // Mostrar alerta
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Aviso"),
-          content: const Text("Ya tienes una solicitud pendiente."),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();  
-              },
-              child: const Text("Aceptar"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/services/api_services/utils_service.dart';
-import 'package:soluva/services/api_services/worker_service.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
 
 class SearchWorkersScreen extends StatefulWidget {

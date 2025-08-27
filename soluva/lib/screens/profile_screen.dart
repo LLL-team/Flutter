@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:soluva/screens/edit_trade_prices_screen.dart';
+import 'package:soluva/screens/edit_worker_schedule_screen.dart';
 import 'package:soluva/screens/home_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 
@@ -75,18 +77,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    final fullName = "${user!['name'] ?? ''} ${user!['last_name'] ?? ''}"
-        .trim();
+    final fullName = "${user!['name'] ?? ''} ${user!['last_name'] ?? ''}".trim();
+    final isWorker = user!['type'] == 'worker';
+    final trade = user!['trade'] as Map<String, dynamic>? ?? {};
+    final description = user!['description'] ?? user!['descripcion'];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
-        child: Column(
+        child: ListView(
           children: [
             const SizedBox(height: 20),
-
-            // Imagen de perfil
             GestureDetector(
               onTap: _pickImage,
               child: Stack(
@@ -120,35 +122,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Nombre
             Text(
               fullName.isNotEmpty ? fullName : 'Nombre no disponible',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 10),
-
-            // Email
             Text(
               user!['email'] ?? 'Email no disponible',
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
-
-            // Descripción
-            if (user!['descripcion'] != null) ...[
+            const SizedBox(height: 10),
+            if (description != null && description.toString().isNotEmpty) ...[
               const SizedBox(height: 20),
               Text(
-                user!['descripcion'],
+                description,
                 style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
             ],
-
+            if (isWorker && trade.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              const Text('Servicios ofrecidos:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ...trade.entries.map((entry) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Wrap(
+                    spacing: 8,
+                    children: (entry.value as List<dynamic>)
+                        .map((s) => Chip(label: Text(s.toString())))
+                        .toList(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              )),
+            ],
             const SizedBox(height: 30),
-
-            // Botón Editar Perfil
             ElevatedButton.icon(
               onPressed: () {
                 // Acción para editar el perfil
@@ -162,12 +171,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                // Convierte trade a Map<String, List<String>>
+                final Map<String, List<String>> tradeListMap = trade.map((key, value) {
+                  return MapEntry(key, List<String>.from(value as List));
+                });
 
+                final newPrices = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditTradePricesScreen(
+                      trade: tradeListMap,
+                      prices: {}, // Pasa los precios actuales aquí
+                    ),
+                  ),
+                );
+                // Actualiza precios en tu backend con newPrices
+              },
+              child: const Text('Editar precios'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () async {
+                final newSchedule = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditWorkerScheduleScreen(
+                      availableHours: [], // Pasa los horarios actuales aquí
+                    ),
+                  ),
+                );
+                // Actualiza horarios en tu backend con newSchedule
+              },
+              child: const Text('Editar horarios'),
+            ),
             const SizedBox(height: 30),
             const Divider(),
             const SizedBox(height: 20),
-
-            // Opciones
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Configuración'),
@@ -177,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Cerrar sesión'),
               onTap: () {
-                ApiService.logout(); // Método para cerrar sesión
+                ApiService.logout();
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const HomePage()),
