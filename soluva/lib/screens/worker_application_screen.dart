@@ -18,7 +18,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _dniController = TextEditingController();
-  final TextEditingController _certificationController = TextEditingController();
+  final TextEditingController _certificationController =
+      TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   File? _facePhoto;
@@ -190,7 +191,6 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       );
     }
 
-    // 🔹 SI EL ESTADO ES APPROVED → SOLO MOSTRAR MENSAJE
     if (_workerStatus == "approved") {
       return Scaffold(
         appBar: AppBar(title: const Text("Estado de tu perfil")),
@@ -239,9 +239,8 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                   child: _webImageBytes != null
                       ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
                       : _facePhoto != null
-                          ? Image.file(_facePhoto!, fit: BoxFit.cover)
-                          : const Center(
-                              child: Text("Tap to upload face photo")),
+                      ? Image.file(_facePhoto!, fit: BoxFit.cover)
+                      : const Center(child: Text("Tap to upload face photo")),
                 ),
               ),
               const SizedBox(height: 16),
@@ -293,9 +292,10 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                   child: _webCertificationBytes != null
                       ? Image.memory(_webCertificationBytes!, fit: BoxFit.cover)
                       : _certificationPhoto != null
-                          ? Image.file(_certificationPhoto!, fit: BoxFit.cover)
-                          : const Center(
-                              child: Text("Tap to upload certification photo")),
+                      ? Image.file(_certificationPhoto!, fit: BoxFit.cover)
+                      : const Center(
+                          child: Text("Tap to upload certification photo"),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
