@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/profile_screen.dart';
 import '../screens/auth_screen.dart';
+import '../theme/app_colors.dart';
 
 class HeaderWidget extends StatefulWidget implements PreferredSizeWidget {
   const HeaderWidget({super.key});
@@ -10,7 +11,7 @@ class HeaderWidget extends StatefulWidget implements PreferredSizeWidget {
   State<HeaderWidget> createState() => _HeaderWidgetState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(60);
 }
 
 class _HeaderWidgetState extends State<HeaderWidget> {
@@ -32,32 +33,89 @@ class _HeaderWidgetState extends State<HeaderWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: const Text('Header Widget'),
-      actions: [
-        isAuthenticated
-            ? IconButton(
-                icon: const Icon(Icons.person),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  );
-                },
-              )
-            : TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AuthScreen()),
-                  );
-                },
-                child: const Text(
-                  'Acceder',
-                  style: TextStyle(color: Colors.black),
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Row(
+        children: [
+          // Logo y nombre
+          Row(
+            children: [
+              // Puedes reemplazar este Icon por tu logo real
+              Icon(Icons.handyman, color: AppColors.secondary, size: 32),
+              const SizedBox(width: 8),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Solu',
+                      style: TextStyle(
+                        color: AppColors.secondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Va',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-      ],
+            ],
+          ),
+          const Spacer(),
+          // ¿Cómo funciona?
+          Text(
+            '¿Cómo funciona?',
+            style: TextStyle(
+              color: AppColors.text,
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(width: 24),
+          // Botón Ingresar / Perfil
+          isAuthenticated
+              ? IconButton(
+                  icon: const Icon(Icons.person, color: AppColors.primary),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                  },
+                )
+              : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    foregroundColor: AppColors.buttonText,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AuthScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Ingresar',
+                    style: TextStyle(
+                      color: AppColors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+        ],
+      ),
     );
   }
 }
