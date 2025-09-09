@@ -129,13 +129,20 @@ class WorkerService {
   }
 
   static Future<List<dynamic>> getWorkersByCategory(String category) async {
-    final url = Uri.parse('${UtilsService.baseUrl}/workers?trade=${Uri.encodeComponent(category)}');
+    final url = Uri.parse(
+      '${UtilsService.baseUrl}/workers?trade=${Uri.encodeComponent(category)}',
+    );
     try {
-      final response = await http.get(url, headers: {'Accept': 'application/json'});
+      final response = await http.get(
+        url,
+        headers: {'Accept': 'application/json'},
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body) as List<dynamic>;
       } else {
-        throw Exception('Error al obtener trabajadores: ${response.statusCode}');
+        throw Exception(
+          'Error al obtener trabajadores: ${response.statusCode}',
+        );
       }
     } catch (e) {
       throw Exception('Error al obtener trabajadores: $e');
@@ -143,10 +150,12 @@ class WorkerService {
   }
 
   static Future<Map<String, dynamic>> getWorkerByUuid(String id) async {
-    print("Fetching worker with UUID: $id");
     final url = Uri.parse('${UtilsService.baseUrl}/workers/$id');
     try {
-      final response = await http.get(url, headers: {'Accept': 'application/json'});
+      final response = await http.get(
+        url,
+        headers: {'Accept': 'application/json'},
+      );
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
@@ -154,6 +163,75 @@ class WorkerService {
       }
     } catch (e) {
       throw Exception('Error al obtener trabajador: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> addWorkerService({
+    required String type,
+    required String category,
+    required String service,
+    required double cost,
+  }) async {
+    final url = Uri.parse('${UtilsService.baseUrl}/workerServices/add');
+    print("Adding service: $type, $category, $service, $cost");
+    try {
+      if (type == "hora") {
+        type = "hour";
+      }
+      if (type == "fijo") {
+        type = "fixed";
+      }
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer ${await ApiService.getToken()}',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+
+        body: json.encode({
+          'type': type,
+          'category': category,
+          'service': service,
+          'cost': cost,
+        }),
+      );
+      if (response.statusCode == 201) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Error al agregar servicio: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error al agregar servicio: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getWorkerServices(
+    String uuid,
+  ) async {
+    final url = Uri.parse(
+      '${UtilsService.baseUrl}/workerServices/get?uuid=$uuid',
+    );
+
+    try {
+      final token = await ApiService.getToken();
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((e) => Map<String, dynamic>.from(e)).toList();
+      } else {
+        throw Exception('Error al obtener servicios: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener servicios: $e');
     }
   }
 }

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:soluva/screens/edit_trade_prices_screen.dart';
 import 'package:soluva/screens/edit_worker_schedule_screen.dart';
 import 'package:soluva/screens/home_screen.dart';
+import 'package:soluva/screens/worker_services_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -198,9 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final newSchedule = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => EditWorkerScheduleScreen(
-                      availableHours: [], // Pasa los horarios actuales aquí
-                    ),
+                    builder: (context) => WorkerServicesPage(uuid: user!['uuid']),
                   ),
                 );
                 // Actualiza horarios en tu backend con newSchedule

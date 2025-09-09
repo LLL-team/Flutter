@@ -108,4 +108,23 @@ class ApiService {
   }
 
   workers() {}
+
+  static Future getWorkerServices(uuid) async {
+    return WorkerService.getWorkerServices(uuid);
+  }
+
+  static Future addWorkerService({
+    required String type,
+    required String category,
+    required String service,
+    required double cost,
+  }) async {
+    print("ApiService - addWorkerService called,: $type, $category, $service, $cost");
+    return WorkerService.addWorkerService(
+      type: type,
+      category: category,
+      service: service,
+      cost: cost,
+    );
+  }
 }
