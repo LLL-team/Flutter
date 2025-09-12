@@ -2,226 +2,251 @@ import 'package:flutter/material.dart';
 import 'package:soluva/screens/home_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/theme/app_colors.dart';
-import 'package:soluva/theme/app_text_styles.dart';
+import 'package:soluva/widgets/header_widget.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
-
-
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  bool isSignIn = true;
+  bool isSignIn = false; // Por defecto mostrar registro
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
+    final size = MediaQuery.of(context).size;
+return Scaffold(
+      appBar: const HeaderWidget(),
+      backgroundColor: AppColors.text,
       body: Center(
-        child: Row(
-          children: [
-            Expanded(
-              child: Container(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              // Card de registro o login
+              Container(
+                width: size.width < 500 ? size.width * 0.95 : 400,
                 padding: const EdgeInsets.all(32),
-                color: AppColors.white,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'SoluVa',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    _buildAuthTabs(),
-                    const SizedBox(height: 24),
                     Text(
-                      "Let's get started by filling out the form below.",
-                      style: AppTextStyles.bodyText.copyWith(
-                        color: Colors.grey[700],
+                      isSignIn ? 'Iniciar sesión' : '¡Bienvenido!',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isSignIn
+                          ? 'Ingresa tus datos para acceder.'
+                          : 'Regístrate para estar más cerca de la solución.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.text,
+                        fontSize: 15,
                       ),
                     ),
                     const SizedBox(height: 24),
-                    if (!isSignIn)
+                    if (!isSignIn) ...[
+                      _CustomTextField(
+                        controller: nameController,
+                        hint: 'Nombre',
+                      ),
+                      const SizedBox(height: 16),
+                      _CustomTextField(
+                        controller: lastNameController,
+                        hint: 'Apellido',
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    _CustomTextField(
+                      controller: emailController,
+                      hint: 'Email',
+                    ),
+                    const SizedBox(height: 16),
+                    _CustomTextField(
+                      controller: passwordController,
+                      hint: 'Contraseña',
+                      obscure: true,
+                    ),
+                    if (!isSignIn) ...[
+                      const SizedBox(height: 8),
                       Column(
-                        children: [
-                          TextField(
-                            controller: nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'First Name',
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: lastNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Last Name',
-                            ),
-                          ),
-                          const SizedBox(height: 16),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('• Al menos 8 caracteres', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                          Text('• Una letra mayúscula', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                          Text('• Un número', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                          Text('• Un símbolo (por ejemplo: ! @ # \$ &)', style: TextStyle(fontSize: 13, color: Colors.grey)),
                         ],
                       ),
-                    TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Password'),
-                    ),
-                    if (!isSignIn) const SizedBox(height: 16),
-                    if (!isSignIn)
-                      TextField(
-                        controller: confirmPasswordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Confirm Password',
-                        ),
-                      ),
+                    ],
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        backgroundColor: Colors.deepPurple,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isSignIn ? _handleLogin : _handleRegister,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.secondary,
+                          foregroundColor: AppColors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: Text(
+                          isSignIn ? 'Iniciar sesión' : 'Crear cuenta',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        isSignIn ? 'Sign In' : 'Create Account',
-                        style: AppTextStyles.buttonText,
-                      ),
                     ),
-                    if (isSignIn)
-                      TextButton(
-                        onPressed: () {
-                          // Forgot password logic
-                        },
-                        child: const Text('Forgot Password'),
+                    if (!isSignIn) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: Image.asset(
+                            'assets/images/google_icon.png',
+                            height: 24,
+                          ),
+                          label: const Text(
+                            'Registrarse con Google',
+                            style: TextStyle(
+                              color: Colors.deepOrange,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.secondary),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                          ),
+                        ),
                       ),
+                    ],
                     const SizedBox(height: 16),
-                    const Center(child: Text('Or sign up with')),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.g_mobiledata_rounded),
-                      label: const Text('Continue with Google'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          isSignIn = !isSignIn;
+                        });
+                      },
+                      child: Text(
+                        isSignIn
+                            ? '¿No tenés cuenta?\nRegistrate'
+                            : 'Si ya tenés cuenta\nIniciar sesión',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.secondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildAuthTabs() {
-    return Row(
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => isSignIn = true),
-          child: Column(
-            children: [
-              Text(
-                'Sign In',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: isSignIn ? Colors.black : Colors.grey,
-                ),
-              ),
-              if (isSignIn)
-                Container(
-                  height: 3,
-                  width: 60,
-                  color: AppColors.primary,
-                  margin: const EdgeInsets.only(top: 4),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-        GestureDetector(
-          onTap: () => setState(() => isSignIn = false),
-          child: Column(
-            children: [
-              Text(
-                'Sign Up',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: !isSignIn ? Colors.black : Colors.grey,
-                ),
-              ),
-              if (!isSignIn)
-                Container(
-                  height: 3,
-                  width: 60,
-                  color: Colors.deepPurple,
-                  margin: const EdgeInsets.only(top: 4),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _handleSubmit() async {
+  Future<void> _handleRegister() async {
+    final name = nameController.text.trim();
+    final lastName = lastNameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text;
 
-    if (isSignIn) {
-      await ApiService.login(email: email, password: password);
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    } else {
-      final confirmPassword = confirmPasswordController.text;
-      final name = nameController.text.trim();
-      final lastName = lastNameController.text.trim();
+    // Validaciones aquí si quieres
 
-      if (password != confirmPassword) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
-
-        return;
-      }
-
-      await ApiService.register(
-        email: email,
-        password: password,
-        name: name,
-        lastName: lastName,
-      );
-      // Redirección o feedback
-    }
-    Navigator.push(
+    await ApiService.register(
+      email: email,
+      password: password,
+      name: name,
+      lastName: lastName,
+    );
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const HomePage()),
+    );
+  }
+
+  Future<void> _handleLogin() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+    // Aquí puedes agregar validaciones
+    await ApiService.login(
+      email: email,
+      password: password,
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+    );
+  }
+}
+
+class _CustomTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool obscure;
+
+  const _CustomTextField({
+    required this.controller,
+    required this.hint,
+    this.obscure = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.transparent,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: BorderSide(color: AppColors.secondary, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: BorderSide(color: AppColors.secondary, width: 2),
+        ),
+      ),
+      style: const TextStyle(fontSize: 16),
     );
   }
 }
