@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../screens/profile_screen.dart';
 import '../screens/auth_screen.dart';
 import '../theme/app_colors.dart';
@@ -33,41 +34,15 @@ class _HeaderWidgetState extends State<HeaderWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final logoPath =
+        dotenv.env['header_logo'] ?? 'assets/images/Logo Header.webp';
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
         children: [
-          // Logo y nombre
-          Row(
-            children: [
-              // Puedes reemplazar este Icon por tu logo real
-              Icon(Icons.handyman, color: AppColors.secondary, size: 32),
-              const SizedBox(width: 8),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Solu',
-                      style: TextStyle(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
-                      ),
-                    ),
-                    TextSpan(
-                      text: 'Va',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          // Logo
+          Image.asset(logoPath, height: 36, fit: BoxFit.contain),
           const Spacer(),
           // ¿Cómo funciona?
           Text(
@@ -94,7 +69,10 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     foregroundColor: AppColors.buttonText,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),

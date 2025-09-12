@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:soluva/screens/profile_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:soluva/screens/search_workers_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/widgets/header_widget.dart';
@@ -10,17 +10,24 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fondoPath =
+        dotenv.env['default_cover_webp'] ?? 'assets/images/fondo-inicio.webp';
+    final offerServiceBtn =
+        dotenv.env['offer_service_button'] ??
+        'assets/images/boton_ofrecer_sersvicios.webp';
+    final searchServiceBtn =
+        dotenv.env['search_service_button'] ??
+        'assets/images/boton_buscar_servicio.webp';
+
     return Scaffold(
       appBar: const HeaderWidget(),
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Fondo decorativo (puedes usar un CustomPaint o una imagen de fondo aquí)
-          Container(
-            decoration: const BoxDecoration(
-              color: AppColors.background,
-            ),
-          ),
+          // Fondo liso primero
+          Container(color: AppColors.background),
+          // Imagen de fondo encima
+          Positioned.fill(child: Image.asset(fondoPath, fit: BoxFit.cover)),
           ListView(
             padding: const EdgeInsets.all(0),
             children: [
@@ -28,10 +35,8 @@ class HomePage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _MainOption(
-                    text: '¿Querés ofrecer tus servicios?',
-                    icon: Icons.handyman,
-                    color: AppColors.secondary,
+                  _MainImageButton(
+                    image: offerServiceBtn,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -41,10 +46,8 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
-                  _MainOption(
-                    text: '¿Buscás un servicio?',
-                    icon: Icons.search,
-                    color: AppColors.primary,
+                  _MainImageButton(
+                    image: searchServiceBtn,
                     onTap: () {
                       Navigator.push(
                         context,
@@ -61,7 +64,7 @@ class HomePage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: AppColors.background.withOpacity(0.95),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   padding: const EdgeInsets.all(24),
@@ -78,8 +81,14 @@ class HomePage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _StepItem(number: 1, text: 'Registrate o inicia sesión.'),
-                      _StepItem(number: 2, text: 'Elige una categoría y servicio.'),
-                      _StepItem(number: 3, text: 'Contacta y contrata al profesional.'),
+                      _StepItem(
+                        number: 2,
+                        text: 'Elige una categoría y servicio.',
+                      ),
+                      _StepItem(
+                        number: 3,
+                        text: 'Contacta y contrata al profesional.',
+                      ),
                     ],
                   ),
                 ),
@@ -87,7 +96,10 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 32),
               Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 32),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 32,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(16),
@@ -181,53 +193,23 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class _MainOption extends StatelessWidget {
-  final String text;
-  final IconData icon;
-  final Color color;
+class _MainImageButton extends StatelessWidget {
+  final String image;
   final VoidCallback onTap;
 
-  const _MainOption({
-    required this.text,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
+  const _MainImageButton({required this.image, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 160,
-        height: 120,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: color, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 36),
-            const SizedBox(height: 12),
-            Text(
-              text,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.text,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32), // opcional, para bordes redondeados
+        child: Image.asset(
+          image,
+          width: 160,
+          height: 170,
+          fit: BoxFit.cover,
         ),
       ),
     );
@@ -265,10 +247,7 @@ class _StepItem extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
-              color: AppColors.text,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: AppColors.text, fontSize: 16),
           ),
         ),
       ],
@@ -291,39 +270,32 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 150,
-        height: 120,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          image: DecorationImage(
-            image: AssetImage(image),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.25),
-              BlendMode.darken,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Stack(
+          children: [
+            Image.asset(
+              image,
+              width: 150,
+              height: 120,
+              fit: BoxFit.cover,
             ),
-          ),
-        ),
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                shadows: [
-                  Shadow(
-                    color: Colors.black,
-                    blurRadius: 4,
+            // Opcional: si querés texto encima, usá Stack
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
