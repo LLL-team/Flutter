@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+import 'package:soluva/theme/app_colors.dart';
+import 'package:soluva/widgets/header_widget.dart';
 
 class WorkerApplicationScreen extends StatefulWidget {
   const WorkerApplicationScreen({super.key});
@@ -29,7 +31,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   bool _loadingServices = true;
   bool _loadingStatus = true;
 
-  String? _workerStatus; // ← NUEVO: Guardamos el estado del trabajador
+  String? _workerStatus;
   Map<String, List<String>> _services = {};
 
   List<String> _selectedServices = [];
@@ -38,12 +40,15 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   File? _certificationPhoto;
   Uint8List? _webCertificationBytes;
 
+  String _userName = "María Lopez"; // Puedes obtenerlo del perfil si lo tienes
+
   @override
   void initState() {
     super.initState();
     _checkAuthentication();
     _checkStatus();
     _loadServices();
+    // TODO: Cargar el nombre real del usuario si está disponible
   }
 
   Future<void> _checkStatus() async {
@@ -204,127 +209,272 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       );
     }
 
-    // 🔹 SI NO ESTÁ APROBADO → MOSTRAR FORMULARIO NORMAL
-    return Scaffold(
-      appBar: AppBar(title: const Text('Worker Application')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _dniController,
-                decoration: const InputDecoration(labelText: 'DNI'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'DNI is required';
-                  } else if (value.length != 8) {
-                    return 'DNI must be exactly 8 digits';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _webImageBytes != null
-                      ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
-                      : _facePhoto != null
-                      ? Image.file(_facePhoto!, fit: BoxFit.cover)
-                      : const Center(child: Text("Tap to upload face photo")),
-                ),
-              ),
-              const SizedBox(height: 16),
-              MultiSelectDialogField(
-                title: const Text("Select Services"),
-                buttonText: const Text("Services"),
-                items: _services.keys
-                    .map((e) => MultiSelectItem<String>(e, e))
-                    .toList(),
-                listType: MultiSelectListType.CHIP,
-                onConfirm: (values) {
-                  setState(() {
-                    _selectedServices = List<String>.from(values);
-                    _selectedSubServices.clear();
-                  });
-                },
-                validator: (values) => (values == null || values.isEmpty)
-                    ? "Select at least one service"
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              MultiSelectDialogField(
-                title: const Text("Select Sub-Services"),
-                buttonText: const Text("Sub-Services"),
-                items: _selectedServices
-                    .expand((service) => _services[service] ?? [])
-                    .map((sub) => MultiSelectItem<String>(sub, sub))
-                    .toList(),
-                listType: MultiSelectListType.CHIP,
-                onConfirm: (values) {
-                  setState(() {
-                    _selectedSubServices = List<String>.from(values);
-                  });
-                },
-                validator: (values) => (values == null || values.isEmpty)
-                    ? "Select at least one sub-service"
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _pickCertificationImage,
-                child: Container(
-                  height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _webCertificationBytes != null
-                      ? Image.memory(_webCertificationBytes!, fit: BoxFit.cover)
-                      : _certificationPhoto != null
-                      ? Image.file(_certificationPhoto!, fit: BoxFit.cover)
-                      : const Center(
-                          child: Text("Tap to upload certification photo"),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _certificationController,
-                decoration: const InputDecoration(
-                  labelText: 'Certification (optional)',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Task Description',
-                ),
-                maxLines: 4,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Task Description is required'
-                    : null,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _submitApplication,
-                child: const Text("Submit Application"),
-              ),
-            ],
+    // 🔹 FORMULARIO CON DISEÑO PERSONALIZADO
+return Scaffold(
+  appBar: HeaderWidget(),
+  body: Stack(
+    children: [
+      // 🔹 Fondo degradado radial naranja
+      Positioned.fill(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.0,
+              colors: [
+                Color.fromARGB(255, 255, 140, 4), // naranja más claro al centro
+                Color.fromARGB(255, 255, 120, 4), // naranja más oscuro en los bordes
+              ],
+              stops: [0.2, 1.0],
+            ),
           ),
         ),
       ),
+
+      // 🔹 Contenido principal
+      Center(
+        child: SingleChildScrollView(
+          child: Container(
+            width: 400,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Text(
+                    "Para inscribirte como ",
+                    style: TextStyle(fontSize: 16, color: Colors.black87),
+                  ),
+                  RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "prestador ",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ", necesitamos los siguientes datos:",
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.button,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _userName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  _CustomField(
+                    label: "Dni:",
+                    child: TextFormField(
+                      controller: _dniController,
+                      decoration: _inputDecoration(),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'DNI es requerido';
+                        } else if (value.length != 8) {
+                          return 'DNI debe tener 8 dígitos';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _CustomField(
+                    label: "Oficio:",
+                    child: MultiSelectDialogField(
+                      title: const Text("Oficio"),
+                      buttonText: const Text("Seleccionar oficio"),
+                      items: _services.keys
+                          .map((e) => MultiSelectItem<String>(e, e))
+                          .toList(),
+                      listType: MultiSelectListType.CHIP,
+                      onConfirm: (values) {
+                        setState(() {
+                          _selectedServices = List<String>.from(values);
+                          _selectedSubServices.clear();
+                        });
+                      },
+                      validator: (values) => (values == null || values.isEmpty)
+                          ? "Selecciona al menos un oficio"
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _CustomField(
+                    label: "Certificación / Matrícula:",
+                    child: TextFormField(
+                      controller: _certificationController,
+                      decoration: _inputDecoration(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _CustomField(
+                    label: "Descripción de tareas:",
+                    child: TextFormField(
+                      controller: _descriptionController,
+                      decoration: _inputDecoration(),
+                      maxLines: 4,
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'La descripción es requerida'
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _pickImage,
+                          child: Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              border: Border.all(color: AppColors.primary),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: _webImageBytes != null
+                                ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
+                                : _facePhoto != null
+                                    ? Image.file(_facePhoto!, fit: BoxFit.cover)
+                                    : const Center(
+                                        child: Text(
+                                          "Foto de rostro",
+                                          style: TextStyle(color: Colors.black54),
+                                        ),
+                                      ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _pickCertificationImage,
+                          child: Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              border: Border.all(color: AppColors.primary),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: _webCertificationBytes != null
+                                ? Image.memory(_webCertificationBytes!, fit: BoxFit.cover)
+                                : _certificationPhoto != null
+                                    ? Image.file(_certificationPhoto!, fit: BoxFit.cover)
+                                    : const Center(
+                                        child: Text(
+                                          "Foto de documento",
+                                          style: TextStyle(color: Colors.black54),
+                                        ),
+                                      ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitApplication,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: const Text(
+                        "SOLICITAR ALTA",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "*Una vez enviada la solicitud, aguardar mail con la autorización.",
+                    style: TextStyle(
+                      color: Colors.black54,
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],	
+                
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+);
+  }
+  InputDecoration _inputDecoration() => InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+      );
+}
+
+class _CustomField extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _CustomField({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        const SizedBox(height: 4),
+        child,
+      ],
     );
   }
 }
