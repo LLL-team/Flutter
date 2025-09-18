@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../screens/profile_screen.dart';
 import '../screens/auth_screen.dart';
+import '../screens/home_screen.dart';
 import '../theme/app_colors.dart';
 
 class HeaderWidget extends StatefulWidget implements PreferredSizeWidget {
@@ -41,8 +42,17 @@ class _HeaderWidgetState extends State<HeaderWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       child: Row(
         children: [
-          // Logo
-          Image.asset(logoPath, height: 36, fit: BoxFit.contain),
+          // Logo con navegación al Home
+          GestureDetector(
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const HomePage()),
+                (route) => false,
+              );
+            },
+            child: Image.asset(logoPath, height: 36, fit: BoxFit.contain),
+          ),
           const Spacer(),
           // ¿Cómo funciona?
           Text(

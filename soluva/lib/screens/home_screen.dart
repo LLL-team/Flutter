@@ -123,7 +123,8 @@ class HomePage extends StatelessWidget {
                   children: [
                     _CategoryCard(
                       label: 'AUTOMÓVIL',
-                      image: 'assets/auto.jpg',
+                      icon: Icons.directions_car,
+                      color: AppColors.primary,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -135,7 +136,8 @@ class HomePage extends StatelessWidget {
                     ),
                     _CategoryCard(
                       label: 'PLOMERÍA',
-                      image: 'assets/plomeria.jpg',
+                      icon: Icons.plumbing,
+                      color: AppColors.secondary,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -147,7 +149,8 @@ class HomePage extends StatelessWidget {
                     ),
                     _CategoryCard(
                       label: 'JARDINERÍA',
-                      image: 'assets/jardineria.jpg',
+                      icon: Icons.grass,
+                      color: Colors.green,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -159,7 +162,8 @@ class HomePage extends StatelessWidget {
                     ),
                     _CategoryCard(
                       label: 'ELECTRICIDAD',
-                      image: 'assets/electricidad.jpg',
+                      icon: Icons.electrical_services,
+                      color: Colors.yellow.shade700,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -171,7 +175,8 @@ class HomePage extends StatelessWidget {
                     ),
                     _CategoryCard(
                       label: 'LIMPIEZA',
-                      image: 'assets/limpieza.jpg',
+                      icon: Icons.cleaning_services,
+                      color: Colors.blueGrey,
                       onTap: () {
                         Navigator.push(
                           context,
@@ -257,12 +262,14 @@ class _StepItem extends StatelessWidget {
 
 class _CategoryCard extends StatelessWidget {
   final String label;
-  final String image;
+  final IconData icon;
+  final Color color;
   final VoidCallback onTap;
 
   const _CategoryCard({
     required this.label,
-    required this.image,
+    required this.icon,
+    required this.color,
     required this.onTap,
   });
 
@@ -270,29 +277,31 @@ class _CategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            Image.asset(
-              image,
-              width: 150,
-              height: 120,
-              fit: BoxFit.cover,
+      child: Container(
+        width: 150,
+        height: 120,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            // Opcional: si querés texto encima, usá Stack
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.text,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
               ),
             ),
           ],
