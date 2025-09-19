@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:soluva/screens/search_workers_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
+import 'package:soluva/screens/workers_list_screen.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/theme/app_colors.dart';
 
@@ -129,7 +130,7 @@ class HomePage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const SearchWorkersScreen(),
+                            builder: (_) => const WorkersByCategoryScreen(category: 'Auto'),
                           ),
                         );
                       },
@@ -155,7 +156,7 @@ class HomePage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const SearchWorkersScreen(),
+                            builder: (_) => const WorkersByCategoryScreen(category: 'Jard\u00edn'),
                           ),
                         );
                       },

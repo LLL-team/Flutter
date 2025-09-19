@@ -62,7 +62,7 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => WorkersListScreen(category: category),
+                          builder: (context) => WorkersByCategoryScreen(category: category),
                         ),
                       );
                     },
