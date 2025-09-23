@@ -40,79 +40,96 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-return Scaffold(
-  backgroundColor: AppColors.text,
-  body: Stack(
-    children: [
-      // Lista de trabajadores
-      Padding(
-        padding: const EdgeInsets.only(top: 80), // espacio para la cabecera
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
-          children: [
-            Center(
-              child: SizedBox(
-                width: 600,
-                child: Column(
-                  children: _workers.map((w) => _WorkerCard(worker: w)).toList(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      // Cabecera flotante
-      Positioned(
-        top: 16,
-        left: 0,
-        right: 0,
-        child: Center(
-          child: Container(
-            width: 700,
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.88),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-            child: Row(
+    return Scaffold(
+      backgroundColor: AppColors.text,
+      appBar: const HeaderWidget(),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Stack(
               children: [
-                const Icon(Icons.lightbulb, color: AppColors.primary, size: 32),
-                const SizedBox(width: 8),
-                const Icon(Icons.electrical_services, color: AppColors.secondary, size: 32),
-                const SizedBox(width: 16),
-                Text(
-                  widget.category,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 26,
-                    color: AppColors.text,
+                // Cards de trabajadores
+                Padding(
+                  padding: const EdgeInsets.only(top: 90),
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    children: [
+                      Center(
+                        child: SizedBox(
+                          width: 600,
+                          child: Column(
+                            children: _workers
+                                .map((w) => _WorkerCard(worker: w))
+                                .toList(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
-                const Text(
-                  "*(Filtro de servicio requerido)*",
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
+                // Cabecera de categoría con sombra proyectada
+                Positioned(
+                  top: 25,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      width: 700,
+                      margin: const EdgeInsets.only(top: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.7),
+                            blurRadius: 10,
+                            offset: const Offset(0, 8),
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 24,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.lightbulb,
+                            color: AppColors.primary,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.electrical_services,
+                            color: AppColors.secondary,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            widget.category,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                              color: AppColors.text,
+                            ),
+                          ),
+                          const Spacer(),
+                          const Text(
+                            "*(Filtro de servicio requerido)*",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    ],
-  ),
-);
-
+    );
   }
 }
 
