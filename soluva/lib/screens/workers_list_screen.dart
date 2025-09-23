@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/services/api_services/worker_service.dart';
+import 'package:soluva/widgets/header_widget.dart';
 
 class WorkersByCategoryScreen extends StatefulWidget {
   final String category;
   const WorkersByCategoryScreen({super.key, required this.category});
 
   @override
-  State<WorkersByCategoryScreen> createState() => _WorkersByCategoryScreenState();
+  State<WorkersByCategoryScreen> createState() =>
+      _WorkersByCategoryScreenState();
 }
 
 class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
@@ -38,94 +40,79 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.text,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: Container(
-          color: AppColors.background,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Row(
-            children: [
-              // Logo
-              Image.asset(
-                'assets/images/Logo_Header.webp',
-                height: 36,
-                fit: BoxFit.contain,
-              ),
-              const Spacer(),
-              Text(
-                'María Lopez',
-                style: TextStyle(
-                  color: AppColors.text,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
+return Scaffold(
+  backgroundColor: AppColors.text,
+  body: Stack(
+    children: [
+      // Lista de trabajadores
+      Padding(
+        padding: const EdgeInsets.only(top: 80), // espacio para la cabecera
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
+          children: [
+            Center(
+              child: SizedBox(
+                width: 600,
+                child: Column(
+                  children: _workers.map((w) => _WorkerCard(worker: w)).toList(),
                 ),
               ),
-              const SizedBox(width: 8),
-              const CircleAvatar(
-                backgroundColor: AppColors.secondary,
-                child: Icon(Icons.person, color: Colors.white),
-                radius: 16,
-              ),
-            ],
+            ),
+          ],
+        ),
+      ),
+      // Cabecera flotante
+      Positioned(
+        top: 16,
+        left: 0,
+        right: 0,
+        child: Center(
+          child: Container(
+            width: 700,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.88),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+            child: Row(
+              children: [
+                const Icon(Icons.lightbulb, color: AppColors.primary, size: 32),
+                const SizedBox(width: 8),
+                const Icon(Icons.electrical_services, color: AppColors.secondary, size: 32),
+                const SizedBox(width: 16),
+                Text(
+                  widget.category,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 26,
+                    color: AppColors.text,
+                  ),
+                ),
+                const Spacer(),
+                const Text(
+                  "*(Filtro de servicio requerido)*",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 0),
-              children: [
-                // Header de categoría
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.18),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.lightbulb, color: AppColors.primary, size: 32),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.electrical_services, color: AppColors.secondary, size: 32),
-                        const SizedBox(width: 16),
-                        Text(
-                          widget.category,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 26,
-                            color: AppColors.text,
-                          ),
-                        ),
-                        const Spacer(),
-                        const Text(
-                          "*(Filtro de servicio requerido)*",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // Lista de trabajadores
-                ..._workers.map((worker) => _WorkerCard(worker: worker)).toList(),
-              ],
-            ),
-    );
+    ],
+  ),
+);
+
   }
 }
 
@@ -135,23 +122,38 @@ class _WorkerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Simulación de datos de horarios
+    // Obtengo la lista de servicios del worker (del trade por categoría)
+    final services =
+        (worker['trade'] as Map<String, dynamic>?)?.values
+            .expand((s) => (s as List<dynamic>))
+            .toList() ??
+        [];
+
+    // Generamos los 3 días dinámicamente
+    final now = DateTime.now();
+    final dias = List.generate(3, (i) {
+      final date = now.add(Duration(days: i));
+      if (i == 0) return "Hoy\n${_formatDate(date)}";
+      if (i == 1) return "Mañana\n${_formatDate(date)}";
+      return "${_weekdayName(date.weekday)}\n${_formatDate(date)}";
+    });
+
+    // Ejemplo de horarios fijos (en la práctica deberías traerlos desde API)
     final horarios = [
       ["17:45", "18:30", "19:30"],
       ["08:30", "09:00", "09:30", "11:00"],
       ["08:30", "09:00", "09:30", "11:00"],
     ];
-    final dias = ["Hoy\n17 Sep", "Mañana\n18 Sep", "Vie\n19 Sep"];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 0),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.background,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withOpacity(0.0),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -165,7 +167,7 @@ class _WorkerCard extends StatelessWidget {
             CircleAvatar(
               backgroundColor: AppColors.secondary,
               radius: 32,
-              child: Icon(Icons.person, color: Colors.white, size: 40),
+              child: const Icon(Icons.person, color: Colors.white, size: 40),
             ),
             const SizedBox(width: 18),
             // Info principal
@@ -174,7 +176,7 @@ class _WorkerCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    worker['name'] ?? 'Nombre',
+                    "${worker['name'] ?? ''} ${worker['last_name'] ?? ''}",
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
@@ -182,14 +184,8 @@ class _WorkerCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    (worker['services'] as List<dynamic>?)
-                            ?.take(3)
-                            .join(', ') ??
-                        '',
-                    style: const TextStyle(
-                      color: AppColors.text,
-                      fontSize: 15,
-                    ),
+                    services.take(3).join(', '),
+                    style: const TextStyle(color: AppColors.text, fontSize: 15),
                   ),
                   const SizedBox(height: 6),
                   Row(
@@ -205,33 +201,25 @@ class _WorkerCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 18, color: AppColors.text),
-                      const SizedBox(width: 4),
-                      Text(
-                        worker['address'] ?? 'Dirección de atención',
-                        style: const TextStyle(
-                          color: AppColors.text,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
             // Horarios
             Container(
-              width: 170,
-              padding: const EdgeInsets.only(left: 16),
+              width: 190,
+              padding: const EdgeInsets.only(left: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Cabecera de días
                   Row(
                     children: dias
-                        .map((d) => Expanded(
+                        .map(
+                          (d) => Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               child: Text(
                                 d,
                                 textAlign: TextAlign.center,
@@ -241,10 +229,13 @@ class _WorkerCard extends StatelessWidget {
                                   fontSize: 13,
                                 ),
                               ),
-                            ))
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
+                  // Horarios
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(
@@ -252,27 +243,33 @@ class _WorkerCard extends StatelessWidget {
                       (i) => Expanded(
                         child: Column(
                           children: horarios[i]
-                              .map((h) => Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 2),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.button,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 4, horizontal: 0),
-                                      child: Center(
-                                        child: Text(
-                                          h,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
+                              .map(
+                                (h) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 3,
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: AppColors.button,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                      horizontal: 0,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        h,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ),
-                                  ))
+                                  ),
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -298,6 +295,34 @@ class _WorkerCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helpers para formatear fecha y nombre del día
+  static String _formatDate(DateTime date) {
+    return "${date.day} ${_monthName(date.month)}";
+  }
+
+  static String _monthName(int month) {
+    const months = [
+      "Ene",
+      "Feb",
+      "Mar",
+      "Abr",
+      "May",
+      "Jun",
+      "Jul",
+      "Ago",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dic",
+    ];
+    return months[month - 1];
+  }
+
+  static String _weekdayName(int weekday) {
+    const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    return days[weekday - 1];
   }
 
   Widget _buildStars(num rating) {
