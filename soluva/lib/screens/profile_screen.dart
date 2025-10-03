@@ -1,11 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:soluva/screens/edit_trade_prices_screen.dart';
-import 'package:soluva/screens/edit_worker_schedule_screen.dart';
-import 'package:soluva/screens/home_screen.dart';
-import 'package:soluva/screens/worker_services_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+import 'package:soluva/theme/app_colors.dart';
+import 'package:soluva/widgets/header_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -16,35 +13,14 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? user;
+  Uint8List? _imageBytes;
   bool loading = true;
-  final ImagePicker _picker = ImagePicker();
-  XFile? _imageFile;
-  Uint8List? _imageBytes; // Vista previa de imagen elegida
-  String? profileImageUrl; // URL de la imagen desde el backend
+  int selectedMenu = 1; // 1: Solicitudes, 2: Mis Datos, 3: Formas de pago
 
   @override
   void initState() {
     super.initState();
     loadUser();
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      final bytes = await pickedFile.readAsBytes();
-
-      setState(() {
-        _imageFile = pickedFile;
-        _imageBytes = bytes;
-      });
-
-      // Subir la imagen al servidor
-      await ApiService.uploadProfileImage(bytes, pickedFile.name);
-
-      // Volver a cargar los datos del usuario
-      await loadUser();
-    }
   }
 
   Future<void> loadUser() async {
@@ -55,7 +31,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         loading = false;
       });
     }
-    // Si hay uuid, buscar la imagen
     if (data != null && data['uuid'] != null) {
       final fotoBytes = await ApiService.getFoto(data['uuid']);
       if (mounted) {
@@ -69,165 +44,491 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
-
     if (user == null) {
       return const Scaffold(
+        backgroundColor: AppColors.background,
         body: Center(child: Text('No se pudo cargar el perfil')),
       );
     }
 
     final fullName = "${user!['name'] ?? ''} ${user!['last_name'] ?? ''}".trim();
-    final isWorker = user!['type'] == 'worker';
-    final trade = user!['trade'] as Map<String, dynamic>? ?? {};
-    final description = user!['description'] ?? user!['descripcion'];
+    final email = user!['email'] ?? '';
+    final avatar = _imageBytes != null ? MemoryImage(_imageBytes!) : null;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 650;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfil'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: ListView(
-          children: [
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: _pickImage,
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey.shade300,
-                    backgroundImage: _imageBytes != null
-                        ? MemoryImage(_imageBytes!)
-                        : (profileImageUrl != null
-                                  ? NetworkImage(profileImageUrl!)
-                                  : null)
-                              as ImageProvider<Object>?,
-                    child: (_imageBytes == null && profileImageUrl == null)
-                        ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white,
-                          )
-                        : null,
+      backgroundColor: AppColors.background,
+      appBar: const HeaderWidget(),
+      body: isMobile
+          ? _MobileProfileView(
+              fullName: fullName,
+              email: email,
+              avatar: avatar,
+              selectedMenu: selectedMenu,
+              onMenuChanged: (i) => setState(() => selectedMenu = i),
+              mainContent: _buildMainContent(isMobile: true),
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Menú lateral
+                Container(
+                  width: 260,
+                  color: AppColors.background,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 32),
+                      CircleAvatar(
+                        radius: 48,
+                        backgroundColor: AppColors.secondary,
+                        backgroundImage: avatar,
+                        child: avatar == null
+                            ? const Icon(Icons.person, size: 60, color: Colors.white)
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        fullName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: AppColors.text,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        email,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 15,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 32),
+                      _ProfileMenuButton(
+                        icon: Icons.person,
+                        text: "Mis Datos",
+                        selected: selectedMenu == 2,
+                        onTap: () => setState(() => selectedMenu = 2),
+                      ),
+                      _ProfileMenuButton(
+                        icon: Icons.list_alt,
+                        text: "Solicitudes",
+                        selected: selectedMenu == 1,
+                        onTap: () => setState(() => selectedMenu = 1),
+                      ),
+                      _ProfileMenuButton(
+                        icon: Icons.credit_card,
+                        text: "Formas de pago",
+                        selected: selectedMenu == 3,
+                        onTap: () => setState(() => selectedMenu = 3),
+                      ),
+                      const SizedBox(height: 32),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(color: Colors.grey.shade400),
+                      ),
+                      const SizedBox(height: 16),
+                      GestureDetector(
+                        onTap: () {
+                          // Acción inscripción como trabajador
+                        },
+                        child: const Text(
+                          "Inscripción\ncomo trabajador",
+                          style: TextStyle(
+                            color: AppColors.secondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            height: 1.2,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.white,
-                      child: const Icon(Icons.camera_alt, size: 20),
+                ),
+                // Contenido principal
+                Expanded(
+                  child: Container(
+                    color: AppColors.background,
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Center(
+                      child: Container(
+                        width: 600,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: _buildMainContent(isMobile: false),
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              fullName.isNotEmpty ? fullName : 'Nombre no disponible',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              user!['email'] ?? 'Email no disponible',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 10),
-            if (description != null && description.toString().isNotEmpty) ...[
-              const SizedBox(height: 20),
+    );
+  }
+
+  Widget _buildMainContent({required bool isMobile}) {
+    if (selectedMenu == 1) {
+      // Solicitudes (vacío, listo para conectar a API)
+      return _SolicitudesList(isMobile: isMobile);
+    } else if (selectedMenu == 2) {
+      // Mis Datos
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text(
+            "Aquí irán los datos del usuario para editar.",
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      );
+    } else {
+      // Formas de pago
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text(
+            "Aquí irán las formas de pago.",
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      );
+    }
+  }
+}
+
+class _ProfileMenuButton extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ProfileMenuButton({
+    required this.icon,
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? Colors.white : Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.text, size: 22),
+              const SizedBox(width: 16),
               Text(
-                description,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
-              ),
-            ],
-            if (isWorker && trade.isNotEmpty) ...[
-              const SizedBox(height: 20),
-              const Text('Servicios ofrecidos:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ...trade.entries.map((entry) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Wrap(
-                    spacing: 8,
-                    children: (entry.value as List<dynamic>)
-                        .map((s) => Chip(label: Text(s.toString())))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              )),
-            ],
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Acción para editar el perfil
-              },
-              icon: const Icon(Icons.edit),
-              label: const Text('Editar Perfil'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                text,
+                style: TextStyle(
+                  color: AppColors.text,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 16,
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                // Convierte trade a Map<String, List<String>>
-                final Map<String, List<String>> tradeListMap = trade.map((key, value) {
-                  return MapEntry(key, List<String>.from(value as List));
-                });
-
-                final newPrices = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditTradePricesScreen(
-                      trade: tradeListMap,
-                      prices: {}, // Pasa los precios actuales aquí
-                    ),
-                  ),
-                );
-                // Actualiza precios en tu backend con newPrices
-              },
-              child: const Text('Editar precios'),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () async {
-                final newSchedule = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => WorkerServicesPage(uuid: user!['uuid']),
-                  ),
-                );
-                // Actualiza horarios en tu backend con newSchedule
-              },
-              child: const Text('Editar horarios'),
-            ),
-            const SizedBox(height: 30),
-            const Divider(),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Configuración'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Cerrar sesión'),
-              onTap: () {
-                ApiService.logout();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
-                );
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+}
+
+// Responsive mobile view
+class _MobileProfileView extends StatelessWidget {
+  final String fullName;
+  final String email;
+  final ImageProvider<Object>? avatar;
+  final int selectedMenu;
+  final ValueChanged<int> onMenuChanged;
+  final Widget mainContent;
+
+  const _MobileProfileView({
+    required this.fullName,
+    required this.email,
+    required this.avatar,
+    required this.selectedMenu,
+    required this.onMenuChanged,
+    required this.mainContent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+      children: [
+        Center(
+          child: CircleAvatar(
+            radius: 44,
+            backgroundColor: AppColors.secondary,
+            backgroundImage: avatar,
+            child: avatar == null
+                ? const Icon(Icons.person, size: 48, color: Colors.white)
+                : null,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Center(
+          child: Text(
+            fullName,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppColors.text,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        Center(
+          child: Text(
+            email,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 18),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _MobileMenuButton(
+              icon: Icons.list_alt,
+              text: "Solicitudes",
+              selected: selectedMenu == 1,
+              onTap: () => onMenuChanged(1),
+            ),
+            _MobileMenuButton(
+              icon: Icons.person,
+              text: "Mis Datos",
+              selected: selectedMenu == 2,
+              onTap: () => onMenuChanged(2),
+            ),
+            _MobileMenuButton(
+              icon: Icons.credit_card,
+              text: "Pago",
+              selected: selectedMenu == 3,
+              onTap: () => onMenuChanged(3),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Center(
+          child: GestureDetector(
+            onTap: () {
+              // Acción inscripción como trabajador
+            },
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                "Inscripción como trabajador",
+                style: TextStyle(
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: mainContent,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MobileMenuButton extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _MobileMenuButton({
+    required this.icon,
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.background : Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.text, size: 22),
+              Text(
+                text,
+                style: TextStyle(
+                  color: AppColors.text,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Lista de solicitudes vacía, lista para conectar a API
+class _SolicitudesList extends StatefulWidget {
+  final bool isMobile;
+  const _SolicitudesList({required this.isMobile});
+
+  @override
+  State<_SolicitudesList> createState() => _SolicitudesListState();
+}
+
+class _SolicitudesListState extends State<_SolicitudesList> {
+  int selectedTab = 0; // 0: Todos, 1: Pendientes, 2: Terminados
+
+  @override
+  Widget build(BuildContext context) {
+    // Aquí puedes conectar a tu API cuando esté lista
+    final List<Map<String, dynamic>> solicitudes = [];
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: 24,
+        horizontal: widget.isMobile ? 8 : 24,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Tabs
+          Row(
+            mainAxisAlignment: widget.isMobile ? MainAxisAlignment.center : MainAxisAlignment.start,
+            children: [
+              _TabButton(
+                text: "Todos",
+                selected: selectedTab == 0,
+                onTap: () => setState(() => selectedTab = 0),
+              ),
+              _TabButton(
+                text: "Pendientes",
+                selected: selectedTab == 1,
+                onTap: () => setState(() => selectedTab = 1),
+              ),
+              _TabButton(
+                text: "Terminados",
+                selected: selectedTab == 2,
+                onTap: () => setState(() => selectedTab = 2),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (solicitudes.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(
+                  "No hay solicitudes para mostrar.",
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+              ),
+            ),
+          // Cuando conectes la API, reemplaza esto por el mapeo real:
+          ...solicitudes.map((s) => _SolicitudCard(solicitud: s)).toList(),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  final String text;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TabButton({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 18),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 18),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.button.withOpacity(0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: AppColors.text,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SolicitudCard extends StatelessWidget {
+  final Map<String, dynamic> solicitud;
+  const _SolicitudCard({required this.solicitud});
+
+  @override
+  Widget build(BuildContext context) {
+    // Aquí va el diseño de cada solicitud, cuando conectes la API
+    return Container();
   }
 }
