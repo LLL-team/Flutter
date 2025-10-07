@@ -207,10 +207,10 @@ class _WorkerCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      _buildStars(worker['rating'] ?? 4),
+                      _buildStars(worker['ratings_avg'] ?? 4),
                       const SizedBox(width: 6),
                       Text(
-                        "${worker['opinions'] ?? 0} opiniones",
+                        "${worker['ratings_count'] ?? 0} opiniones",
                         style: const TextStyle(
                           color: Colors.black54,
                           fontSize: 13,
