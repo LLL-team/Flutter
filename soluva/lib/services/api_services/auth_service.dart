@@ -19,12 +19,14 @@ class AuthService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['accessToken'];
+      final name = data['name'];
+      final lastName = data['last_name'];
       if (token != null) {
         await _saveToken(token);
+        await _saveUserName(name, lastName);
       }
       return data;
     } else {
-      // print("Login failed: ${response.statusCode} - ${response.body}");
       return null;
     }
   }
@@ -64,6 +66,12 @@ class AuthService {
     await prefs.setString('auth_token', token);
   }
 
+  static Future<void> _saveUserName(String? name, String? lastName) async {
+    final prefs = await SharedPreferences.getInstance();
+    final fullName = ((name ?? '') + ' ' + (lastName ?? '')).trim();
+    await prefs.setString('user_name', fullName);
+  }
+
   static Future<void> logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -79,4 +87,6 @@ class AuthService {
       // print("Logout failed: ${response.statusCode} - ${response.body}");
     }
   }
+
+  
 }
