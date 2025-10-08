@@ -15,7 +15,7 @@ class HomePage extends StatelessWidget {
         dotenv.env['default_cover_webp'] ?? 'assets/images/fondo-inicio.webp';
     final offerServiceBtn =
         dotenv.env['offer_service_button'] ??
-        'assets/images/boton_ofrecer_sersvicios.webp';
+        'assets/images/boton_ofrecer_servicio.webp';
     final searchServiceBtn =
         dotenv.env['search_service_button'] ??
         'assets/images/boton_buscar_servicio.webp';

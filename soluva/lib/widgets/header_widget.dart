@@ -155,7 +155,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   @override
   Widget build(BuildContext context) {
     final logoPath =
-        dotenv.env['header_logo'] ?? 'assets/images/Logo Header.webp';
+        dotenv.env['header_logo'] ?? 'assets/images/Logo_Header.webp';
     return Container(
       color: AppColors.background,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
