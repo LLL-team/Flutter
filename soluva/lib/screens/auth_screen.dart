@@ -6,7 +6,9 @@ import 'package:soluva/widgets/header_widget.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final Widget? redirectTo;
+
+  const AuthScreen({super.key, this.redirectTo});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -37,7 +39,8 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final fondoPath = dotenv.env['default_cover_webp'] ?? 'assets/images/fondo-inicio.webp';
+    final fondoPath =
+        dotenv.env['default_cover_webp'] ?? 'assets/images/fondo-inicio.webp';
 
     return Scaffold(
       appBar: const HeaderWidget(),
@@ -48,12 +51,7 @@ class _AuthScreenState extends State<AuthScreen> {
           Container(color: AppColors.text),
           // Imagen de fondo después
           if (_showBackgroundImage)
-            Positioned.fill(
-              child: Image.asset(
-                fondoPath,
-                fit: BoxFit.cover,
-              ),
-            ),
+            Positioned.fill(child: Image.asset(fondoPath, fit: BoxFit.cover)),
           Center(
             child: SingleChildScrollView(
               child: Column(
@@ -124,10 +122,34 @@ class _AuthScreenState extends State<AuthScreen> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
-                              Text('• Al menos 8 caracteres', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                              Text('• Una letra mayúscula', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                              Text('• Un número', style: TextStyle(fontSize: 13, color: Colors.grey)),
-                              Text('• Un símbolo (por ejemplo: ! @ # \$ &)', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                              Text(
+                                '• Al menos 8 caracteres',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                '• Una letra mayúscula',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                '• Un número',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                '• Un símbolo (por ejemplo: ! @ # \$ &)',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -135,7 +157,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: isSignIn ? _handleLogin : _handleRegister,
+                            onPressed: isSignIn
+                                ? _handleLogin
+                                : _handleRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.secondary,
                               foregroundColor: AppColors.white,
@@ -158,9 +182,15 @@ class _AuthScreenState extends State<AuthScreen> {
                           width: double.infinity,
                           child: OutlinedButton.icon(
                             onPressed: () {},
-                            icon: Icon(Icons.g_mobiledata, color: AppColors.secondary, size: 28),
+                            icon: Icon(
+                              Icons.g_mobiledata,
+                              color: AppColors.secondary,
+                              size: 28,
+                            ),
                             label: Text(
-                              isSignIn ? 'Iniciar sesión con Google' : 'Crear cuenta con Google',
+                              isSignIn
+                                  ? 'Iniciar sesión con Google'
+                                  : 'Crear cuenta con Google',
                               style: TextStyle(
                                 color: AppColors.secondary,
                                 fontWeight: FontWeight.bold,
@@ -221,20 +251,17 @@ class _AuthScreenState extends State<AuthScreen> {
     );
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
+      MaterialPageRoute(builder: (_) => widget.redirectTo ?? const HomePage()),
     );
   }
 
   Future<void> _handleLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
-    await ApiService.login(
-      email: email,
-      password: password,
-    );
+    await ApiService.login(email: email, password: password);
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
+      MaterialPageRoute(builder: (_) => widget.redirectTo ?? const HomePage()),
     );
   }
 }
@@ -259,7 +286,10 @@ class _CustomTextField extends StatelessWidget {
         hintText: hint,
         filled: true,
         fillColor: Colors.transparent,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 18,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
           borderSide: BorderSide(color: AppColors.secondary, width: 2),

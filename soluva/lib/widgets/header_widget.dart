@@ -38,10 +38,12 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   }
 
   void _showUserMenu() async {
-    final RenderBox renderBox = _userMenuKey.currentContext!.findRenderObject() as RenderBox;
+    final RenderBox renderBox =
+        _userMenuKey.currentContext!.findRenderObject() as RenderBox;
     final Offset offset = renderBox.localToGlobal(Offset.zero);
     final Size size = renderBox.size;
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
 
     await showMenu<String>(
       context: context,
@@ -52,9 +54,7 @@ class _HeaderWidgetState extends State<HeaderWidget> {
         0,
       ),
       color: AppColors.background,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       items: [
         // PopupMenuItem<String>(
         //   enabled: false,
@@ -111,13 +111,17 @@ class _HeaderWidgetState extends State<HeaderWidget> {
           child: Row(
             children: [
               Image.asset(
-                dotenv.env['ICON_BRIEFCASE_BLUE'] ?? 'assets/icons/briefcase_blue.png', // Icono Mis trabajos
+                dotenv.env['ICON_BRIEFCASE_BLUE'] ??
+                    'assets/icons/briefcase_blue.png', // Icono Mis trabajos
                 width: 22,
                 height: 27,
                 fit: BoxFit.contain,
               ),
               const SizedBox(width: 10),
-              const Text("Mis trabajos", style: TextStyle(color: AppColors.text)),
+              const Text(
+                "Mis trabajos",
+                style: TextStyle(color: AppColors.text),
+              ),
             ],
           ),
         ),
@@ -138,7 +142,8 @@ class _HeaderWidgetState extends State<HeaderWidget> {
           child: Row(
             children: [
               Image.asset(
-                dotenv.env['ICON_LOGOUT_BLUE'] ?? 'assets/icons/logout_blue.png', // Icono Salir
+                dotenv.env['ICON_LOGOUT_BLUE'] ??
+                    'assets/icons/logout_blue.png', // Icono Salir
                 width: 21,
                 height: 28,
                 fit: BoxFit.contain,
@@ -193,7 +198,8 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                         backgroundColor: AppColors.background,
                         radius: 18,
                         child: Image.asset(
-                          dotenv.env['ICON_USER_ORANGE'] ?? 'assets/icons/user_orange.png',
+                          dotenv.env['ICON_USER_ORANGE'] ??
+                              'assets/icons/user_orange.png',
                           width: 28,
                           height: 28,
                           fit: BoxFit.contain,

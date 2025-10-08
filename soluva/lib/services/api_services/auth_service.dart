@@ -51,12 +51,15 @@ class AuthService {
     if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
       final token = data['accessToken'];
+
       if (token != null) {
         await _saveToken(token);
+        // 🔽 Esto es lo que faltaba:
+        await _saveUserName(name, lastName);
       }
+
       return data;
     } else {
-      // print("Register failed: ${response.statusCode} - ${response.body}");
       return null;
     }
   }
@@ -87,6 +90,4 @@ class AuthService {
       // print("Logout failed: ${response.statusCode} - ${response.body}");
     }
   }
-
-  
 }

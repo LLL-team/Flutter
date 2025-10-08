@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:soluva/screens/auth_screen.dart';
 import 'package:soluva/screens/search_workers_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
@@ -36,17 +38,32 @@ class HomePage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _MainImageButton(
-                    image: offerServiceBtn,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const WorkerApplicationScreen(),
-                        ),
-                      );
-                    },
-                  ),
+_MainImageButton(
+  image: offerServiceBtn,
+  onTap: () async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+
+    if (token != null && token.isNotEmpty) {
+      // Usuario logueado → ir a pantalla de aplicación
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const WorkerApplicationScreen()),
+      );
+    } else {
+      // Usuario NO logueado → ir a AuthScreen con redirección
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AuthScreen(
+            redirectTo: WorkerApplicationScreen(),
+          ),
+        ),
+      );
+    }
+  },
+),
+
                   _MainImageButton(
                     image: searchServiceBtn,
                     onTap: () {
