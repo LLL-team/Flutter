@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+import 'package:soluva/services/api_services/request_service.dart'; // <--- Importa el servicio
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/header_widget.dart';
 
@@ -431,11 +432,33 @@ class _SolicitudesList extends StatefulWidget {
 
 class _SolicitudesListState extends State<_SolicitudesList> {
   int selectedTab = 0; // 0: Todos, 1: Pendientes, 2: Terminados
+  List<Map<String, dynamic>> solicitudes = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRequests();
+  }
+
+  Future<void> _loadRequests() async {
+    setState(() => loading = true);
+    final reqs = await RequestService.getMyRequests();
+    setState(() {
+      solicitudes = reqs;
+      loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Aquí puedes conectar a tu API cuando esté lista
-    final List<Map<String, dynamic>> solicitudes = [];
+    // Filtrado por estado
+    List<Map<String, dynamic>> filtered = solicitudes;
+    if (selectedTab == 1) {
+      filtered = solicitudes.where((r) => r['status'] == 'pending' || r['status'] == 'assigned').toList();
+    } else if (selectedTab == 2) {
+      filtered = solicitudes.where((r) => r['status'] == 'finished' || r['status'] == 'completed').toList();
+    }
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -467,7 +490,9 @@ class _SolicitudesListState extends State<_SolicitudesList> {
             ],
           ),
           const SizedBox(height: 16),
-          if (solicitudes.isEmpty)
+          if (loading)
+            const Center(child: CircularProgressIndicator())
+          else if (filtered.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -476,9 +501,9 @@ class _SolicitudesListState extends State<_SolicitudesList> {
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
               ),
-            ),
-          // Cuando conectes la API, reemplaza esto por el mapeo real:
-          ...solicitudes.map((s) => _SolicitudCard(solicitud: s)).toList(),
+            )
+          else
+            ...filtered.map((s) => _SolicitudCard(solicitud: s)).toList(),
         ],
       ),
     );
@@ -528,7 +553,81 @@ class _SolicitudCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Aquí va el diseño de cada solicitud, cuando conectes la API
-    return Container();
+    // Ejemplo de visualización básica, puedes personalizarlo
+    return Container(
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.notes, color: AppColors.text, size: 26),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  solicitud['descripcion'] ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              Text(
+                solicitud['date'] ?? '',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            solicitud['location'] ?? '',
+            style: const TextStyle(
+              color: AppColors.text,
+              fontSize: 15,
+            ),
+          ),
+          Text(
+            solicitud['type'] ?? '',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                solicitud['status'] ?? '',
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                solicitud['created_at'] != null
+                    ? solicitud['created_at'].toString().substring(0, 10)
+                    : '',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
