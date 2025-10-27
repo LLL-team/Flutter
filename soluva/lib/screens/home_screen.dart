@@ -38,31 +38,33 @@ class HomePage extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-_MainImageButton(
-  image: offerServiceBtn,
-  onTap: () async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+                  _MainImageButton(
+                    image: offerServiceBtn,
+                    onTap: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      final token = prefs.getString('auth_token');
 
-    if (token != null && token.isNotEmpty) {
-      // Usuario logueado → ir a pantalla de aplicación
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const WorkerApplicationScreen()),
-      );
-    } else {
-      // Usuario NO logueado → ir a AuthScreen con redirección
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const AuthScreen(
-            redirectTo: WorkerApplicationScreen(),
-          ),
-        ),
-      );
-    }
-  },
-),
+                      if (token != null && token.isNotEmpty) {
+                        // Usuario logueado → ir a pantalla de aplicación
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkerApplicationScreen(),
+                          ),
+                        );
+                      } else {
+                        // Usuario NO logueado → ir a AuthScreen con redirección
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AuthScreen(
+                              redirectTo: WorkerApplicationScreen(),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
 
                   _MainImageButton(
                     image: searchServiceBtn,
@@ -147,7 +149,8 @@ _MainImageButton(
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const WorkersByCategoryScreen(category: 'Auto'),
+                            builder: (_) =>
+                                const WorkersByCategoryScreen(category: 'Auto'),
                           ),
                         );
                       },
@@ -160,7 +163,9 @@ _MainImageButton(
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const SearchWorkersScreen(),
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'plomer\u00eda',
+                            ),
                           ),
                         );
                       },
@@ -173,7 +178,9 @@ _MainImageButton(
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const WorkersByCategoryScreen(category: 'Jard\u00edn'),
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Jard\u00edn',
+                            ),
                           ),
                         );
                       },
@@ -186,7 +193,9 @@ _MainImageButton(
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const SearchWorkersScreen(),
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'electricidad',
+                            ),
                           ),
                         );
                       },
@@ -199,7 +208,9 @@ _MainImageButton(
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const SearchWorkersScreen(),
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'limpieza',
+                            ),
                           ),
                         );
                       },
@@ -227,13 +238,10 @@ class _MainImageButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32), // opcional, para bordes redondeados
-        child: Image.asset(
-          image,
-          width: 160,
-          height: 170,
-          fit: BoxFit.cover,
-        ),
+        borderRadius: BorderRadius.circular(
+          32,
+        ), // opcional, para bordes redondeados
+        child: Image.asset(image, width: 160, height: 170, fit: BoxFit.cover),
       ),
     );
   }

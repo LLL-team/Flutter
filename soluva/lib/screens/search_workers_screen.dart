@@ -28,19 +28,18 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
         _loading = false;
       });
     } catch (e) {
+      print(e);
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar servicios: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar servicios: $e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -54,20 +53,23 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            ..._services.keys.map((category) => Card(
-                  child: ListTile(
-                    title: Text(category),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => WorkersByCategoryScreen(category: category),
-                        ),
-                      );
-                    },
-                  ),
-                )),
+            ..._services.keys.map(
+              (category) => Card(
+                child: ListTile(
+                  title: Text(category),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            WorkersByCategoryScreen(category: category),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
