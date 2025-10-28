@@ -5,6 +5,7 @@ import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/widgets/profile/profile_menu.dart';
 import 'package:soluva/widgets/profile/profile_mis_datos.dart';
+import 'package:soluva/widgets/profile/profile_notifications.dart';
 import 'package:soluva/widgets/profile/profile_solicitudes.dart';
 import 'package:soluva/widgets/profile/profile_pagos.dart';
 import 'package:soluva/widgets/profile/profile_inscripcion.dart';
@@ -125,6 +126,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 3:
         return const ProfilePagos();
       case 4:
+        return const ProfileNotifications();
+      case 5:
         return const ProfileInscripcion();
       default:
         return const SizedBox.shrink();

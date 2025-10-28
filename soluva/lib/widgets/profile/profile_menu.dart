@@ -27,73 +27,72 @@ class ProfileMenu extends StatelessWidget {
   // ================= DESKTOP =================
   Widget _buildDesktopMenu() {
     return Container(
-      width: 260,
+      width: 220,
       color: AppColors.background,
       child: Column(
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
+          // Avatar circular grande
           CircleAvatar(
-            radius: 48,
+            radius: 60,
             backgroundColor: AppColors.secondary,
             backgroundImage: avatar,
             child: avatar == null
-                ? const Icon(Icons.person, size: 60, color: Colors.white)
+                ? const Icon(Icons.person, size: 70, color: Colors.white)
                 : null,
           ),
-          const SizedBox(height: 16),
-          Text(
-            fullName,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: AppColors.text,
+          const SizedBox(height: 24),
+          // Nombre y email
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Text(
+                  fullName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.text,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
-          Text(
-            email,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 15,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          _menuButton(Icons.list_alt, "Solicitudes", 1),
-          _menuButton(Icons.person, "Mis Datos", 2),
-          _menuButton(Icons.credit_card, "Formas de pago", 3),
-          _menuButton(Icons.work, "Inscripción como trabajador", 4),
+          const SizedBox(height: 40),
+          // Botones del menú
+          _menuButton("Solicitudes", 1),
+          _menuButton("Mis Datos", 2),
+          _menuButton("Formas de pago", 3),
+          _menuButton("Notificaciones", 4),
+          _menuButton("Inscripción como trabajador", 5),
         ],
       ),
     );
   }
 
-  Widget _menuButton(IconData icon, String text, int index) {
+  Widget _menuButton(String text, int index) {
     final selected = selectedMenu == index;
     return Material(
-      color: selected ? Colors.white : Colors.transparent,
+      color: Colors.transparent,
       child: InkWell(
         onTap: () => onMenuChanged(index),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-          child: Row(
-            children: [
-              Icon(icon, color: AppColors.text, size: 22),
-              const SizedBox(width: 12),
-              Expanded( // ✅ Evita overflow
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    color: AppColors.text,
-                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 16,
-                  ),
-                  overflow: TextOverflow.ellipsis, // corta si es muy largo
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          decoration: BoxDecoration(
+            color: selected ? Colors.white : Colors.transparent,
+            border: selected
+                ? Border(left: BorderSide(color: AppColors.secondary, width: 4))
+                : null,
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              color: selected ? AppColors.text : Colors.grey[700],
+              fontWeight: selected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 15,
+            ),
           ),
         ),
       ),
@@ -102,43 +101,48 @@ class ProfileMenu extends StatelessWidget {
 
   // ================= MOBILE =================
   Widget _buildMobileMenu() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _iconButton(Icons.list_alt, "Solicitudes", 1),
-          _iconButton(Icons.person, "Datos", 2),
-          _iconButton(Icons.credit_card, "Pago", 3),
-          _iconButton(Icons.work, "Inscripción", 4),
-        ],
+    return Container(
+      color: AppColors.background,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            const SizedBox(width: 12),
+            _mobileTab("Solicitudes", 1),
+            _mobileTab("Datos", 2),
+            _mobileTab("Pago", 3),
+            _mobileTab("Notificaciones", 4),
+            _mobileTab("Inscripción", 5), 
+            const SizedBox(width: 12),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _iconButton(IconData icon, String text, int index) {
+  Widget _mobileTab(String text, int index) {
     final selected = selectedMenu == index;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
       onTap: () => onMenuChanged(index),
-      child: Column(
-        children: [
-          Icon(icon, color: selected ? AppColors.secondary : AppColors.text),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 60, // limita el ancho del texto en mobile
-            child: Text(
-              text,
-              style: TextStyle(
-                color: AppColors.text,
-                fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 12,
-              ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
-            ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: selected
+              ? Border.all(color: AppColors.secondary, width: 2)
+              : Border.all(color: Colors.grey[400]!, width: 1),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: selected ? AppColors.text : Colors.grey[700],
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
           ),
-        ],
+        ),
       ),
     );
   }
