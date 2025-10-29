@@ -4,7 +4,9 @@ import 'package:soluva/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
 class ProfileSolicitudes extends StatefulWidget {
-  const ProfileSolicitudes({super.key});
+  final String? selectedTab;
+
+  const ProfileSolicitudes({super.key, this.selectedTab});
 
   @override
   State<ProfileSolicitudes> createState() => _ProfileSolicitudesState();
@@ -13,57 +15,12 @@ class ProfileSolicitudes extends StatefulWidget {
 class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
   List<Map<String, dynamic>> _requests = [];
   bool _loading = true;
-  String _selectedTab = 'Todos';
 
   @override
   void initState() {
     super.initState();
     _loadRequests();
   }
-Future<void> _loadRequests() async {
-  setState(() => _loading = true);
-  await Future.delayed(const Duration(seconds: 1)); // Simula carga
-
-  final exampleRequests = [
-    {
-      'worker_name': 'María López',
-      'service': 'Limpieza de hogar',
-      'created_at': '2025-10-25T10:30:00Z',
-      'scheduled_date': '2025-10-30T15:00:00Z',
-      'status': 'pending',
-      'cost': 15000.0,
-    },
-    {
-      'worker_name': 'Carlos Pérez',
-      'service': 'Plomería',
-      'created_at': '2025-10-20T08:00:00Z',
-      'scheduled_date': '2025-10-22T10:00:00Z',
-      'status': 'in_progress',
-      'cost': 20000.0,
-    },
-    {
-      'worker_name': 'Laura Gómez',
-      'service': 'Electricidad',
-      'created_at': '2025-09-18T09:00:00Z',
-      'scheduled_date': '2025-09-19T14:30:00Z',
-      'status': 'completed',
-      'cost': 18000.0,
-    },
-    {
-      'worker_name': 'Juan Martínez',
-      'service': 'Jardinería',
-      'created_at': '2025-10-10T12:00:00Z',
-      'scheduled_date': '2025-10-12T09:00:00Z',
-      'status': 'confirmed',
-      'cost': 12000.0,
-    },
-  ];
-
-  setState(() {
-    _requests = exampleRequests;
-    _loading = false;
-  });
-}
 
   // Future<void> _loadRequests() async {
   //   setState(() => _loading = true);
@@ -82,97 +39,116 @@ Future<void> _loadRequests() async {
   //     }
   //   }
   // }
+  Future<void> _loadRequests() async {
+  setState(() => _loading = true);
+  // Simulación de carga - reemplazar con llamada a API
+  await Future.delayed(const Duration(seconds: 1));
+  setState(() {
+    _requests = [
+      {
+        'worker_name': 'Carlos López',
+        'service': 'Limpieza general',
+        'created_at': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
+        'status': 'pending',
+        'cost': 120.0,
+        'rejected': false,
+      },
+      {
+        'worker_name': 'Ana Torres',
+        'service': 'Reparación eléctrica',
+        'created_at': DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 3)).toIso8601String(),
+        'status': 'in_progress',
+        'cost': 150.0,
+        'rejected': false,
+      },
+      {
+        'worker_name': 'Javier Pérez',
+        'service': 'Instalación de plomería',
+        'created_at': DateTime.now().subtract(const Duration(days: 1, hours: 2)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+        'status': 'completed',
+        'cost': 200.0,
+        'rejected': false,
+      },
+      {
+        'worker_name': 'María González',
+        'service': 'Pintura interior',
+        'created_at': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 4)).toIso8601String(),
+        'status': 'completed',
+        'cost': 180.0,
+        'rejected': false,
+      },
+      {
+        'worker_name': 'Pablo Díaz',
+        'service': 'Jardinería',
+        'created_at': DateTime.now().subtract(const Duration(days: 3)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 5)).toIso8601String(),
+        'status': 'confirmed',
+        'cost': 80.0,
+        'rejected': false,
+      },
+      {
+        'worker_name': 'Lucía Méndez',
+        'service': 'Desinfección',
+        'created_at': DateTime.now().subtract(const Duration(days: 4)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 6)).toIso8601String(),
+        'status': 'provider_completed',
+        'cost': 250.0,
+        'rejected': false,
+      },
+      {
+        'worker_name': 'Juan Pérez',
+        'service': 'Electricidad',
+        'created_at': DateTime.now().subtract(const Duration(days: 6)).toIso8601String(),
+        'scheduled_date': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
+        'status': 'in_progress',
+        'cost': 90.0,
+        'rejected': true,
+      },
+    ];
+    _loading = false;
+  });
+}
+
 
   List<Map<String, dynamic>> get _filteredRequests {
-    if (_selectedTab == 'Todos') return _requests;
+    final tab = widget.selectedTab ?? 'Todos';
+    if (tab == 'Todos') return _requests;
     return _requests.where((r) {
       final status = r['status']?.toString().toLowerCase() ?? '';
-      if (_selectedTab == 'Pendientes') return status != 'completed';
-      if (_selectedTab == 'Terminados') return status == 'completed';
+      if (tab == 'Pendientes') return status != 'completed';
+      if (tab == 'Terminados') return status == 'completed';
       return true;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.background,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _buildTab('Todos'),
-                const SizedBox(width: 32),
-                _buildTab('Pendientes'),
-                const SizedBox(width: 32),
-                _buildTab('Terminados'),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredRequests.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No hay solicitudes',
-                          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(24),
-                        itemCount: _filteredRequests.length,
-                        itemBuilder: (context, index) {
-                          return _RequestCard(
-                            request: _filteredRequests[index],
-                            onUpdate: _loadRequests,
-                          );
-                        },
-                      ),
-          ),
-        ],
-      ),
-    );
-  }
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  Widget _buildTab(String label) {
-    final isSelected = _selectedTab == label;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTab = label),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? AppColors.secondary : Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (isSelected)
-            Container(
-              height: 3,
-              width: 60,
-              decoration: BoxDecoration(
-                color: AppColors.secondary,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-        ],
-      ),
+    if (_filteredRequests.isEmpty) {
+      return Center(
+        child: Text(
+          'No hay solicitudes',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.zero,
+      itemCount: _filteredRequests.length,
+      itemBuilder: (context, index) {
+        return _RequestCard(
+          request: _filteredRequests[index],
+          onUpdate: _loadRequests,
+        );
+      },
     );
   }
 }
@@ -200,7 +176,6 @@ class _RequestCard extends StatelessWidget {
       if (scheduledDate.isNotEmpty) scheduled = DateTime.parse(scheduledDate);
     } catch (_) {}
 
-    // Calcular el fondo según el estado
     Color backgroundColor = Colors.white;
     if (status == 'completed') {
       backgroundColor = const Color(0xFFEAE6DB).withOpacity(0.8);
@@ -212,13 +187,7 @@ class _RequestCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +263,8 @@ class _RequestCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E3A4A),
                     borderRadius: BorderRadius.circular(24),
@@ -315,7 +285,8 @@ class _RequestCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(24),
@@ -362,7 +333,8 @@ class _RequestCard extends StatelessWidget {
                   OutlinedButton(
                     onPressed: () => _showConfirmationDialog(context, false),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.secondary, width: 2),
+                      side:
+                          const BorderSide(color: AppColors.secondary, width: 2),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 12,
@@ -444,7 +416,8 @@ class _RequestCard extends StatelessWidget {
                 _RatingRow(
                   label: 'Puntualidad',
                   rating: punctualityRating,
-                  onRatingChanged: (r) => setDialogState(() => punctualityRating = r),
+                  onRatingChanged: (r) =>
+                      setDialogState(() => punctualityRating = r),
                 ),
                 const SizedBox(height: 20),
                 _RatingRow(
@@ -459,7 +432,8 @@ class _RequestCard extends StatelessWidget {
                   style: const TextStyle(color: AppColors.text),
                   decoration: InputDecoration(
                     hintText: 'Comentarios (opcional)',
-                    hintStyle: TextStyle(color: AppColors.secondary.withOpacity(0.6)),
+                    hintStyle:
+                        TextStyle(color: AppColors.secondary.withOpacity(0.6)),
                     filled: true,
                     fillColor: const Color(0xFFEAE6DB),
                     border: OutlineInputBorder(
@@ -473,7 +447,6 @@ class _RequestCard extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Enviar calificación
                       Navigator.pop(ctx);
                       onUpdate();
                     },
@@ -542,7 +515,8 @@ class _RequestCard extends StatelessWidget {
                 style: const TextStyle(color: AppColors.text),
                 decoration: InputDecoration(
                   hintText: 'Describir inconveniente',
-                  hintStyle: TextStyle(color: AppColors.secondary.withOpacity(0.6)),
+                  hintStyle:
+                      TextStyle(color: AppColors.secondary.withOpacity(0.6)),
                   filled: true,
                   fillColor: const Color(0xFFEAE6DB),
                   border: OutlineInputBorder(
@@ -662,7 +636,10 @@ class _StatusProgress extends StatelessWidget {
 
     final steps = [
       {'label': 'Pendiente de\nconfirmación', 'icon': Icons.schedule},
-      {'label': 'Confirmado,\nEsperando visita', 'icon': Icons.check_circle_outline},
+      {
+        'label': 'Confirmado,\nEsperando visita',
+        'icon': Icons.check_circle_outline
+      },
       {
         'label': 'Prestador\ncomunica la finalización\ndel servicio',
         'icon': Icons.verified_outlined

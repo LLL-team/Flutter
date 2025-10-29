@@ -4,11 +4,12 @@ import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/widgets/profile/profile_menu.dart';
+import 'package:soluva/widgets/profile/profile_card_container.dart';
 import 'package:soluva/widgets/profile/profile_mis_datos.dart';
-import 'package:soluva/widgets/profile/profile_notifications.dart';
 import 'package:soluva/widgets/profile/profile_solicitudes.dart';
 import 'package:soluva/widgets/profile/profile_pagos.dart';
 import 'package:soluva/widgets/profile/profile_inscripcion.dart';
+import 'package:soluva/widgets/profile/profile_notifications.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -21,7 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? user;
   Uint8List? _imageBytes;
   bool loading = true;
-  int selectedMenu = 1; // 1: Solicitudes, 2: Mis Datos, 3: Pago, 4: Inscripción
+  int selectedMenu = 1;
 
   @override
   void initState() {
@@ -79,7 +80,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildDesktopLayout(String fullName, String email, ImageProvider? avatar) {
+  Widget _buildDesktopLayout(
+      String fullName, String email, ImageProvider? avatar) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -91,17 +93,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onMenuChanged: (i) => setState(() => selectedMenu = i),
         ),
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            alignment: Alignment.topCenter,
-            child: _buildContent(),
-          ),
+          child: _buildContent(),
         ),
       ],
     );
   }
 
-  Widget _buildMobileLayout(String fullName, String email, ImageProvider? avatar) {
+  Widget _buildMobileLayout(
+      String fullName, String email, ImageProvider? avatar) {
     return Column(
       children: [
         ProfileMenu(
@@ -120,15 +119,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildContent() {
     switch (selectedMenu) {
       case 1:
-        return const ProfileSolicitudes();
+        // Mis Datos - sin tabs
+        return ProfileCardContainer(
+          contentBuilder: (selectedTab) => const ProfileMisDatos(),
+        );
+
       case 2:
-        return const ProfileMisDatos();
+        // Solicitudes - con tabs
+        return ProfileCardContainer(
+          tabs: const ['Todos', 'Pendientes', 'Terminados'],
+          contentBuilder: (selectedTab) =>
+              ProfileSolicitudes(selectedTab: selectedTab),
+        );
+
       case 3:
-        return const ProfilePagos();
+        // Formas de pago - sin tabs
+        return ProfileCardContainer(
+          contentBuilder: (selectedTab) => const ProfilePagos(),
+        );
+
       case 4:
-        return const ProfileNotifications();
+        // Notificaciones - sin tabs
+        return ProfileCardContainer(
+          contentBuilder: (selectedTab) => const ProfileNotifications(),
+        );
+
       case 5:
-        return const ProfileInscripcion();
+        // Inscripción como trabajador - sin tabs
+        return ProfileCardContainer(
+          contentBuilder: (selectedTab) => const ProfileInscripcion(),
+        );
+
       default:
         return const SizedBox.shrink();
     }

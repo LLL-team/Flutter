@@ -61,8 +61,8 @@ class ProfileMenu extends StatelessWidget {
           ),
           const SizedBox(height: 40),
           // Botones del menú
-          _menuButton("Solicitudes", 1),
-          _menuButton("Mis Datos", 2),
+          _menuButton("Mis Datos", 1),
+          _menuButton("Solicitudes", 2),
           _menuButton("Formas de pago", 3),
           _menuButton("Notificaciones", 4),
           _menuButton("Inscripción como trabajador", 5),
@@ -83,7 +83,12 @@ class ProfileMenu extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? Colors.white : Colors.transparent,
             border: selected
-                ? Border(left: BorderSide(color: AppColors.secondary, width: 4))
+                ? Border(
+                    left: BorderSide(
+                      color: AppColors.secondary,
+                      width: 4,
+                    ),
+                  )
                 : null,
           ),
           child: Text(
@@ -112,8 +117,7 @@ class ProfileMenu extends StatelessWidget {
             _mobileTab("Solicitudes", 1),
             _mobileTab("Datos", 2),
             _mobileTab("Pago", 3),
-            _mobileTab("Notificaciones", 4),
-            _mobileTab("Inscripción", 5), 
+            _mobileTab("Inscripción", 4),
             const SizedBox(width: 12),
           ],
         ),
