@@ -60,12 +60,14 @@ class ProfileMenu extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 40),
-          // Botones del menú
+          // Botones del menú estándar
           _menuButton("Mis Datos", 1),
           _menuButton("Solicitudes", 2),
           _menuButton("Formas de pago", 3),
           _menuButton("Notificaciones", 4),
-          _menuButton("Inscripción como trabajador", 5),
+          const SizedBox(height: 20),
+          // Botón destacado de inscripción
+          _highlightedMenuButton("Inscripción\ncomo trabajador", 5),
         ],
       ),
     );
@@ -97,6 +99,51 @@ class ProfileMenu extends StatelessWidget {
               color: selected ? AppColors.text : Colors.grey[700],
               fontWeight: selected ? FontWeight.bold : FontWeight.w500,
               fontSize: 15,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _highlightedMenuButton(String text, int index) {
+    final selected = selectedMenu == index;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onMenuChanged(index),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: selected 
+                    ? [AppColors.secondary, const Color(0xFFFF6B35)]
+                    : [AppColors.secondary.withOpacity(0.9), const Color(0xFFFF6B35).withOpacity(0.9)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.secondary.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                height: 1.3,
+              ),
             ),
           ),
         ),

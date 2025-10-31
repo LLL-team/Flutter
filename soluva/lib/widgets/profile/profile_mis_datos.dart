@@ -112,7 +112,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
     }
 
     return Container(
-      color: AppColors.background,
+      color: AppColors.white,
       padding: const EdgeInsets.all(32),
       child: SingleChildScrollView(
         child: Center(
@@ -123,17 +123,11 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
                 // Card principal con datos básicos
                 Container(
                   padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                  // decoration: BoxDecoration(
+                  //   color: Colors.white,
+                  //   borderRadius: BorderRadius.circular(20),
+          
+                  // ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

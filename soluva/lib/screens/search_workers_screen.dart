@@ -10,7 +10,7 @@ class SearchWorkersScreen extends StatefulWidget {
 }
 
 class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
-  Map<String, List<String>> _services = {};
+  Map<String, dynamic> _services = {};
   bool _loading = true;
 
   @override
@@ -42,6 +42,17 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Obtener todas las subcategorías de todas las categorías
+    List<MapEntry<String, String>> allSubcategories = [];
+    
+    _services.forEach((category, subcategories) {
+      if (subcategories is Map<String, dynamic>) {
+        subcategories.forEach((subcategory, services) {
+          allSubcategories.add(MapEntry(subcategory, category));
+        });
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(title: const Text('Buscar Trabajadores')),
       body: Padding(
@@ -49,21 +60,22 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
         child: ListView(
           children: [
             const Text(
-              'Selecciona una categoría:',
+              'Selecciona un servicio:',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            ..._services.keys.map(
-              (category) => Card(
+            ...allSubcategories.map(
+              (entry) => Card(
                 child: ListTile(
-                  title: Text(category),
+                  title: Text(entry.key),
+                  subtitle: Text('Categoría: ${_formatCategoryName(entry.value)}'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            WorkersByCategoryScreen(category: category),
+                            WorkersByCategoryScreen(category: entry.key),
                       ),
                     );
                   },
@@ -74,5 +86,17 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
         ),
       ),
     );
+  }
+
+  String _formatCategoryName(String category) {
+    final Map<String, String> categoryNames = {
+      'casa': 'Casa',
+      'llaves': 'Llaves',
+      'auto': 'Auto',
+      'camion': 'Camión',
+      'jardin': 'Jardín',
+      'bienestar': 'Bienestar',
+    };
+    return categoryNames[category] ?? category;
   }
 }

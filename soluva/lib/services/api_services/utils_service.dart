@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class UtilsService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
-  static Future<Map<String, List<String>>> getServices() async {
+  static Future<Map<String, dynamic>> getServices() async {
     final url = Uri.parse('$baseUrl/service');
 
     final response = await http.get(
@@ -15,11 +15,9 @@ class UtilsService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as Map<String, dynamic>;
-
-      // Convertir dynamic → List<String>
-      return data.map((key, value) {
-        return MapEntry(key, List<String>.from(value));
-      });
+      
+      // Retornar directamente la estructura completa de 3 niveles
+      return data;
     } else {
       throw Exception('Error al obtener servicios: ${response.statusCode}');
     }

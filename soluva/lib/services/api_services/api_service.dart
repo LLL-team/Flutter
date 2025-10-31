@@ -94,12 +94,12 @@ class ApiService {
       facePhoto: facePhoto,
       webImageBytes: webImageBytes,
       certifications: certifications,
-      webCertificationBytes: webCertificationBytes, // ← pasa el parámetro
+      webCertificationBytes: webCertificationBytes,
       token: token,
     );
   }
 
-  static Future<Map<String, List<String>>> getServices() async {
+  static Future<Map<String, dynamic>> getServices() async {
     return UtilsService.getServices();
   }
 

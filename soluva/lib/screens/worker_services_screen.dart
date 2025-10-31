@@ -1,193 +1,102 @@
 import 'package:flutter/material.dart';
-import 'package:soluva/services/api_services/api_service.dart';
+import 'package:soluva/services/api_services/utils_service.dart';
+import 'package:soluva/screens/workers_list_screen.dart';
 
-class WorkerServicesPage extends StatefulWidget {
-  final String uuid; 
-
-  const WorkerServicesPage({Key? key, required this.uuid}) : super(key: key);
+class SearchWorkersScreen extends StatefulWidget {
+  const SearchWorkersScreen({super.key});
 
   @override
-  State<WorkerServicesPage> createState() => _WorkerServicesPageState();
+  State<SearchWorkersScreen> createState() => _SearchWorkersScreenState();
 }
 
-class _WorkerServicesPageState extends State<WorkerServicesPage> {
-  final TextEditingController _costController = TextEditingController();
-
-  String? _selectedCategory;
-  String? _selectedService;
-  String? _selectedType = "hora";
-  Map<String, List<String>> _servicesByCategory = {};
-  List<Map<String, dynamic>> _myServices = [];
-  bool _isLoading = false;
+class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
+  Map<String, dynamic> _services = {};
+  bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _fetchServices();
-    _fetchMyServices();
+    _loadServices();
   }
 
-  /// OBTENER TODAS LAS CATEGORÍAS Y SERVICIOS
-  Future<void> _fetchServices() async {
+  Future<void> _loadServices() async {
+    setState(() => _loading = true);
     try {
-      final services = await ApiService.getServices();
+      final services = await UtilsService.getServices();
       setState(() {
-        _servicesByCategory = services;
+        _services = services;
+        _loading = false;
       });
     } catch (e) {
-      debugPrint("Error al obtener servicios: $e");
+      print(e);
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al cargar servicios: $e')));
     }
-  }
-
-  /// OBTENER SERVICIOS DEL TRABAJADOR USANDO UUID
-  Future<void> _fetchMyServices() async {
-    try {
-      final services = await ApiService.getWorkerServices(widget.uuid);
-      setState(() {
-        _myServices = services;
-      });
-    } catch (e) {
-      debugPrint("Error al obtener mis servicios: $e");
-    }
-  }
-
-  /// AGREGAR NUEVO SERVICIO
-  Future<void> _addService() async {
-    if (_selectedCategory == null || _selectedService == null || _costController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Completa todos los campos.")),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      final result = await ApiService.addWorkerService(
-        type: _selectedType!,
-        category: _selectedCategory!,
-        service: _selectedService!,
-        cost: double.tryParse(_costController.text) ?? 0,
-      );
-
-      if (result["status"] == "success") {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Servicio agregado correctamente.")),
-        );
-        _fetchMyServices();
-        _costController.clear();
-        setState(() {
-          _selectedCategory = null;
-          _selectedService = null;
-          _selectedType = "hora";
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${result["message"] ?? "No se pudo agregar."}")),
-        );
-      }
-    } catch (e) {
-      debugPrint("Error al agregar servicio: $e");
-    }
-
-    setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Obtener todas las subcategorías de todas las categorías
+    List<MapEntry<String, String>> allSubcategories = [];
+    
+    _services.forEach((category, subcategories) {
+      if (subcategories is Map<String, dynamic>) {
+        subcategories.forEach((subcategory, services) {
+          allSubcategories.add(MapEntry(subcategory, category));
+        });
+      }
+    });
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Servicios del Trabajador")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(title: const Text('Buscar Trabajadores')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
           children: [
-            /// CATEGORÍA
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: const InputDecoration(labelText: "Categoría"),
-              items: _servicesByCategory.keys.map((category) {
-                return DropdownMenuItem(value: category, child: Text(category));
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedCategory = value;
-                  _selectedService = null;
-                });
-              },
+            const Text(
+              'Selecciona un servicio:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
-            /// SERVICIO
-            DropdownButtonFormField<String>(
-              value: _selectedService,
-              decoration: const InputDecoration(labelText: "Servicio"),
-              items: _selectedCategory == null
-                  ? []
-                  : _servicesByCategory[_selectedCategory]!
-                      .map((service) => DropdownMenuItem(value: service, child: Text(service)))
-                      .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedService = value;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            /// TIPO DE COBRO
-            DropdownButtonFormField<String>(
-              value: _selectedType,
-              decoration: const InputDecoration(labelText: "Tipo de Cobro"),
-              items: ["hora", "fijo"]
-                  .map((type) => DropdownMenuItem(value: type, child: Text(type)))
-                  .toList(),
-              onChanged: (value) {
-                setState(() => _selectedType = value);
-              },
-            ),
-            const SizedBox(height: 16),
-
-            /// COSTO
-            TextField(
-              controller: _costController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Costo", prefixText: "\$ "),
-            ),
-            const SizedBox(height: 20),
-
-            /// BOTÓN GUARDAR
-            ElevatedButton(
-              onPressed: _isLoading ? null : _addService,
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("Agregar Servicio"),
-            ),
-            const SizedBox(height: 24),
-
-            /// LISTA DE SERVICIOS
-            const Text("Mis Servicios", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            if (_myServices.isEmpty)
-              const Text("No tienes servicios registrados.")
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _myServices.length,
-                itemBuilder: (context, index) {
-                  final service = _myServices[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text("${service['category']} - ${service['service']}"),
-                      subtitle: Text("Tipo: ${service['type']} | \$${service['cost']}"),
-                    ),
-                  );
-                },
+            ...allSubcategories.map(
+              (entry) => Card(
+                child: ListTile(
+                  title: Text(entry.key),
+                  subtitle: Text('Categoría: ${_formatCategoryName(entry.value)}'),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            WorkersByCategoryScreen(category: entry.key),
+                      ),
+                    );
+                  },
+                ),
               ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatCategoryName(String category) {
+    final Map<String, String> categoryNames = {
+      'casa': 'Casa',
+      'llaves': 'Llaves',
+      'auto': 'Auto',
+      'camion': 'Camión',
+      'jardin': 'Jardín',
+      'bienestar': 'Bienestar',
+    };
+    return categoryNames[category] ?? category;
   }
 }

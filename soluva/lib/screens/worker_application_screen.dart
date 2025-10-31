@@ -33,17 +33,18 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   bool _loadingStatus = true;
 
   String? _workerStatus;
-  Map<String, List<String>> _services = {};
+  
+  // Nueva estructura para 3 niveles
+  Map<String, dynamic> _services = {}; // {categoria: {subcategoria: {servicio: {tipo_costo: ...}}}}
 
-  List<String> _selectedServices = [];
-  List<String> _selectedSubServices = [];
   List<String> _selectedCategories = [];
-  Map<String, List<String>> _selectedServicesByCategory = {};
+  Map<String, List<String>> _selectedSubcategoriesByCategory = {}; // {categoria: [subcategorias]}
+  Map<String, Map<String, List<String>>> _selectedServicesBySubcategory = {}; // {categoria: {subcategoria: [servicios]}}
 
   File? _certificationPhoto;
   Uint8List? _webCertificationBytes;
 
-  String _userName = ""; // ← ahora vacío
+  String _userName = "";
 
   @override
   void initState() {
@@ -141,7 +142,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     if (_formKey.currentState!.validate() &&
         (_facePhoto != null || _webImageBytes != null) &&
         _selectedCategories.isNotEmpty &&
-        _selectedServicesByCategory.values.every((list) => list.isNotEmpty)) {
+        _validateAllSelectionsComplete()) {
       final token = await ApiService.getToken();
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -150,10 +151,18 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         return;
       }
 
-      // Construir el tradeMap para la API
+      // Construir el tradeMap en el formato que espera la API
+      // Formato: {subcategoria: [servicios]}
       Map<String, List<String>> tradeMap = {};
+      
       for (String category in _selectedCategories) {
-        tradeMap[category] = _selectedServicesByCategory[category] ?? [];
+        final subcategories = _selectedSubcategoriesByCategory[category] ?? [];
+        for (String subcategory in subcategories) {
+          final services = _selectedServicesBySubcategory[category]?[subcategory] ?? [];
+          if (services.isNotEmpty) {
+            tradeMap[subcategory] = services;
+          }
+        }
       }
 
       final response = await ApiService.enviarSolicitudTrabajador(
@@ -193,6 +202,19 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     }
   }
 
+  bool _validateAllSelectionsComplete() {
+    for (String category in _selectedCategories) {
+      final subcategories = _selectedSubcategoriesByCategory[category] ?? [];
+      if (subcategories.isEmpty) return false;
+      
+      for (String subcategory in subcategories) {
+        final services = _selectedServicesBySubcategory[category]?[subcategory] ?? [];
+        if (services.isEmpty) return false;
+      }
+    }
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loadingAuth || _loadingServices || _loadingStatus) {
@@ -218,7 +240,6 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       );
     }
 
-    // 🔹 FORMULARIO CON DISEÑO PERSONALIZADO
     return Scaffold(
       appBar: HeaderWidget(),
       body: Stack(
@@ -248,7 +269,6 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Cambia el texto a blanco
                       const Text(
                         "Para inscribirte como ",
                         style: TextStyle(fontSize: 16, color: Colors.white),
@@ -311,22 +331,26 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Selección de categorías
+                      
+                      // Selección de CATEGORÍAS
                       _CustomField(
                         label: "Seleccionar categoría:",
                         child: MultiSelectDialogField<String>(
                           title: const Text("Categoría"),
                           buttonText: const Text("Seleccionar categoría"),
                           items: _services.keys
-                              .map((e) => MultiSelectItem<String>(e, e))
+                              .map((e) => MultiSelectItem<String>(e, _formatCategoryName(e)))
                               .toList(),
                           listType: MultiSelectListType.CHIP,
                           initialValue: _selectedCategories,
                           onConfirm: (values) {
                             setState(() {
                               _selectedCategories = List<String>.from(values);
-                              // Elimina servicios de categorías deseleccionadas
-                              _selectedServicesByCategory.removeWhere(
+                              // Elimina subcategorías y servicios de categorías deseleccionadas
+                              _selectedSubcategoriesByCategory.removeWhere(
+                                (key, _) => !_selectedCategories.contains(key),
+                              );
+                              _selectedServicesBySubcategory.removeWhere(
                                 (key, _) => !_selectedCategories.contains(key),
                               );
                             });
@@ -337,31 +361,73 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Selección de servicios por cada categoría
-                      ..._selectedCategories.map((category) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _CustomField(
-                          label: "Servicios de $category:",
-                          child: MultiSelectDialogField<String>(
-                            title: Text("Servicios de $category"),
-                            buttonText: const Text("Seleccionar servicios"),
-                            items: (_services[category] ?? [])
-                                .map((e) => MultiSelectItem<String>(e, e))
-                                .toList(),
-                            listType: MultiSelectListType.CHIP,
-                            initialValue: _selectedServicesByCategory[category] ?? [],
-                            onConfirm: (values) {
-                              setState(() {
-                                _selectedServicesByCategory[category] = List<String>.from(values);
-                              });
-                            },
-                            validator: (values) =>
-                                (values == null || values.isEmpty)
-                                    ? "Selecciona al menos un servicio"
-                                    : null,
+                      
+                      // Para cada categoría seleccionada, mostrar selector de SUBCATEGORÍAS
+                      ..._selectedCategories.map((category) => Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _CustomField(
+                              label: "Subcategorías de ${_formatCategoryName(category)}:",
+                              child: MultiSelectDialogField<String>(
+                                title: Text("Subcategorías de ${_formatCategoryName(category)}"),
+                                buttonText: const Text("Seleccionar subcategorías"),
+                                items: (_services[category] as Map<String, dynamic>).keys
+                                    .map((e) => MultiSelectItem<String>(e, e))
+                                    .toList(),
+                                listType: MultiSelectListType.CHIP,
+                                initialValue: _selectedSubcategoriesByCategory[category] ?? [],
+                                onConfirm: (values) {
+                                  setState(() {
+                                    _selectedSubcategoriesByCategory[category] = List<String>.from(values);
+                                    
+                                    // Elimina servicios de subcategorías deseleccionadas
+                                    if (_selectedServicesBySubcategory[category] != null) {
+                                      _selectedServicesBySubcategory[category]!.removeWhere(
+                                        (key, _) => !_selectedSubcategoriesByCategory[category]!.contains(key),
+                                      );
+                                    }
+                                  });
+                                },
+                                validator: (values) =>
+                                    (values == null || values.isEmpty)
+                                        ? "Selecciona al menos una subcategoría"
+                                        : null,
+                              ),
+                            ),
                           ),
-                        ),
+                          
+                          // Para cada subcategoría seleccionada, mostrar selector de SERVICIOS
+                          ...(_selectedSubcategoriesByCategory[category] ?? []).map((subcategory) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _CustomField(
+                              label: "Servicios de $subcategory:",
+                              child: MultiSelectDialogField<String>(
+                                title: Text("Servicios de $subcategory"),
+                                buttonText: const Text("Seleccionar servicios"),
+                                items: ((_services[category] as Map<String, dynamic>)[subcategory] as Map<String, dynamic>).keys
+                                    .map((e) => MultiSelectItem<String>(e, e))
+                                    .toList(),
+                                listType: MultiSelectListType.CHIP,
+                                initialValue: _selectedServicesBySubcategory[category]?[subcategory] ?? [],
+                                onConfirm: (values) {
+                                  setState(() {
+                                    if (_selectedServicesBySubcategory[category] == null) {
+                                      _selectedServicesBySubcategory[category] = {};
+                                    }
+                                    _selectedServicesBySubcategory[category]![subcategory] = List<String>.from(values);
+                                  });
+                                },
+                                validator: (values) =>
+                                    (values == null || values.isEmpty)
+                                        ? "Selecciona al menos un servicio"
+                                        : null,
+                              ),
+                            ),
+                          )),
+                        ],
                       )),
+                      
                       _CustomField(
                         label: "Certificación / Matrícula:",
                         child: TextFormField(
@@ -474,6 +540,20 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       ),
     );
   }
+
+  String _formatCategoryName(String category) {
+    // Capitaliza y formatea nombres de categorías
+    final Map<String, String> categoryNames = {
+      'casa': 'Casa',
+      'llaves': 'Llaves',
+      'auto': 'Auto',
+      'camion': 'Camión',
+      'jardin': 'Jardín',
+      'bienestar': 'Bienestar',
+    };
+    return categoryNames[category] ?? category;
+  }
+
   InputDecoration _inputDecoration() => InputDecoration(
         filled: true,
         fillColor: Colors.white,

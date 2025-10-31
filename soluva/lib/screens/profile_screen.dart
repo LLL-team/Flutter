@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/header_widget.dart';
@@ -8,7 +9,6 @@ import 'package:soluva/widgets/profile/profile_card_container.dart';
 import 'package:soluva/widgets/profile/profile_mis_datos.dart';
 import 'package:soluva/widgets/profile/profile_solicitudes.dart';
 import 'package:soluva/widgets/profile/profile_pagos.dart';
-import 'package:soluva/widgets/profile/profile_inscripcion.dart';
 import 'package:soluva/widgets/profile/profile_notifications.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -90,7 +90,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           email: email,
           avatar: avatar,
           selectedMenu: selectedMenu,
-          onMenuChanged: (i) => setState(() => selectedMenu = i),
+          onMenuChanged: (i) {
+            if (i == 5) {
+              // Si selecciona "Inscripción como trabajador", navega al formulario
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WorkerApplicationScreen(),
+                ),
+              );
+            } else {
+              setState(() => selectedMenu = i);
+            }
+          },
         ),
         Expanded(
           child: _buildContent(),
@@ -108,7 +120,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           email: email,
           avatar: avatar,
           selectedMenu: selectedMenu,
-          onMenuChanged: (i) => setState(() => selectedMenu = i),
+          onMenuChanged: (i) {
+            if (i == 5) {
+              // Si selecciona "Inscripción como trabajador", navega al formulario
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const WorkerApplicationScreen(),
+                ),
+              );
+            } else {
+              setState(() => selectedMenu = i);
+            }
+          },
           isMobile: true,
         ),
         Expanded(child: _buildContent()),
@@ -145,10 +169,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
       case 5:
-        // Inscripción como trabajador - sin tabs
-        return ProfileCardContainer(
-          contentBuilder: (selectedTab) => const ProfileInscripcion(),
-        );
+        // Este caso ya no se alcanza porque redirigimos antes
+        return const SizedBox.shrink();
 
       default:
         return const SizedBox.shrink();
