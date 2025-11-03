@@ -8,6 +8,7 @@ class ProfileMenu extends StatelessWidget {
   final int selectedMenu;
   final ValueChanged<int> onMenuChanged;
   final bool isMobile;
+  final bool isWorker;
 
   const ProfileMenu({
     super.key,
@@ -16,6 +17,7 @@ class ProfileMenu extends StatelessWidget {
     required this.avatar,
     required this.selectedMenu,
     required this.onMenuChanged,
+    required this.isWorker,
     this.isMobile = false,
   });
 
@@ -65,9 +67,11 @@ class ProfileMenu extends StatelessWidget {
           _menuButton("Solicitudes", 2),
           _menuButton("Formas de pago", 3),
           _menuButton("Notificaciones", 4),
-          const SizedBox(height: 20),
-          // Botón destacado de inscripción
-          _highlightedMenuButton("Inscripción\ncomo trabajador", 5),
+          // Botón destacado de inscripción solo si NO es trabajador
+          if (!isWorker) ...[
+            const SizedBox(height: 20),
+            _highlightedMenuButton("Inscripción\ncomo trabajador", 5),
+          ],
         ],
       ),
     );
@@ -161,10 +165,12 @@ class ProfileMenu extends StatelessWidget {
         child: Row(
           children: [
             const SizedBox(width: 12),
-            _mobileTab("Solicitudes", 1),
-            _mobileTab("Datos", 2),
+            _mobileTab("Datos", 1),
+            _mobileTab("Solicitudes", 2),
             _mobileTab("Pago", 3),
-            _mobileTab("Inscripción", 4),
+            _mobileTab("Notificaciones", 4),
+            // Mostrar opción de inscripción solo si NO es trabajador
+            if (!isWorker) _mobileTab("Inscripción", 5),
             const SizedBox(width: 12),
           ],
         ),

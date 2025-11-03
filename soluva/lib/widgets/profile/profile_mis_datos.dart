@@ -42,25 +42,34 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
         _phoneController.text = user['phone'] ?? '';
         _addressController.text = user['address'] ?? '';
         _certificateController.text = user['certificate'] ?? '';
-        
-        // Verificar si es trabajador
-        try {
-          final statusResponse = await ApiService.getWorkerStatus();
-          _isWorker = statusResponse['status'] == 'approved';
-          
-          if (_isWorker && user['trade'] != null) {
-            _workerTrades = Map<String, List<String>>.from(
-              (user['trade'] as Map<String, dynamic>).map(
-                (key, value) => MapEntry(key, List<String>.from(value)),
-              ),
-            );
-            if (_workerTrades!.isNotEmpty) {
-              _selectedCategory = _workerTrades!.keys.first;
+
+        // Verificar si es trabajador usando el campo 'type'
+        _isWorker = user['type'] == 'worker';
+
+        // Si es trabajador y tiene servicios, procesarlos
+        if (_isWorker && user['services'] != null) {
+          final services = user['services'] as List<dynamic>;
+
+          // Agrupar servicios por categoría
+          Map<String, List<String>> groupedServices = {};
+          for (var service in services) {
+            final category = service['category'] as String;
+            final type = service['type'] as String;
+            final price = service['price'];
+
+            if (!groupedServices.containsKey(category)) {
+              groupedServices[category] = [];
             }
+
+            // Agregar el servicio con su tipo y precio
+            final serviceType = type == 'hour' ? 'Por hora' : 'Precio fijo';
+            groupedServices[category]!.add('$serviceType - \$$price');
           }
-        } catch (e) {
-          // Si no es trabajador, continuar normalmente
-          _isWorker = false;
+
+          _workerTrades = groupedServices;
+          if (_workerTrades!.isNotEmpty) {
+            _selectedCategory = _workerTrades!.keys.first;
+          }
         }
       }
     } catch (e) {

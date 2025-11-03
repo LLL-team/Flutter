@@ -22,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? user;
   Uint8List? _imageBytes;
   bool loading = true;
+  bool isWorker = false;
   int selectedMenu = 1;
 
   @override
@@ -35,6 +36,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (mounted) {
       setState(() {
         user = data;
+        // Verificar si es trabajador usando el campo 'type' del perfil
+        isWorker = data?['type'] == 'worker';
         loading = false;
       });
     }
@@ -90,6 +93,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           email: email,
           avatar: avatar,
           selectedMenu: selectedMenu,
+          isWorker: isWorker,
           onMenuChanged: (i) {
             if (i == 5) {
               // Si selecciona "Inscripción como trabajador", navega al formulario
@@ -120,6 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           email: email,
           avatar: avatar,
           selectedMenu: selectedMenu,
+          isWorker: isWorker,
           onMenuChanged: (i) {
             if (i == 5) {
               // Si selecciona "Inscripción como trabajador", navega al formulario
