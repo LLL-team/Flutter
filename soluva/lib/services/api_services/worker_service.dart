@@ -5,12 +5,20 @@ import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:soluva/services/api_services/api_service.dart';
-import 'package:soluva/services/api_services/utils_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WorkerService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
+  /// Obtiene el token de autenticación
+  /// NOTA: Esta función solo debe ser usada internamente por WorkerService
+  /// Para uso externo, usar ApiService.getToken()
+  static Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
+  }
+
+  /// Envía una solicitud para convertirse en trabajador
   static Future<http.Response> enviarSolicitudTrabajador({
     required String nationalId,
     required Map<String, List<String>> trade,
@@ -19,10 +27,11 @@ class WorkerService {
     File? facePhoto,
     Uint8List? webImageBytes,
     File? certifications,
-    Uint8List? webCertificationBytes, // ← nuevo parámetro
+    Uint8List? webCertificationBytes,
     required String token,
   }) async {
-    final url = Uri.parse('${UtilsService.baseUrl}/worker/new');
+    final url = Uri.parse('$baseUrl/worker/new');
+    
     try {
       var request = http.MultipartRequest('POST', url);
 
@@ -32,9 +41,12 @@ class WorkerService {
       request.fields['national_id'] = nationalId;
       request.fields['trade'] = jsonEncode(trade);
       request.fields['task_description'] = taskDescription;
+      
       if (description != null) {
         request.fields['description'] = description;
       }
+      
+      // Foto de rostro
       if (facePhoto != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -54,7 +66,8 @@ class WorkerService {
           ),
         );
       }
-      // Adjunta la foto de certificación si existe
+      
+      // Foto de certificación
       if (certifications != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
@@ -76,24 +89,13 @@ class WorkerService {
       }
 
       final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-
-      // final responseData = json.decode(response.body);
-      return response;
-
-      //   if (response.statusCode == 201) {
-
-      //   } else {
-      //     // print(responseData);
-      //     throw Exception('Failed to submit application: ${response.statusCode}');
-      //   }
+      return await http.Response.fromStream(streamedResponse);
     } catch (e) {
-      // print(e);
       throw Exception('Failed to submit application: $e');
     }
   }
 
-  // Detecta MIME basado en extensión (para cert. en PDF o imagen)
+  /// Detecta MIME type basado en extensión
   static MediaType _getMimeType(String path) {
     final ext = extension(path).toLowerCase();
     switch (ext) {
@@ -111,127 +113,130 @@ class WorkerService {
     }
   }
 
+  /// Obtiene el estado de la solicitud de trabajador
   static Future<Map<String, dynamic>> getStatus() async {
-    final url = Uri.parse('${UtilsService.baseUrl}/worker/status');
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No hay token de autenticación');
+    }
 
-    try {
-      final headers = <String, String>{
-        'Authorization': 'Bearer ${await ApiService.getToken()}',
+    final url = Uri.parse('$baseUrl/worker/status');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
         'Accept': 'application/json',
-      };
+      },
+    );
 
-      final response = await http.get(url, headers: headers);
-      final responseData = json.decode(response.body);
-      return responseData;
-    } catch (e) {
-      throw Exception('Failed to load worker status: $e');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load worker status: ${response.statusCode}');
     }
   }
 
+  /// Obtiene trabajadores por categoría
   static Future<List<dynamic>> getWorkersByCategory(String category) async {
     final url = Uri.parse(
-      '${UtilsService.baseUrl}/workers?trade=${Uri.encodeComponent(category)}',
+      '$baseUrl/workers?trade=${Uri.encodeComponent(category)}',
     );
-    try {
-      final response = await http.get(
-        url,
-        headers: {'Accept': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body) as List<dynamic>;
-      } else {
-        throw Exception(
-          'Error al obtener trabajadores: ${response.statusCode}',
-        );
-      }
-    } catch (e) {
-      throw Exception('Error al obtener trabajadores: $e');
+    
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
+    } else {
+      throw Exception('Error al obtener trabajadores: ${response.statusCode}');
     }
   }
 
+  /// Obtiene información de un trabajador por UUID
   static Future<Map<String, dynamic>> getWorkerByUuid(String id) async {
-    final url = Uri.parse('${UtilsService.baseUrl}/workers/$id');
-    try {
-      final response = await http.get(
-        url,
-        headers: {'Accept': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Error al obtener trabajador: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error al obtener trabajador: $e');
+    final url = Uri.parse('$baseUrl/workers/$id');
+    
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error al obtener trabajador: ${response.statusCode}');
     }
   }
 
+  /// Agrega un servicio al perfil del trabajador
   static Future<Map<String, dynamic>> addWorkerService({
     required String type,
     required String category,
     required String service,
     required double cost,
   }) async {
-    final url = Uri.parse('${UtilsService.baseUrl}/workerServices/add');
-    print("Adding service: $type, $category, $service, $cost");
-    try {
-      if (type == "hora") {
-        type = "hour";
-      }
-      if (type == "fijo") {
-        type = "fixed";
-      }
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer ${await ApiService.getToken()}',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No hay token de autenticación');
+    }
 
-        body: json.encode({
-          'type': type,
-          'category': category,
-          'service': service,
-          'cost': cost,
-        }),
-      );
-      if (response.statusCode == 201) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Error al agregar servicio: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error al agregar servicio: $e');
+    final url = Uri.parse('$baseUrl/workerServices/add');
+    
+    // Convertir tipo al formato que espera la API
+    String apiType = type;
+    if (type == "hora") {
+      apiType = "hour";
+    } else if (type == "fijo") {
+      apiType = "fixed";
+    }
+    
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'type': apiType,
+        'category': category,
+        'service': service,
+        'cost': cost,
+      }),
+    );
+    
+    if (response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Error al agregar servicio: ${response.statusCode}');
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getWorkerServices(
-    String uuid,
-  ) async {
-    final url = Uri.parse(
-      '${UtilsService.baseUrl}/workerServices/get?uuid=$uuid',
+  /// Obtiene los servicios de un trabajador
+  static Future<List<Map<String, dynamic>>> getWorkerServices(String uuid) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No hay token de autenticación');
+    }
+
+    final url = Uri.parse('$baseUrl/workerServices/get?uuid=$uuid');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
-    try {
-      final token = await ApiService.getToken();
-
-      final response = await http.get(
-        url,
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((e) => Map<String, dynamic>.from(e)).toList();
-      } else {
-        throw Exception('Error al obtener servicios: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error al obtener servicios: $e');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      throw Exception('Error al obtener servicios: ${response.statusCode}');
     }
   }
 }

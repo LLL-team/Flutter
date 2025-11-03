@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:soluva/services/api_services/api_service.dart';
-import 'package:soluva/services/api_services/profile_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/header_widget.dart';
 
@@ -56,7 +55,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   }
 
   Future<void> _loadUserName() async {
-    final profile = await ProfileService.getUserProfile();
+    final profile = await ApiService.getUserProfile();
     setState(() {
       _userName = profile?['name'] != null && profile?['last_name'] != null
           ? "${profile!['name']} ${profile['last_name']}"
@@ -66,7 +65,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
   Future<void> _checkStatus() async {
     try {
-      final response = await ApiService.getStatus();
+      final response = await ApiService.getWorkerStatus();
       setState(() {
         _workerStatus = response['status'];
         _loadingStatus = false;
@@ -241,7 +240,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     }
 
     return Scaffold(
-      appBar: HeaderWidget(),
+      appBar: const HeaderWidget(),
       body: Stack(
         children: [
           // Fondo degradado radial naranja

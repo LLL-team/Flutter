@@ -45,7 +45,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
         
         // Verificar si es trabajador
         try {
-          final statusResponse = await ApiService.getStatus();
+          final statusResponse = await ApiService.getWorkerStatus();
           _isWorker = statusResponse['status'] == 'approved';
           
           if (_isWorker && user['trade'] != null) {

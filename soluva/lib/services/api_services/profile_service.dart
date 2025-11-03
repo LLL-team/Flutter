@@ -7,39 +7,43 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProfileService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 
-  static Future<String?> getToken() async {
+  /// Obtiene el token de autenticación
+  /// NOTA: Esta función solo debe ser usada internamente por ProfileService
+  /// Para uso externo, usar ApiService.getToken()
+  static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    // print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
 
+  /// Obtiene el perfil del usuario actual
   static Future<Map<String, dynamic>?> getUserProfile() async {
-    final token = await getToken();
+    final token = await _getToken();
     if (token == null) {
       return null;
     }
+    
     final response = await http.get(
       Uri.parse('$baseUrl/profile/myProfile'),
-      headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
+      headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer $token",
+      },
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      // print(
-      //   "Failed to get user profile: ${response.statusCode} - ${response.body}",
-      // );
       return null;
     }
   }
 
-  // Editar perfil del usuario
+  /// Edita el perfil del usuario
   static Future<bool> editUserProfile({
     required String? name,
     required String? lastName,
     required String? descripcion,
   }) async {
-    final token = await getToken();
+    final token = await _getToken();
     if (token == null) {
       return false;
     }
@@ -58,13 +62,6 @@ class ProfileService {
       }),
     );
 
-    if (response.statusCode == 200) {
-      return true; // Éxito
-    } else {
-      // print(
-      //   "Failed to edit user profile: ${response.statusCode} - ${response.body}",
-      // );
-      return false;
-    }
+    return response.statusCode == 200;
   }
 }

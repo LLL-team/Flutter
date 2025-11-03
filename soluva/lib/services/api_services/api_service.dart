@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:http/src/response.dart';
-
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:soluva/services/api_services/auth_service.dart';
@@ -9,54 +8,41 @@ import 'package:soluva/services/api_services/profile_service.dart';
 import 'package:soluva/services/api_services/user_service.dart';
 import 'package:soluva/services/api_services/utils_service.dart';
 import 'package:soluva/services/api_services/worker_service.dart';
+import 'package:soluva/services/api_services/request_service.dart';
 
+/// Clase centralizada para todas las llamadas a servicios
+/// TODAS las pantallas deben usar esta clase en lugar de llamar directamente a los servicios
 class ApiService {
+  // ==================== TOKEN & AUTH ====================
+  
+  /// Obtiene el token de autenticación almacenado
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    print(prefs.getString('auth_token'));
     return prefs.getString('auth_token');
   }
 
-  static Future<bool> editUserProfile({
-    required String name,
-    required String lastName,
-    String? descripcion,
-  }) {
-    return ProfileService.editUserProfile(
-      name: name,
-      lastName: lastName,
-      descripcion: descripcion,
-    );
+  /// Verifica si el usuario está autenticado
+  static Future<bool> isAuthenticated() async {
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
   }
 
-  static Future<Map<String, dynamic>?> getUserProfile() {
-    return ProfileService.getUserProfile();
-  }
-
-  static Future<void> logout() async {
-    await AuthService.logout();
-  }
-
-  static Future<void> login({
+  /// Inicia sesión con email y contraseña
+  static Future<Map<String, dynamic>?> login({
     required String email,
     required String password,
   }) async {
-    final response = await AuthService.login(email: email, password: password);
-
-    if (response == null) {
-      throw Exception('Login failed');
-    }
-
-    // Aquí podrías manejar la respuesta, como redirigir al usuario
+    return await AuthService.login(email: email, password: password);
   }
 
-  static Future<void> register({
+  /// Registra un nuevo usuario
+  static Future<Map<String, dynamic>?> register({
     required String email,
     required String password,
     required String name,
     required String lastName,
   }) async {
-    await AuthService.register(
+    return await AuthService.register(
       email: email,
       password: password,
       name: name,
@@ -64,6 +50,34 @@ class ApiService {
     );
   }
 
+  /// Cierra sesión del usuario
+  static Future<void> logout() async {
+    await AuthService.logout();
+  }
+
+  // ==================== PERFIL DE USUARIO ====================
+
+  /// Obtiene el perfil del usuario actual
+  static Future<Map<String, dynamic>?> getUserProfile() async {
+    return await ProfileService.getUserProfile();
+  }
+
+  /// Edita el perfil del usuario
+  static Future<bool> editUserProfile({
+    required String? name,
+    required String? lastName,
+    String? descripcion,
+  }) async {
+    return await ProfileService.editUserProfile(
+      name: name,
+      lastName: lastName,
+      descripcion: descripcion,
+    );
+  }
+
+  // ==================== IMÁGENES ====================
+
+  /// Sube una imagen de perfil
   static Future<void> uploadProfileImage(
     Uint8List imageBytes,
     String fileName,
@@ -71,11 +85,22 @@ class ApiService {
     await UserService.uploadProfileImage(imageBytes, fileName);
   }
 
-  static Future getFoto(String uuid) async {
-    return UserService.getFoto(uuid);
+  /// Obtiene la foto de un usuario por UUID
+  static Future<Uint8List?> getFoto(String uuid) async {
+    return await UserService.getFoto(uuid);
   }
 
-  static Future<Response> enviarSolicitudTrabajador({
+  // ==================== SERVICIOS ====================
+
+  /// Obtiene todos los servicios disponibles (estructura de 3 niveles)
+  static Future<Map<String, dynamic>> getServices() async {
+    return await UtilsService.getServices();
+  }
+
+  // ==================== TRABAJADORES ====================
+
+  /// Envía una solicitud para convertirse en trabajador
+  static Future<http.Response> enviarSolicitudTrabajador({
     required String nationalId,
     required Map<String, List<String>> trade,
     required String taskDescription,
@@ -85,8 +110,8 @@ class ApiService {
     File? certifications,
     Uint8List? webCertificationBytes,
     required String token,
-  }) {
-    return WorkerService.enviarSolicitudTrabajador(
+  }) async {
+    return await WorkerService.enviarSolicitudTrabajador(
       nationalId: nationalId,
       trade: trade,
       taskDescription: taskDescription,
@@ -99,32 +124,47 @@ class ApiService {
     );
   }
 
-  static Future<Map<String, dynamic>> getServices() async {
-    return UtilsService.getServices();
+  /// Obtiene el estado de la solicitud de trabajador
+  static Future<Map<String, dynamic>> getWorkerStatus() async {
+    return await WorkerService.getStatus();
   }
 
-  static Future<Map<String, dynamic>> getStatus() async {
-    return WorkerService.getStatus();
+  /// Obtiene trabajadores por categoría/subcategoría
+  static Future<List<dynamic>> getWorkersByCategory(String category) async {
+    return await WorkerService.getWorkersByCategory(category);
   }
 
-  workers() {}
-
-  static Future getWorkerServices(uuid) async {
-    return WorkerService.getWorkerServices(uuid);
+  /// Obtiene información de un trabajador específico por UUID
+  static Future<Map<String, dynamic>> getWorkerByUuid(String uuid) async {
+    return await WorkerService.getWorkerByUuid(uuid);
   }
 
-  static Future addWorkerService({
+  // ==================== SERVICIOS DEL TRABAJADOR ====================
+
+  /// Obtiene los servicios de un trabajador específico
+  static Future<List<Map<String, dynamic>>> getWorkerServices(String uuid) async {
+    return await WorkerService.getWorkerServices(uuid);
+  }
+
+  /// Agrega un nuevo servicio al perfil del trabajador
+  static Future<Map<String, dynamic>> addWorkerService({
     required String type,
     required String category,
     required String service,
     required double cost,
   }) async {
-    print("ApiService - addWorkerService called,: $type, $category, $service, $cost");
-    return WorkerService.addWorkerService(
+    return await WorkerService.addWorkerService(
       type: type,
       category: category,
       service: service,
       cost: cost,
     );
+  }
+
+  // ==================== SOLICITUDES ====================
+
+  /// Obtiene las solicitudes del usuario actual
+  static Future<List<Map<String, dynamic>>> getMyRequests() async {
+    return await RequestService.getMyRequests();
   }
 }
