@@ -14,7 +14,7 @@ import 'package:soluva/services/api_services/request_service.dart';
 /// TODAS las pantallas deben usar esta clase en lugar de llamar directamente a los servicios
 class ApiService {
   // ==================== TOKEN & AUTH ====================
-  
+
   /// Obtiene el token de autenticación almacenado
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -102,7 +102,7 @@ class ApiService {
   /// Envía una solicitud para convertirse en trabajador
   static Future<http.Response> enviarSolicitudTrabajador({
     required String nationalId,
-    required Map<String, List<String>> trade,
+    required Map<String, dynamic> trade,
     required String taskDescription,
     String? description,
     File? facePhoto,
@@ -142,7 +142,9 @@ class ApiService {
   // ==================== SERVICIOS DEL TRABAJADOR ====================
 
   /// Obtiene los servicios de un trabajador específico
-  static Future<List<Map<String, dynamic>>> getWorkerServices(String uuid) async {
+  static Future<List<Map<String, dynamic>>> getWorkerServices(
+    String uuid,
+  ) async {
     return await WorkerService.getWorkerServices(uuid);
   }
 

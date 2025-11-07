@@ -1,6 +1,6 @@
 import 'dart:io' show File;
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show Category, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
@@ -32,13 +32,16 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   bool _loadingStatus = true;
 
   String? _workerStatus;
-  
+
   // Nueva estructura para 3 niveles
-  Map<String, dynamic> _services = {}; // {categoria: {subcategoria: {servicio: {tipo_costo: ...}}}}
+  Map<String, dynamic> _services =
+      {}; // {categoria: {subcategoria: {servicio: {tipo_costo: ...}}}}
 
   List<String> _selectedCategories = [];
-  Map<String, List<String>> _selectedSubcategoriesByCategory = {}; // {categoria: [subcategorias]}
-  Map<String, Map<String, List<String>>> _selectedServicesBySubcategory = {}; // {categoria: {subcategoria: [servicios]}}
+  Map<String, List<String>> _selectedSubcategoriesByCategory =
+      {}; // {categoria: [subcategorias]}
+  Map<String, Map<String, List<String>>> _selectedServicesBySubcategory =
+      {}; // {categoria: {subcategoria: [servicios]}}
 
   File? _certificationPhoto;
   Uint8List? _webCertificationBytes;
@@ -150,16 +153,18 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         return;
       }
 
-      // Construir el tradeMap en el formato que espera la API
-      // Formato: {subcategoria: [servicios]}
-      Map<String, List<String>> tradeMap = {};
-      
+      Map<String, dynamic> tradeMap = {};
+
       for (String category in _selectedCategories) {
         final subcategories = _selectedSubcategoriesByCategory[category] ?? [];
         for (String subcategory in subcategories) {
-          final services = _selectedServicesBySubcategory[category]?[subcategory] ?? [];
+          final services =
+              _selectedServicesBySubcategory[category]?[subcategory] ?? [];
+          print(subcategory);
+          print(_selectedServicesBySubcategory[category]);
+          print(_selectedServicesBySubcategory[category]?[subcategory]);
           if (services.isNotEmpty) {
-            tradeMap[subcategory] = services;
+            tradeMap = {"categoria": subcategory, "tareas": services};
           }
         }
       }
@@ -205,9 +210,10 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     for (String category in _selectedCategories) {
       final subcategories = _selectedSubcategoriesByCategory[category] ?? [];
       if (subcategories.isEmpty) return false;
-      
+
       for (String subcategory in subcategories) {
-        final services = _selectedServicesBySubcategory[category]?[subcategory] ?? [];
+        final services =
+            _selectedServicesBySubcategory[category]?[subcategory] ?? [];
         if (services.isEmpty) return false;
       }
     }
@@ -263,7 +269,10 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
             child: SingleChildScrollView(
               child: Container(
                 width: 400,
-                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 24,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -330,7 +339,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Selección de CATEGORÍAS
                       _CustomField(
                         label: "Seleccionar categoría:",
@@ -338,7 +347,12 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                           title: const Text("Categoría"),
                           buttonText: const Text("Seleccionar categoría"),
                           items: _services.keys
-                              .map((e) => MultiSelectItem<String>(e, _formatCategoryName(e)))
+                              .map(
+                                (e) => MultiSelectItem<String>(
+                                  e,
+                                  _formatCategoryName(e),
+                                ),
+                              )
                               .toList(),
                           listType: MultiSelectListType.CHIP,
                           initialValue: _selectedCategories,
@@ -354,79 +368,119 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                               );
                             });
                           },
-                          validator: (values) => (values == null || values.isEmpty)
+                          validator: (values) =>
+                              (values == null || values.isEmpty)
                               ? "Selecciona al menos una categoría"
                               : null,
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Para cada categoría seleccionada, mostrar selector de SUBCATEGORÍAS
-                      ..._selectedCategories.map((category) => Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _CustomField(
-                              label: "Subcategorías de ${_formatCategoryName(category)}:",
-                              child: MultiSelectDialogField<String>(
-                                title: Text("Subcategorías de ${_formatCategoryName(category)}"),
-                                buttonText: const Text("Seleccionar subcategorías"),
-                                items: (_services[category] as Map<String, dynamic>).keys
-                                    .map((e) => MultiSelectItem<String>(e, e))
-                                    .toList(),
-                                listType: MultiSelectListType.CHIP,
-                                initialValue: _selectedSubcategoriesByCategory[category] ?? [],
-                                onConfirm: (values) {
-                                  setState(() {
-                                    _selectedSubcategoriesByCategory[category] = List<String>.from(values);
-                                    
-                                    // Elimina servicios de subcategorías deseleccionadas
-                                    if (_selectedServicesBySubcategory[category] != null) {
-                                      _selectedServicesBySubcategory[category]!.removeWhere(
-                                        (key, _) => !_selectedSubcategoriesByCategory[category]!.contains(key),
-                                      );
-                                    }
-                                  });
-                                },
-                                validator: (values) =>
-                                    (values == null || values.isEmpty)
-                                        ? "Selecciona al menos una subcategoría"
-                                        : null,
+                      ..._selectedCategories.map(
+                        (category) => Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _CustomField(
+                                label:
+                                    "Subcategorías de ${_formatCategoryName(category)}:",
+                                child: MultiSelectDialogField<String>(
+                                  title: Text(
+                                    "Subcategorías de ${_formatCategoryName(category)}",
+                                  ),
+                                  buttonText: const Text(
+                                    "Seleccionar subcategorías",
+                                  ),
+                                  items:
+                                      (_services[category]
+                                              as Map<String, dynamic>)
+                                          .keys
+                                          .map(
+                                            (e) =>
+                                                MultiSelectItem<String>(e, e),
+                                          )
+                                          .toList(),
+                                  listType: MultiSelectListType.CHIP,
+                                  initialValue:
+                                      _selectedSubcategoriesByCategory[category] ??
+                                      [],
+                                  onConfirm: (values) {
+                                    setState(() {
+                                      _selectedSubcategoriesByCategory[category] =
+                                          List<String>.from(values);
+
+                                      // Elimina servicios de subcategorías deseleccionadas
+                                      if (_selectedServicesBySubcategory[category] !=
+                                          null) {
+                                        _selectedServicesBySubcategory[category]!
+                                            .removeWhere(
+                                              (key, _) =>
+                                                  !_selectedSubcategoriesByCategory[category]!
+                                                      .contains(key),
+                                            );
+                                      }
+                                    });
+                                  },
+                                  validator: (values) =>
+                                      (values == null || values.isEmpty)
+                                      ? "Selecciona al menos una subcategoría"
+                                      : null,
+                                ),
                               ),
                             ),
-                          ),
-                          
-                          // Para cada subcategoría seleccionada, mostrar selector de SERVICIOS
-                          ...(_selectedSubcategoriesByCategory[category] ?? []).map((subcategory) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _CustomField(
-                              label: "Servicios de $subcategory:",
-                              child: MultiSelectDialogField<String>(
-                                title: Text("Servicios de $subcategory"),
-                                buttonText: const Text("Seleccionar servicios"),
-                                items: ((_services[category] as Map<String, dynamic>)[subcategory] as Map<String, dynamic>).keys
-                                    .map((e) => MultiSelectItem<String>(e, e))
-                                    .toList(),
-                                listType: MultiSelectListType.CHIP,
-                                initialValue: _selectedServicesBySubcategory[category]?[subcategory] ?? [],
-                                onConfirm: (values) {
-                                  setState(() {
-                                    if (_selectedServicesBySubcategory[category] == null) {
-                                      _selectedServicesBySubcategory[category] = {};
-                                    }
-                                    _selectedServicesBySubcategory[category]![subcategory] = List<String>.from(values);
-                                  });
-                                },
-                                validator: (values) =>
-                                    (values == null || values.isEmpty)
+
+                            // Para cada subcategoría seleccionada, mostrar selector de SERVICIOS
+                            ...(_selectedSubcategoriesByCategory[category] ?? []).map(
+                              (subcategory) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _CustomField(
+                                  label: "Servicios de $subcategory:",
+                                  child: MultiSelectDialogField<String>(
+                                    title: Text("Servicios de $subcategory"),
+                                    buttonText: const Text(
+                                      "Seleccionar servicios",
+                                    ),
+                                    items:
+                                        ((_services[category]
+                                                    as Map<
+                                                      String,
+                                                      dynamic
+                                                    >)[subcategory]
+                                                as Map<String, dynamic>)
+                                            .keys
+                                            .map(
+                                              (e) =>
+                                                  MultiSelectItem<String>(e, e),
+                                            )
+                                            .toList(),
+                                    listType: MultiSelectListType.CHIP,
+                                    initialValue:
+                                        _selectedServicesBySubcategory[category]?[subcategory] ??
+                                        [],
+                                    onConfirm: (values) {
+                                      setState(() {
+                                        if (_selectedServicesBySubcategory[category] ==
+                                            null) {
+                                          _selectedServicesBySubcategory[category] =
+                                              {};
+                                        }
+                                        _selectedServicesBySubcategory[category]![subcategory] =
+                                            List<String>.from(values);
+                                      });
+                                    },
+                                    validator: (values) =>
+                                        (values == null || values.isEmpty)
                                         ? "Selecciona al menos un servicio"
                                         : null,
+                                  ),
+                                ),
                               ),
                             ),
-                          )),
-                        ],
-                      )),
-                      
+                          ],
+                        ),
+                      ),
+
                       _CustomField(
                         label: "Certificación / Matrícula:",
                         child: TextFormField(
@@ -460,15 +514,20 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: _webImageBytes != null
-                                    ? Image.memory(_webImageBytes!, fit: BoxFit.cover)
+                                    ? Image.memory(
+                                        _webImageBytes!,
+                                        fit: BoxFit.cover,
+                                      )
                                     : _facePhoto != null
-                                        ? Image.file(_facePhoto!, fit: BoxFit.cover)
-                                        : const Center(
-                                            child: Text(
-                                              "Foto de rostro",
-                                              style: TextStyle(color: Colors.black54),
-                                            ),
+                                    ? Image.file(_facePhoto!, fit: BoxFit.cover)
+                                    : const Center(
+                                        child: Text(
+                                          "Foto de rostro",
+                                          style: TextStyle(
+                                            color: Colors.black54,
                                           ),
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
@@ -484,15 +543,23 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: _webCertificationBytes != null
-                                    ? Image.memory(_webCertificationBytes!, fit: BoxFit.cover)
+                                    ? Image.memory(
+                                        _webCertificationBytes!,
+                                        fit: BoxFit.cover,
+                                      )
                                     : _certificationPhoto != null
-                                        ? Image.file(_certificationPhoto!, fit: BoxFit.cover)
-                                        : const Center(
-                                            child: Text(
-                                              "Foto de documento",
-                                              style: TextStyle(color: Colors.black54),
-                                            ),
+                                    ? Image.file(
+                                        _certificationPhoto!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Center(
+                                        child: Text(
+                                          "Foto de documento",
+                                          style: TextStyle(
+                                            color: Colors.black54,
                                           ),
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
@@ -523,10 +590,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       const SizedBox(height: 12),
                       const Text(
                         "*Una vez enviada la solicitud, aguardar mail con la autorización.",
-                        style: TextStyle(
-                          color: Colors.black54,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.black54, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -554,18 +618,18 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   }
 
   InputDecoration _inputDecoration() => InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
-        ),
-      );
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(24),
+      borderSide: BorderSide(color: AppColors.primary, width: 2),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(24),
+      borderSide: BorderSide(color: AppColors.primary, width: 2),
+    ),
+  );
 }
 
 class _CustomField extends StatelessWidget {

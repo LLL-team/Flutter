@@ -21,7 +21,7 @@ class WorkerService {
   /// Envía una solicitud para convertirse en trabajador
   static Future<http.Response> enviarSolicitudTrabajador({
     required String nationalId,
-    required Map<String, List<String>> trade,
+    required Map<String, dynamic> trade,
     required String taskDescription,
     String? description,
     File? facePhoto,
@@ -31,7 +31,7 @@ class WorkerService {
     required String token,
   }) async {
     final url = Uri.parse('$baseUrl/worker/new');
-    
+
     try {
       var request = http.MultipartRequest('POST', url);
 
@@ -41,11 +41,11 @@ class WorkerService {
       request.fields['national_id'] = nationalId;
       request.fields['trade'] = jsonEncode(trade);
       request.fields['task_description'] = taskDescription;
-      
+
       if (description != null) {
         request.fields['description'] = description;
       }
-      
+
       // Foto de rostro
       if (facePhoto != null) {
         request.files.add(
@@ -66,7 +66,7 @@ class WorkerService {
           ),
         );
       }
-      
+
       // Foto de certificación
       if (certifications != null) {
         request.files.add(
@@ -124,10 +124,7 @@ class WorkerService {
 
     final response = await http.get(
       url,
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Accept': 'application/json',
-      },
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 
     if (response.statusCode == 200) {
@@ -142,12 +139,12 @@ class WorkerService {
     final url = Uri.parse(
       '$baseUrl/workers?trade=${Uri.encodeComponent(category)}',
     );
-    
+
     final response = await http.get(
       url,
       headers: {'Accept': 'application/json'},
     );
-    
+
     if (response.statusCode == 200) {
       return json.decode(response.body) as List<dynamic>;
     } else {
@@ -158,12 +155,12 @@ class WorkerService {
   /// Obtiene información de un trabajador por UUID
   static Future<Map<String, dynamic>> getWorkerByUuid(String id) async {
     final url = Uri.parse('$baseUrl/workers/$id');
-    
+
     final response = await http.get(
       url,
       headers: {'Accept': 'application/json'},
     );
-    
+
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -184,7 +181,7 @@ class WorkerService {
     }
 
     final url = Uri.parse('$baseUrl/workerServices/add');
-    
+
     // Convertir tipo al formato que espera la API
     String apiType = type;
     if (type == "hora") {
@@ -192,7 +189,7 @@ class WorkerService {
     } else if (type == "fijo") {
       apiType = "fixed";
     }
-    
+
     final response = await http.post(
       url,
       headers: {
@@ -207,7 +204,7 @@ class WorkerService {
         'cost': cost,
       }),
     );
-    
+
     if (response.statusCode == 201) {
       return json.decode(response.body);
     } else {
@@ -216,7 +213,9 @@ class WorkerService {
   }
 
   /// Obtiene los servicios de un trabajador
-  static Future<List<Map<String, dynamic>>> getWorkerServices(String uuid) async {
+  static Future<List<Map<String, dynamic>>> getWorkerServices(
+    String uuid,
+  ) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('No hay token de autenticación');
@@ -226,10 +225,7 @@ class WorkerService {
 
     final response = await http.get(
       url,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
