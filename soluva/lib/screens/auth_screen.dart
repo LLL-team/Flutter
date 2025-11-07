@@ -258,11 +258,26 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _handleLogin() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
-    await ApiService.login(email: email, password: password);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => widget.redirectTo ?? const HomePage()),
-    );
+    final data = await ApiService.login(email: email, password: password);
+    if (data != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => widget.redirectTo ?? const HomePage(),
+        ),
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Credenciales incorrectas. Inténtalo nuevamente.'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }
 
