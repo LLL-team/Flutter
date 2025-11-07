@@ -243,16 +243,32 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = emailController.text.trim();
     final password = passwordController.text;
 
-    await ApiService.register(
+    final data = await ApiService.register(
       email: email,
       password: password,
       name: name,
       lastName: lastName,
     );
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => widget.redirectTo ?? const HomePage()),
-    );
+    if (data != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => widget.redirectTo ?? const HomePage(),
+        ),
+      );
+    } else {
+      print("GELLO");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Credenciales invalidas. Inténtalo nuevamente.'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _handleLogin() async {
