@@ -257,7 +257,6 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
       );
     } else {
-      print("GELLO");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

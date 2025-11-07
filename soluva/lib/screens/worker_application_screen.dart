@@ -160,9 +160,6 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         for (String subcategory in subcategories) {
           final services =
               _selectedServicesBySubcategory[category]?[subcategory] ?? [];
-          print(subcategory);
-          print(_selectedServicesBySubcategory[category]);
-          print(_selectedServicesBySubcategory[category]?[subcategory]);
           if (services.isNotEmpty) {
             tradeMap = {"categoria": subcategory, "tareas": services};
           }
