@@ -142,9 +142,33 @@ class HomePage extends StatelessWidget {
                   runSpacing: 16,
                   children: [
                     _CategoryCard(
-                      label: 'AUTOMÓVIL',
-                      icon: Icons.directions_car,
-                      color: AppColors.primary,
+                      imagePath: 'icons/servicios/Boton-I.Aire.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Aire acondicionado',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Albanileria.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Albañilería',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Auto.png',
                       onTap: () {
                         Navigator.push(
                           context,
@@ -156,39 +180,59 @@ class HomePage extends StatelessWidget {
                       },
                     ),
                     _CategoryCard(
-                      label: 'PLOMERÍA',
-                      icon: Icons.plumbing,
-                      color: AppColors.secondary,
+                      imagePath: 'icons/servicios/Boton-I.Bienestar.png',
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const WorkersByCategoryScreen(
-                              category: 'plomer\u00eda',
+                              category: 'Bienestar',
                             ),
                           ),
                         );
                       },
                     ),
                     _CategoryCard(
-                      label: 'JARDINERÍA',
-                      icon: Icons.grass,
-                      color: Colors.green,
+                      imagePath: 'icons/servicios/Boton-I.Carpinteria.png',
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const WorkersByCategoryScreen(
-                              category: 'Jard\u00edn',
+                              category: 'Carpintería',
                             ),
                           ),
                         );
                       },
                     ),
                     _CategoryCard(
-                      label: 'ELECTRICIDAD',
-                      icon: Icons.electrical_services,
-                      color: Colors.yellow.shade700,
+                      imagePath: 'icons/servicios/Boton-I.Cerrajeria.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Cerrajería',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Durlock.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Durlock',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Electricidad.png',
                       onTap: () {
                         Navigator.push(
                           context,
@@ -201,15 +245,130 @@ class HomePage extends StatelessWidget {
                       },
                     ),
                     _CategoryCard(
-                      label: 'LIMPIEZA',
-                      icon: Icons.cleaning_services,
-                      color: Colors.blueGrey,
+                      imagePath: 'icons/servicios/Boton-I.Flete.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Flete',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Gas.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Gas',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Herreria.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Herrería',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.imc.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Informática',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Jardineria.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Service',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Limpieza.png',
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const WorkersByCategoryScreen(
                               category: 'limpieza',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Pintura.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Pintura',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Plomeria.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'plomer\u00eda',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Service.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Jard\u00edn',
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    _CategoryCard(
+                      imagePath: 'icons/servicios/Boton-I.Tutti.png',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WorkersByCategoryScreen(
+                              category: 'Tutti',
                             ),
                           ),
                         );
@@ -241,7 +400,7 @@ class _MainImageButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(
           32,
         ), // opcional, para bordes redondeados
-        child: Image.asset(image, width: 160, height: 170, fit: BoxFit.cover),
+        child: Image.asset(image, width: 210, height: 215, fit: BoxFit.cover),
       ),
     );
   }
@@ -287,52 +446,56 @@ class _StepItem extends StatelessWidget {
 }
 
 class _CategoryCard extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
+  final String imagePath;
   final VoidCallback onTap;
 
   const _CategoryCard({
-    required this.label,
-    required this.icon,
-    required this.color,
+    required this.imagePath,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 150,
-        height: 120,
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.15),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        // Ancho mínimo deseado para cada card
+        const minCardWidth = 150.0;
+
+        // Calcular número de columnas dinámicamente según el ancho disponible
+        final availableWidth = screenWidth - 32; // Restar padding horizontal
+        int columns = (availableWidth / minCardWidth).floor();
+
+        // Asegurar al menos 2 columnas y máximo 6
+        columns = columns.clamp(2, 6);
+
+        // Calcular ancho de card considerando spacing
+        final totalSpacing = 16 * (columns - 1); // spacing entre cards
+        final cardWidth = (availableWidth - totalSpacing) / columns;
+
+        // Altura proporcional al ancho (mantener relación de aspecto)
+        final cardHeight = cardWidth * 0.85;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: cardWidth,
+            height: cardHeight,
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 40),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: AppColors.text,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.contain,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
