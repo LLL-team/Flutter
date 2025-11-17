@@ -263,9 +263,8 @@ class HomePage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const WorkersByCategoryScreen(
-                              category: 'Gas',
-                            ),
+                            builder: (_) =>
+                                const WorkersByCategoryScreen(category: 'Gas'),
                           ),
                         );
                       },
@@ -303,7 +302,7 @@ class HomePage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const WorkersByCategoryScreen(
-                              category: 'Service',
+                              category: 'Jardín',
                             ),
                           ),
                         );
@@ -449,10 +448,7 @@ class _CategoryCard extends StatelessWidget {
   final String imagePath;
   final VoidCallback onTap;
 
-  const _CategoryCard({
-    required this.imagePath,
-    required this.onTap,
-  });
+  const _CategoryCard({required this.imagePath, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -483,15 +479,10 @@ class _CategoryCard extends StatelessWidget {
             width: cardWidth,
             height: cardHeight,
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                imagePath,
-                fit: BoxFit.contain,
-              ),
+              child: Image.asset(imagePath, fit: BoxFit.contain),
             ),
           ),
         );

@@ -57,9 +57,26 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                         child: SizedBox(
                           width: 600,
                           child: Column(
-                            children: _workers
-                                .map((w) => _WorkerCard(worker: w))
-                                .toList(),
+                            children: _workers.isEmpty
+                                ? [
+                                    const Padding(
+                                      padding: EdgeInsets.all(40),
+                                      child: Center(
+                                        child: Text(
+                                          "No se encontraron trabajadores disponibles en esta categoría.",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ]
+                                : _workers
+                                      .map((w) => _WorkerCard(worker: w))
+                                      .toList(),
                           ),
                         ),
                       ),
