@@ -150,20 +150,49 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
   }
 }
 
-class _WorkerCard extends StatelessWidget {
+class _WorkerCard extends StatefulWidget {
   final Map<String, dynamic> worker;
   const _WorkerCard({required this.worker});
 
   @override
+  State<_WorkerCard> createState() => _WorkerCardState();
+}
+
+class _WorkerCardState extends State<_WorkerCard> {
+  bool expanded = false;
+
+  String _formatHour(DateTime t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
+    return "$h:$m";
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Obtengo la lista de servicios del worker (del trade por categoría)
+    final worker = widget.worker;
+
     final services =
-        (worker['trade'] as Map<String, dynamic>?)?.values
-            .expand((s) => (s as List<dynamic>))
+        (worker['services'] as List<dynamic>?)
+            ?.map((s) => s as Map<String, dynamic>)
             .toList() ??
         [];
 
-    // Generamos los 3 días dinámicamente
+    final grouped = <String, List<String>>{};
+    for (var item in services) {
+      final category = item['category'] ?? 'Sin categoría';
+      final service = item['service'] ?? '';
+      grouped.putIfAbsent(category, () => []);
+      grouped[category]!.add(service);
+    }
+
+    final serviceText = grouped.entries
+        .map((entry) {
+          final category = entry.key;
+          final items = entry.value.take(3).join(', ');
+          return "$category: $items";
+        })
+        .join('\n');
+
     final now = DateTime.now();
     final dias = List.generate(3, (i) {
       final date = now.add(Duration(days: i));
@@ -172,12 +201,39 @@ class _WorkerCard extends StatelessWidget {
       return "${_weekdayName(date.weekday)}\n${_formatDate(date)}";
     });
 
-    // Ejemplo de horarios fijos (en la práctica deberías traerlos desde API)
-    final horarios = [
-      ["17:45", "18:30", "19:30"],
-      ["08:30", "09:00", "09:30", "11:00"],
-      ["08:30", "09:00", "09:30", "11:00"],
-    ];
+    final schedules = worker['available_schedules'] as List<dynamic>? ?? [];
+
+    List<List<String>> horarios = List.generate(3, (_) => []);
+
+    for (int i = 0; i < 3; i++) {
+      final dateToCheck = DateTime(now.year, now.month, now.day + i);
+
+      for (var sched in schedules) {
+        final schedDate = DateTime.parse(sched['date']);
+        if (schedDate.year == dateToCheck.year &&
+            schedDate.month == dateToCheck.month &&
+            schedDate.day == dateToCheck.day) {
+          int start = sched['start'];
+          int end = sched['end'];
+
+          List<String> slots = [];
+          DateTime t = DateTime(
+            schedDate.year,
+            schedDate.month,
+            schedDate.day,
+            start,
+            0,
+          );
+
+          while (t.hour < end) {
+            slots.add(_formatHour(t));
+            t = t.add(const Duration(minutes: 30));
+          }
+
+          horarios[i] = slots;
+        }
+      }
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 0),
@@ -185,26 +241,18 @@ class _WorkerCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.0),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         padding: const EdgeInsets.all(18),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Avatar
             CircleAvatar(
               backgroundColor: AppColors.secondary,
               radius: 32,
               child: const Icon(Icons.person, color: Colors.white, size: 40),
             ),
             const SizedBox(width: 18),
-            // Info principal
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +266,7 @@ class _WorkerCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    services.take(3).join(', '),
+                    serviceText,
                     style: const TextStyle(color: AppColors.text, fontSize: 15),
                   ),
                   const SizedBox(height: 6),
@@ -238,14 +286,13 @@ class _WorkerCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Horarios
+
             Container(
               width: 190,
               padding: const EdgeInsets.only(left: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Cabecera de días
                   Row(
                     children: dias
                         .map(
@@ -269,53 +316,41 @@ class _WorkerCard extends StatelessWidget {
                         .toList(),
                   ),
                   const SizedBox(height: 10),
-                  // Horarios
+
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(
-                      horarios.length,
-                      (i) => Expanded(
-                        child: Column(
-                          children: horarios[i]
-                              .map(
-                                (h) => Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 3,
-                                  ),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: AppColors.button,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 4,
-                                      horizontal: 0,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        h,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
+                    children: List.generate(horarios.length, (i) {
+                      final list = horarios[i];
+
+                      return Expanded(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: expanded ? null : 150,
+                          clipBehavior: Clip.hardEdge,
+                          decoration: const BoxDecoration(),
+                          child: expanded
+                              ? Column(
+                                  children: list
+                                      .map((h) => _HorarioItem(h))
+                                      .toList(),
+                                )
+                              : _CollapsedScheduleColumn(list),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ),
+
                   const SizedBox(height: 6),
+
                   TextButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.expand_more, size: 18),
-                    label: const Text(
-                      "Mostrar más",
-                      style: TextStyle(
+                    onPressed: () => setState(() => expanded = !expanded),
+                    icon: Icon(
+                      expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 18,
+                    ),
+                    label: Text(
+                      expanded ? "Mostrar menos" : "Mostrar más",
+                      style: const TextStyle(
                         color: AppColors.text,
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
@@ -331,10 +366,50 @@ class _WorkerCard extends StatelessWidget {
     );
   }
 
-  // Helpers para formatear fecha y nombre del día
-  static String _formatDate(DateTime date) {
-    return "${date.day} ${_monthName(date.month)}";
+  Widget _CollapsedScheduleColumn(List<String> list) {
+    return ClipRect(
+      child: SizedBox(
+        height: 150,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(), // no deja scrollear
+            child: Column(
+              children: list.take(5).map((h) => _HorarioItem(h)).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
   }
+
+  // ítem de horario
+  Widget _HorarioItem(String h) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.button,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Center(
+          child: Text(
+            h,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helpers
+  static String _formatDate(DateTime date) =>
+      "${date.day} ${_monthName(date.month)}";
 
   static String _monthName(int month) {
     const months = [
@@ -355,22 +430,21 @@ class _WorkerCard extends StatelessWidget {
   }
 
   static String _weekdayName(int weekday) {
-    const days = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    const days = ["Lun", "Mar", "Mie", "Jue", "Vie", "Sáb", "Dom"];
     return days[weekday - 1];
   }
 
   Widget _buildStars(num rating) {
-    int fullStars = rating.floor();
-    bool halfStar = (rating - fullStars) >= 0.5;
+    int full = rating.floor();
+    bool half = (rating - full) >= 0.5;
+
     return Row(
       children: List.generate(5, (i) {
-        if (i < fullStars) {
+        if (i < full)
           return const Icon(Icons.star, color: Colors.black87, size: 18);
-        } else if (i == fullStars && halfStar) {
+        if (i == full && half)
           return const Icon(Icons.star_half, color: Colors.black87, size: 18);
-        } else {
-          return const Icon(Icons.star_border, color: Colors.black26, size: 18);
-        }
+        return const Icon(Icons.star_border, color: Colors.black26, size: 18);
       }),
     );
   }
