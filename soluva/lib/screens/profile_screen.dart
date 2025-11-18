@@ -148,9 +148,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildContent() {
     switch (selectedMenu) {
       case 1:
-        // Mis Datos - sin tabs
+        // Mis Datos - con tabs
         return ProfileCardContainer(
-          contentBuilder: (selectedTab) => const ProfileMisDatos(),
+          tabs: const ['Perfil', 'Servicios', 'Horarios'],
+          contentBuilder: (selectedTab) =>
+              ProfileMisDatos(selectedTab: selectedTab),
         );
 
       case 2:
