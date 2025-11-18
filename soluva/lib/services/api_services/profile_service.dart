@@ -21,13 +21,10 @@ class ProfileService {
     if (token == null) {
       return null;
     }
-    
+
     final response = await http.get(
       Uri.parse('$baseUrl/profile/myProfile'),
-      headers: {
-        "Accept": "application/json",
-        "Authorization": "Bearer $token",
-      },
+      headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
     );
 
     if (response.statusCode == 200) {
@@ -63,5 +60,26 @@ class ProfileService {
     );
 
     return response.statusCode == 200;
+  }
+
+  static Future<List<Map<String, dynamic>>> getNotifications() async {
+    final token = await _getToken();
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/notification/getNotifications'),
+      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Error obteniendo notificaciones');
+    }
+
+    final List<dynamic> decoded = json.decode(response.body);
+
+    final List<Map<String, dynamic>> notis = decoded
+        .map((e) => e as Map<String, dynamic>)
+        .toList();
+
+    return notis;
   }
 }

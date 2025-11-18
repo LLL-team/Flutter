@@ -75,6 +75,11 @@ class ApiService {
     );
   }
 
+  ///Obtiene las notificaciones (Como esta en el perfil lo pongo aca sino lo movemos a otro servicio)
+  static Future<List<Map<String, dynamic>>> getNotifications() async {
+    return await ProfileService.getNotifications();
+  }
+
   // ==================== IMÁGENES ====================
 
   /// Sube una imagen de perfil

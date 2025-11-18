@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 
@@ -47,56 +48,80 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
   //     _loading = false;
   //   });
   // }
-Future<void> _loadNotifications() async {
-  setState(() => _loading = true);
-  // Simulación de carga - reemplazar con llamada a API
-  await Future.delayed(const Duration(seconds: 1));
-  setState(() {
-    _notifications = [
-      {
-        'date': DateTime.now().subtract(const Duration(hours: 2)),
-        'message': 'Carlos López ha aceptado tu solicitud de limpieza general.',
-        'type': 'accepted',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 1, hours: 3)),
-        'message': 'Ana Torres ha rechazado tu solicitud de plomería.',
-        'type': 'rejected',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 2, hours: 5)),
-        'message': 'Javier Pérez no respondió a tu solicitud de jardinería.',
-        'type': 'no_response',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 3)),
-        'message': 'Tu solicitud de mantenimiento eléctrico fue completada.',
-        'type': 'accepted',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 4)),
-        'message': 'Tu pago por el servicio de limpieza fue confirmado.',
-        'type': 'accepted',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 6)),
-        'message': 'María González ha rechazado tu solicitud de pintura.',
-        'type': 'rejected',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 8)),
-        'message': 'El trabajador Pablo Díaz no aceptó tu solicitud de gasista.',
-        'type': 'no_response',
-      },
-      {
-        'date': DateTime.now().subtract(const Duration(days: 10)),
-        'message': 'Tu solicitud de jardinería fue completada con éxito.',
-        'type': 'accepted',
-      },
-    ];
-    _loading = false;
-  });
-}
+
+  Future<void> _loadNotifications() async {
+    setState(() => _loading = true);
+
+    await Future.delayed(const Duration(seconds: 1));
+
+    final notifs = await ApiService.getNotifications();
+
+    setState(() {
+      _notifications = notifs.map((n) {
+        return {
+          'date': DateTime.parse(n['date']),
+          'message': n['body'],
+          'type': n['type'],
+        };
+      }).toList();
+
+      _loading = false;
+    });
+  }
+  /*
+  Future<void> _loadNotifications() async {
+    setState(() => _loading = true);
+    // Simulación de carga - reemplazar con llamada a API
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {
+     _notifications = [
+        {
+          'date': DateTime.now().subtract(const Duration(hours: 2)),
+          'message':
+              'Carlos López ha aceptado tu solicitud de limpieza general.',
+          'type': 'accepted',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 1, hours: 3)),
+          'message': 'Ana Torres ha rechazado tu solicitud de plomería.',
+          'type': 'rejected',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 2, hours: 5)),
+          'message': 'Javier Pérez no respondió a tu solicitud de jardinería.',
+          'type': 'no_response',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 3)),
+          'message': 'Tu solicitud de mantenimiento eléctrico fue completada.',
+          'type': 'accepted',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 4)),
+          'message': 'Tu pago por el servicio de limpieza fue confirmado.',
+          'type': 'accepted',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 6)),
+          'message': 'María González ha rechazado tu solicitud de pintura.',
+          'type': 'rejected',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 8)),
+          'message':
+              'El trabajador Pablo Díaz no aceptó tu solicitud de gasista.',
+          'type': 'no_response',
+        },
+        {
+          'date': DateTime.now().subtract(const Duration(days: 10)),
+          'message': 'Tu solicitud de jardinería fue completada con éxito.',
+          'type': 'accepted',
+        },
+      ];
+    
+      _loading = false;
+    });
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -117,9 +142,7 @@ Future<void> _loadNotifications() async {
       padding: EdgeInsets.zero,
       itemCount: _notifications.length,
       itemBuilder: (context, index) {
-        return _NotificationCard(
-          notification: _notifications[index],
-        );
+        return _NotificationCard(notification: _notifications[index]);
       },
     );
   }
@@ -188,10 +211,7 @@ class _NotificationCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   message,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: AppColors.text,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: AppColors.text),
                 ),
               ],
             ),
