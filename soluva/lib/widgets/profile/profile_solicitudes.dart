@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:intl/intl.dart';
+import 'package:soluva/services/api_services/request_service.dart';
 
 class ProfileSolicitudes extends StatefulWidget {
   final String? selectedTab;
@@ -21,24 +22,25 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
     _loadRequests();
   }
 
-  // Future<void> _loadRequests() async {
-  //   setState(() => _loading = true);
-  //   try {
-  //     final requests = await RequestService.getMyRequests();
-  //     setState(() {
-  //       _requests = requests;
-  //       _loading = false;
-  //     });
-  //   } catch (e) {
-  //     setState(() => _loading = false);
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text('Error al cargar solicitudes: $e')),
-  //       );
-  //     }
-  //   }
-  // }
   Future<void> _loadRequests() async {
+    setState(() => _loading = true);
+    try {
+      final requests = await RequestService.getMyRequests();
+
+      setState(() {
+        _requests = requests;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar solicitudes: $e')),
+        );
+      }
+    }
+  }
+  /**Future<void> _loadRequests() async {
   setState(() => _loading = true);
   // Simulación de carga - reemplazar con llamada a API
   await Future.delayed(const Duration(seconds: 1));
@@ -111,7 +113,7 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
     _loading = false;
   });
 }
-
+*/
 
   List<Map<String, dynamic>> get _filteredRequests {
     final tab = widget.selectedTab ?? 'Todos';
@@ -262,8 +264,10 @@ class _RequestCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16),
               child: Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E3A4A),
                     borderRadius: BorderRadius.circular(24),
@@ -284,8 +288,10 @@ class _RequestCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 16),
               child: Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.secondary,
                     borderRadius: BorderRadius.circular(24),
@@ -332,8 +338,10 @@ class _RequestCard extends StatelessWidget {
                   OutlinedButton(
                     onPressed: () => _showConfirmationDialog(context, false),
                     style: OutlinedButton.styleFrom(
-                      side:
-                          const BorderSide(color: AppColors.secondary, width: 2),
+                      side: const BorderSide(
+                        color: AppColors.secondary,
+                        width: 2,
+                      ),
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 12,
@@ -409,7 +417,8 @@ class _RequestCard extends StatelessWidget {
                 _RatingRow(
                   label: 'Calidad de trabajo',
                   rating: qualityRating,
-                  onRatingChanged: (r) => setDialogState(() => qualityRating = r),
+                  onRatingChanged: (r) =>
+                      setDialogState(() => qualityRating = r),
                 ),
                 const SizedBox(height: 20),
                 _RatingRow(
@@ -422,7 +431,8 @@ class _RequestCard extends StatelessWidget {
                 _RatingRow(
                   label: 'Amabilidad',
                   rating: kindnessRating,
-                  onRatingChanged: (r) => setDialogState(() => kindnessRating = r),
+                  onRatingChanged: (r) =>
+                      setDialogState(() => kindnessRating = r),
                 ),
                 const SizedBox(height: 24),
                 TextField(
@@ -431,8 +441,9 @@ class _RequestCard extends StatelessWidget {
                   style: const TextStyle(color: AppColors.text),
                   decoration: InputDecoration(
                     hintText: 'Comentarios (opcional)',
-                    hintStyle:
-                        TextStyle(color: AppColors.secondary.withOpacity(0.6)),
+                    hintStyle: TextStyle(
+                      color: AppColors.secondary.withOpacity(0.6),
+                    ),
                     filled: true,
                     fillColor: const Color(0xFFEAE6DB),
                     border: OutlineInputBorder(
@@ -514,8 +525,9 @@ class _RequestCard extends StatelessWidget {
                 style: const TextStyle(color: AppColors.text),
                 decoration: InputDecoration(
                   hintText: 'Describir inconveniente',
-                  hintStyle:
-                      TextStyle(color: AppColors.secondary.withOpacity(0.6)),
+                  hintStyle: TextStyle(
+                    color: AppColors.secondary.withOpacity(0.6),
+                  ),
                   filled: true,
                   fillColor: const Color(0xFFEAE6DB),
                   border: OutlineInputBorder(
@@ -527,10 +539,7 @@ class _RequestCard extends StatelessWidget {
               const SizedBox(height: 12),
               const Text(
                 '*A la brevedad, analizaremos la situación\npara brindarte una respuesta',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: Colors.white70, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -637,11 +646,11 @@ class _StatusProgress extends StatelessWidget {
       {'label': 'Pendiente de\nconfirmación', 'icon': Icons.schedule},
       {
         'label': 'Confirmado,\nEsperando visita',
-        'icon': Icons.check_circle_outline
+        'icon': Icons.check_circle_outline,
       },
       {
         'label': 'Prestador\ncomunica la finalización\ndel servicio',
-        'icon': Icons.verified_outlined
+        'icon': Icons.verified_outlined,
       },
       {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
     ];

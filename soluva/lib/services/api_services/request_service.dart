@@ -12,7 +12,7 @@ class RequestService {
     if (token == null) return [];
 
     final response = await http.get(
-      Uri.parse('$baseUrl/request/request'),
+      Uri.parse('$baseUrl/request/myRequest'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -20,11 +20,32 @@ class RequestService {
     );
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data is List) {
-        return List<Map<String, dynamic>>.from(data);
-      }
+      final decoded = jsonDecode(response.body);
+
+      final list = decoded is Map && decoded['data'] is List
+          ? decoded['data']
+          : decoded;
+
+      final List rawList = list is List ? list : [];
+
+      return rawList.map<Map<String, dynamic>>((item) {
+        final worker = item['worker']?['user'];
+        final workerName = worker != null
+            ? "${worker['name']} ${worker['last_name']}"
+            : "Trabajador";
+
+        return {
+          "worker_name": workerName,
+          "service": item["type"],
+          "created_at": item["date"],
+          "scheduled_date": item["date"],
+          "status": item["status"],
+          "cost": item["amount"],
+          "rejected": false,
+        };
+      }).toList();
     }
+
     return [];
   }
 }
