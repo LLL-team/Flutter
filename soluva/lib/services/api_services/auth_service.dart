@@ -2,9 +2,24 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../notidication_services/Firebase_notification_service.dart';
+import 'package:flutter/foundation.dart';
+import 'api_service.dart';
 
 class AuthService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
+
+  static final ValueNotifier<bool> isLoggedIn = ValueNotifier(false);
+
+  static Future<void> initialize() async {
+    final bool tokenValido = await ApiService.verifyToken();
+
+    if (tokenValido) {
+      handleAuthenticated();
+    } else {
+      await clearAuthData();
+    }
+  }
 
   static Future<Map<String, dynamic>?> login({
     required String email,
@@ -89,5 +104,33 @@ class AuthService {
     } else {
       // print("Logout failed: ${response.statusCode} - ${response.body}");
     }
+  }
+
+  static Future<bool> verifyToken() async {
+    final token = await ApiService.getToken();
+    if (token == null) return false;
+
+    final response = await http.get(
+      Uri.parse("$baseUrl/auth/verifyToken"),
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  static Future<void> handleAuthenticated() async {
+    //final controller = NotificationController();
+    //controller.init();
+    //isLoggedIn.value = true;
+    await FirebaseService.initialize();
+  }
+
+  static Future<void> clearAuthData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_name');
   }
 }

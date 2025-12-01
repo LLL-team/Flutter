@@ -37,7 +37,7 @@ class FirebaseService {
       // 🔹 Obtiene token FCM
       final token = await _messaging.getToken(
         vapidKey:
-            "BJWlRVGdM8rG3KnlGPcMbpPRi4WkYTzE3jpEo7FApWgrbvyHFdWQpk1EsivxHBIdq-2tKyqQHxnxPxCAjXWlm9E ", // lo obtenés desde Firebase Console
+            "BJDJkQvLz5N8nNP_8d6NMwKAHhs3JBr6L27i6rRxsHu8tUBnl1HCC8jI3yEbSLue6IziHJGsGi67c6cK3WUqTFA",
       );
       print("✅ Token FCM Web: $token");
 

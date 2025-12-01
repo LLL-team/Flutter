@@ -55,6 +55,10 @@ class ApiService {
     await AuthService.logout();
   }
 
+  static Future<bool> verifyToken() async {
+    return await AuthService.verifyToken();
+  }
+
   // ==================== PERFIL DE USUARIO ====================
 
   /// Obtiene el perfil del usuario actual
