@@ -8,8 +8,35 @@ import 'package:soluva/screens/workers_list_screen.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/theme/app_colors.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToCategories() {
+    _scrollController.animateTo(
+      750, // Ajusta este valor según la altura donde comienzan las categorías
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +59,7 @@ class HomePage extends StatelessWidget {
           // Imagen de fondo encima
           Positioned.fill(child: Image.asset(fondoPath, fit: BoxFit.cover)),
           ListView(
+            controller: _scrollController, // Agregar el controller aquí
             padding: const EdgeInsets.all(0),
             children: [
               const SizedBox(height: 24),
@@ -69,12 +97,7 @@ class HomePage extends StatelessWidget {
                   _MainImageButton(
                     image: searchServiceBtn,
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SearchWorkersScreen(),
-                        ),
-                      );
+                      _scrollToCategories(); // Llamar al método de scroll
                     },
                   ),
                 ],
