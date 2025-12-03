@@ -15,7 +15,7 @@ class UtilsService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body) as Map<String, dynamic>;
-      
+
       // Retornar directamente la estructura completa de 3 niveles
       return data;
     } else {

@@ -2,6 +2,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 class UserService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
@@ -53,6 +54,28 @@ class UserService {
       return response.bodyBytes;
     } else {
       throw Exception('Error al obtener la foto del usuario');
+    }
+  }
+
+  static Future<void> sendFCMTokenToServer(String token) async {
+    final url = Uri.parse('$baseUrl/user/fcm-token');
+
+    final sectoken = await _getToken();
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/notification/updateFcmToken'),
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $sectoken",
+      },
+      body: jsonEncode({"token": token}),
+    );
+
+    if (response.statusCode == 200) {
+      print('Token FCM enviado al servidor correctamente');
+    } else {
+      print('Error al enviar el token FCM: ${response.statusCode}');
     }
   }
 }

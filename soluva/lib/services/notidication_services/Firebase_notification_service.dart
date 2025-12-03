@@ -2,6 +2,7 @@ import 'dart:html' as html;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import '../api_services/api_service.dart';
 
 class FirebaseService {
   static bool _initialized = false;
@@ -41,6 +42,7 @@ class FirebaseService {
       );
       print("✅ Token FCM Web: $token");
 
+      if (token != null) ApiService.sendFCMTokenToServer(token);
       // 🔹 Escucha mensajes en primer plano
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         print("Notificación recibida:");

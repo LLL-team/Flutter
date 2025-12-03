@@ -178,4 +178,10 @@ class ApiService {
   static Future<List<Map<String, dynamic>>> getMyRequests() async {
     return await RequestService.getMyRequests();
   }
+
+  // ==================== TOKEN FCM ====================
+  /// Envía el token FCM al servidor
+  static Future<void> sendFCMTokenToServer(String token) async {
+    return await UserService.sendFCMTokenToServer(token);
+  }
 }
