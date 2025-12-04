@@ -175,7 +175,7 @@ class ApiService {
   // ==================== SOLICITUDES ====================
 
   /// Obtiene las solicitudes del usuario actual
-  static Future<List<Map<String, dynamic>>> getMyRequests() async {
+  static Future<Map<String, dynamic>> getMyRequests() async {
     return await RequestService.getMyRequests();
   }
 

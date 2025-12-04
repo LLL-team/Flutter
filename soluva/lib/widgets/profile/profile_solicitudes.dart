@@ -15,105 +15,60 @@ class ProfileSolicitudes extends StatefulWidget {
 class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
   List<Map<String, dynamic>> _requests = [];
   bool _loading = true;
+  int _page = 1;
+  int _lastPage = 1;
+  bool _loadingMore = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadRequests();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        _loadMore();
+      }
+    });
   }
 
   Future<void> _loadRequests() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _page = 1;
+    });
+
     try {
-      final requests = await RequestService.getMyRequests();
+      final result = await RequestService.getMyRequests(page: _page);
 
       setState(() {
-        _requests = requests;
+        _requests = result['data'];
+        _lastPage = result['last_page'];
         _loading = false;
       });
     } catch (e) {
       setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al cargar solicitudes: $e')),
-        );
-      }
     }
   }
-  /**Future<void> _loadRequests() async {
-  setState(() => _loading = true);
-  // Simulación de carga - reemplazar con llamada a API
-  await Future.delayed(const Duration(seconds: 1));
-  setState(() {
-    _requests = [
-      {
-        'worker_name': 'Carlos López',
-        'service': 'Limpieza general',
-        'created_at': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 2)).toIso8601String(),
-        'status': 'pending',
-        'cost': 120.0,
-        'rejected': false,
-      },
-      {
-        'worker_name': 'Ana Torres',
-        'service': 'Reparación eléctrica',
-        'created_at': DateTime.now().subtract(const Duration(hours: 5)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 3)).toIso8601String(),
-        'status': 'in_progress',
-        'cost': 150.0,
-        'rejected': false,
-      },
-      {
-        'worker_name': 'Javier Pérez',
-        'service': 'Instalación de plomería',
-        'created_at': DateTime.now().subtract(const Duration(days: 1, hours: 2)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
-        'status': 'completed',
-        'cost': 200.0,
-        'rejected': false,
-      },
-      {
-        'worker_name': 'María González',
-        'service': 'Pintura interior',
-        'created_at': DateTime.now().subtract(const Duration(days: 2)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 4)).toIso8601String(),
-        'status': 'completed',
-        'cost': 180.0,
-        'rejected': false,
-      },
-      {
-        'worker_name': 'Pablo Díaz',
-        'service': 'Jardinería',
-        'created_at': DateTime.now().subtract(const Duration(days: 3)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 5)).toIso8601String(),
-        'status': 'confirmed',
-        'cost': 80.0,
-        'rejected': false,
-      },
-      {
-        'worker_name': 'Lucía Méndez',
-        'service': 'Desinfección',
-        'created_at': DateTime.now().subtract(const Duration(days: 4)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 6)).toIso8601String(),
-        'status': 'provider_completed',
-        'cost': 250.0,
-        'rejected': false,
-      },
-      {
-        'worker_name': 'Juan Pérez',
-        'service': 'Electricidad',
-        'created_at': DateTime.now().subtract(const Duration(days: 6)).toIso8601String(),
-        'scheduled_date': DateTime.now().add(const Duration(days: 1)).toIso8601String(),
-        'status': 'in_progress',
-        'cost': 90.0,
-        'rejected': true,
-      },
-    ];
-    _loading = false;
-  });
-}
-*/
+
+  Future<void> _loadMore() async {
+    if (_loadingMore || _page >= _lastPage) return;
+
+    setState(() => _loadingMore = true);
+
+    try {
+      _page++;
+      final result = await RequestService.getMyRequests(page: _page);
+
+      setState(() {
+        _requests.addAll(result['data']);
+        _loadingMore = false;
+      });
+    } catch (_) {
+      setState(() => _loadingMore = false);
+    }
+  }
 
   List<Map<String, dynamic>> get _filteredRequests {
     final tab = widget.selectedTab ?? 'Todos';
@@ -142,9 +97,31 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
     }
 
     return ListView.builder(
+      controller: _scrollController,
       padding: EdgeInsets.zero,
-      itemCount: _filteredRequests.length,
+      itemCount: _filteredRequests.length + 1,
       itemBuilder: (context, index) {
+        if (index == _filteredRequests.length) {
+          if (_loadingMore) {
+            return const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (_page < _lastPage) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: _loadMore,
+                  child: const Text("Cargar más"),
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+
         return _RequestCard(
           request: _filteredRequests[index],
           onUpdate: _loadRequests,
