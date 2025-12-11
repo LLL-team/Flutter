@@ -144,7 +144,11 @@ class _RequestCard extends StatelessWidget {
     final createdAt = request['created_at'] ?? '';
     final scheduledDate = request['scheduled_date'] ?? '';
     final status = request['status']?.toString().toLowerCase() ?? 'pending';
-    final cost = request['cost'] ?? 0;
+
+    // El cost viene como string desde el servicio
+    final costStr = request['cost']?.toString() ?? '0';
+    final cost = double.tryParse(costStr) ?? 0.0;
+
     final isRejected = request['rejected'] == true;
 
     DateTime? created;
@@ -223,7 +227,7 @@ class _RequestCard extends StatelessWidget {
                     ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$${cost.toStringAsFixed(3)}',
+                    '\$${cost.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

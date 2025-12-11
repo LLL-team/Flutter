@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:soluva/screens/auth_screen.dart';
-import 'package:soluva/screens/search_workers_screen.dart';
+// import 'package:soluva/screens/search_workers_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
 import 'package:soluva/widgets/header_widget.dart';
@@ -44,7 +44,7 @@ class _HomePageState extends State<HomePage> {
         dotenv.env['default_cover_webp'] ?? 'assets/images/fondo-inicio.webp';
     final offerServiceBtn =
         dotenv.env['offer_service_button'] ??
-        'assets/images/boton_ofrecer_servicio.webp';
+        'assets/images/boton_ofrecer_servicio.png';
     final searchServiceBtn =
         dotenv.env['search_service_button'] ??
         'assets/images/boton_buscar_servicio.webp';
@@ -416,13 +416,27 @@ class _MainImageButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Calcular el ancho del botón como el 40% del ancho de la pantalla
+    // restando el espacio entre botones y los márgenes
+    final buttonWidth = (screenWidth - 48) * 0.45; // 48 = espaciado aproximado
+    final buttonHeight = buttonWidth * 1.02; // Mantener relación de aspecto similar a 210:215
+
+    // Establecer límites mínimos y máximos para evitar tamaños extremos
+    final finalWidth = buttonWidth.clamp(150.0, 250.0);
+    final finalHeight = buttonHeight.clamp(153.0, 255.0);
+
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(
-          32,
-        ), // opcional, para bordes redondeados
-        child: Image.asset(image, width: 210, height: 215, fit: BoxFit.cover),
+        borderRadius: BorderRadius.circular(32),
+        child: Image.asset(
+          image,
+          width: finalWidth,
+          height: finalHeight,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }
