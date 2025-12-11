@@ -149,7 +149,7 @@ class _RequestCard extends StatelessWidget {
     final costStr = request['cost']?.toString() ?? '0';
     final cost = double.tryParse(costStr) ?? 0.0;
 
-    final isRejected = request['rejected'] == true;
+    final isRejected = status == 'rejected' || request['rejected'] == true;
 
     DateTime? created;
     DateTime? scheduled;
@@ -159,8 +159,15 @@ class _RequestCard extends StatelessWidget {
     } catch (_) {}
 
     Color backgroundColor = Colors.white;
+    Color borderColor = Colors.grey[200]!;
+    double borderWidth = 1;
+
     if (status == 'completed') {
       backgroundColor = const Color(0xFFEAE6DB).withOpacity(0.8);
+    } else if (status == 'worker_completed' || status == 'provider_completed') {
+      backgroundColor = const Color(0xFFFFF4E6); // Color naranja claro para llamar la atención
+      borderColor = AppColors.secondary; // Borde naranja para llamar más la atención
+      borderWidth = 2;
     }
 
     return Container(
@@ -169,7 +176,7 @@ class _RequestCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,56 +246,52 @@ class _RequestCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _StatusProgress(status: status),
+          _StatusProgress(status: status, isRejected: isRejected),
+          const SizedBox(height: 16),
+          // Mostrar botón de estado según el estado de la solicitud
           if (isRejected)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 48,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E3A4A),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Text(
+                  'Solicitud rechazada',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A4A),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Text(
-                    'Solicitud rechazada',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
+                ),
+              ),
+            )
+          else if (status == 'completed')
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 48,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E3A4A),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Text(
+                  'Finalizado',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
                   ),
                 ),
               ),
             ),
-          if (status == 'completed' && !isRejected)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.secondary,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Text(
-                    'Solicitud de trabajo finalizada',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          if (status == 'provider_completed')
+          if (status == 'provider_completed' || status == 'worker_completed')
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Row(
@@ -612,15 +615,16 @@ class _RatingRow extends StatelessWidget {
 
 class _StatusProgress extends StatelessWidget {
   final String status;
+  final bool isRejected;
 
-  const _StatusProgress({required this.status});
+  const _StatusProgress({required this.status, this.isRejected = false});
 
   @override
   Widget build(BuildContext context) {
     int currentStep = 0;
-    if (status == 'confirmed') currentStep = 1;
+    if (status == 'confirmed' || status == 'accepted') currentStep = 1;
     if (status == 'in_progress') currentStep = 2;
-    if (status == 'provider_completed') currentStep = 2;
+    if (status == 'provider_completed' || status == 'worker_completed') currentStep = 2;
     if (status == 'completed') currentStep = 3;
 
     final steps = [
@@ -641,6 +645,21 @@ class _StatusProgress extends StatelessWidget {
         final isActive = index <= currentStep;
         final isLast = index == steps.length - 1;
 
+        // Colores especiales si la solicitud fue rechazada
+        final rejectedColor = const Color(0xFF1E3A4A);
+
+        final Color iconColor = isRejected
+            ? (isActive ? rejectedColor : Colors.grey[400]!)
+            : (isActive ? AppColors.secondary : Colors.grey[400]!);
+
+        final Color textColor = isRejected
+            ? (isActive ? rejectedColor : Colors.grey[500]!)
+            : (isActive ? AppColors.text : Colors.grey[500]!);
+
+        final Color lineColor = isRejected
+            ? (isActive ? rejectedColor : Colors.grey[300]!)
+            : (isActive ? AppColors.secondary : Colors.grey[300]!);
+
         return Expanded(
           child: Row(
             children: [
@@ -649,7 +668,7 @@ class _StatusProgress extends StatelessWidget {
                   children: [
                     Icon(
                       steps[index]['icon'] as IconData,
-                      color: isActive ? AppColors.secondary : Colors.grey[400],
+                      color: iconColor,
                       size: 24,
                     ),
                     const SizedBox(height: 8),
@@ -658,7 +677,7 @@ class _StatusProgress extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 11,
-                        color: isActive ? AppColors.text : Colors.grey[500],
+                        color: textColor,
                         height: 1.3,
                       ),
                     ),
@@ -670,7 +689,7 @@ class _StatusProgress extends StatelessWidget {
                   height: 2,
                   width: 20,
                   margin: const EdgeInsets.only(bottom: 40),
-                  color: isActive ? AppColors.secondary : Colors.grey[300],
+                  color: lineColor,
                 ),
             ],
           ),

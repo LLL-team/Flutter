@@ -32,14 +32,16 @@ class RequestService {
             ? "${worker['name']} ${worker['last_name']}"
             : "Trabajador";
 
+        final status = item["status"]?.toString().toLowerCase() ?? 'pending';
+
         return {
           "worker_name": workerName,
           "service": item["type"],
           "created_at": item["date"],
           "scheduled_date": item["date"],
-          "status": item["status"],
+          "status": status,
           "cost": item["amount"],
-          "rejected": false,
+          "rejected": status == 'rejected',
         };
       }).toList();
 
