@@ -99,23 +99,27 @@ class _AuthScreenState extends State<AuthScreen> {
                           _CustomTextField(
                             controller: nameController,
                             hint: 'Nombre',
+                            onSubmitted: (_) => _handleRegister(),
                           ),
                           const SizedBox(height: 16),
                           _CustomTextField(
                             controller: lastNameController,
                             hint: 'Apellido',
+                            onSubmitted: (_) => _handleRegister(),
                           ),
                           const SizedBox(height: 16),
                         ],
                         _CustomTextField(
                           controller: emailController,
                           hint: 'Email',
+                          onSubmitted: (_) => isSignIn ? _handleLogin() : _handleRegister(),
                         ),
                         const SizedBox(height: 16),
                         _CustomTextField(
                           controller: passwordController,
                           hint: 'Contraseña',
                           obscure: true,
+                          onSubmitted: (_) => isSignIn ? _handleLogin() : _handleRegister(),
                         ),
                         if (!isSignIn) ...[
                           const SizedBox(height: 8),
@@ -300,11 +304,13 @@ class _CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final bool obscure;
+  final void Function(String)? onSubmitted;
 
   const _CustomTextField({
     required this.controller,
     required this.hint,
     this.obscure = false,
+    this.onSubmitted,
   });
 
   @override
@@ -312,6 +318,8 @@ class _CustomTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscure,
+      onSubmitted: onSubmitted,
+      textInputAction: TextInputAction.done,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
