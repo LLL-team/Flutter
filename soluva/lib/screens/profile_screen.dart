@@ -75,7 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMobile = screenWidth < 650;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isWorker ? AppColors.secondary : AppColors.background,
       appBar: const HeaderWidget(),
       body: isMobile
           ? _buildMobileLayout(fullName, email, avatar)

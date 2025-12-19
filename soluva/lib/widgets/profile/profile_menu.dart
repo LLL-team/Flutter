@@ -30,14 +30,14 @@ class ProfileMenu extends StatelessWidget {
   Widget _buildDesktopMenu() {
     return Container(
       width: 220,
-      color: AppColors.background,
+      color: isWorker ? AppColors.secondary : AppColors.background,
       child: Column(
         children: [
           const SizedBox(height: 40),
           // Avatar circular grande
           CircleAvatar(
             radius: 60,
-            backgroundColor: AppColors.secondary,
+            backgroundColor: isWorker ? AppColors.secondary : AppColors.background,
             backgroundImage: avatar,
             child: avatar == null
                 ? const Icon(Icons.person, size: 70, color: Colors.white)
