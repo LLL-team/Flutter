@@ -9,6 +9,7 @@ class ProfileMenu extends StatelessWidget {
   final ValueChanged<int> onMenuChanged;
   final bool isMobile;
   final bool isWorker;
+  final bool viewingAsWorker;
 
   const ProfileMenu({
     super.key,
@@ -18,6 +19,7 @@ class ProfileMenu extends StatelessWidget {
     required this.selectedMenu,
     required this.onMenuChanged,
     required this.isWorker,
+    required this.viewingAsWorker,
     this.isMobile = false,
   });
 
@@ -30,14 +32,14 @@ class ProfileMenu extends StatelessWidget {
   Widget _buildDesktopMenu() {
     return Container(
       width: 220,
-      color: isWorker ? AppColors.secondary : AppColors.background,
+      color: viewingAsWorker ? AppColors.secondary : AppColors.background,
       child: Column(
         children: [
           const SizedBox(height: 40),
           // Avatar circular grande
           CircleAvatar(
             radius: 60,
-            backgroundColor: isWorker ? AppColors.secondary : AppColors.background,
+            backgroundColor: viewingAsWorker ? AppColors.secondary : AppColors.background,
             backgroundImage: avatar,
             child: avatar == null
                 ? const Icon(Icons.person, size: 70, color: Colors.white)
@@ -67,11 +69,17 @@ class ProfileMenu extends StatelessWidget {
           _menuButton("Solicitudes", 2),
           _menuButton("Formas de pago", 3),
           _menuButton("Notificaciones", 4),
-          // Botón destacado de inscripción solo si NO es trabajador
-          if (!isWorker) ...[
-            const SizedBox(height: 20),
-            _highlightedMenuButton("Inscripción\ncomo trabajador", 5),
-          ],
+          const SizedBox(height: 20),
+          // Mostrar botón según el estado
+          if (!isWorker)
+            // Si NO es trabajador, mostrar botón de inscripción
+            _highlightedMenuButton("Inscripción\ncomo trabajador", 5, AppColors.secondary)
+          else if (!viewingAsWorker)
+            // Si ES trabajador y está viendo perfil normal, mostrar botón para ir a perfil trabajador
+            _highlightedMenuButton("Ver perfil de\ntrabajador", 5, AppColors.secondary)
+          else
+            // Si está viendo perfil de trabajador, mostrar botón para volver a perfil normal
+            _highlightedMenuButton("Ver perfil de\nusuario", 6, const Color(0xFF4A90E2)),
         ],
       ),
     );
@@ -110,8 +118,11 @@ class ProfileMenu extends StatelessWidget {
     );
   }
 
-  Widget _highlightedMenuButton(String text, int index) {
+  Widget _highlightedMenuButton(String text, int index, Color baseColor) {
     final selected = selectedMenu == index;
+    // Generar color complementario para el gradiente
+    final endColor = Color.lerp(baseColor, Colors.orange, 0.3) ?? baseColor;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Material(
@@ -124,16 +135,16 @@ class ProfileMenu extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: selected 
-                    ? [AppColors.secondary, const Color(0xFFFF6B35)]
-                    : [AppColors.secondary.withOpacity(0.9), const Color(0xFFFF6B35).withOpacity(0.9)],
+                colors: selected
+                    ? [baseColor, endColor]
+                    : [baseColor.withOpacity(0.9), endColor.withOpacity(0.9)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.secondary.withOpacity(0.4),
+                  color: baseColor.withOpacity(0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -169,8 +180,16 @@ class ProfileMenu extends StatelessWidget {
             _mobileTab("Solicitudes", 2),
             _mobileTab("Pago", 3),
             _mobileTab("Notificaciones", 4),
-            // Mostrar opción de inscripción solo si NO es trabajador
-            if (!isWorker) _mobileTab("Inscripción", 5),
+            // Mostrar botón según el estado
+            if (!isWorker)
+              // Si NO es trabajador, mostrar botón de inscripción
+              _mobileTab("Inscripción", 5)
+            else if (!viewingAsWorker)
+              // Si ES trabajador y está viendo perfil normal, mostrar botón para ir a perfil trabajador
+              _mobileTab("Perfil Trabajador", 5)
+            else
+              // Si está viendo perfil de trabajador, mostrar botón para volver a perfil normal
+              _mobileTab("Perfil Usuario", 6),
             const SizedBox(width: 12),
           ],
         ),

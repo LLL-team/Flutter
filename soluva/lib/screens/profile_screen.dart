@@ -23,6 +23,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Uint8List? _imageBytes;
   bool loading = true;
   bool isWorker = false;
+  bool viewingAsWorker = false; // Modo de visualización actual
   int selectedMenu = 1;
 
   @override
@@ -75,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMobile = screenWidth < 650;
 
     return Scaffold(
-      backgroundColor: isWorker ? AppColors.secondary : AppColors.background,
+      backgroundColor: viewingAsWorker ? AppColors.secondary : AppColors.background,
       appBar: const HeaderWidget(),
       body: isMobile
           ? _buildMobileLayout(fullName, email, avatar)
@@ -94,15 +95,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
           avatar: avatar,
           selectedMenu: selectedMenu,
           isWorker: isWorker,
+          viewingAsWorker: viewingAsWorker,
           onMenuChanged: (i) {
             if (i == 5) {
-              // Si selecciona "Inscripción como trabajador", navega al formulario
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const WorkerApplicationScreen(),
-                ),
-              );
+              // Si NO es trabajador, navega al formulario de inscripción
+              if (!isWorker) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WorkerApplicationScreen(),
+                  ),
+                );
+              } else {
+                // Si ES trabajador, cambia al modo de perfil de trabajador
+                setState(() {
+                  viewingAsWorker = true;
+                  selectedMenu = 1;
+                });
+              }
+            } else if (i == 6) {
+              // Botón para volver al perfil de usuario común
+              setState(() {
+                viewingAsWorker = false;
+                selectedMenu = 1;
+              });
             } else {
               setState(() => selectedMenu = i);
             }
@@ -125,15 +141,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
           avatar: avatar,
           selectedMenu: selectedMenu,
           isWorker: isWorker,
+          viewingAsWorker: viewingAsWorker,
           onMenuChanged: (i) {
             if (i == 5) {
-              // Si selecciona "Inscripción como trabajador", navega al formulario
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const WorkerApplicationScreen(),
-                ),
-              );
+              // Si NO es trabajador, navega al formulario de inscripción
+              if (!isWorker) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const WorkerApplicationScreen(),
+                  ),
+                );
+              } else {
+                // Si ES trabajador, cambia al modo de perfil de trabajador
+                setState(() {
+                  viewingAsWorker = true;
+                  selectedMenu = 1;
+                });
+              }
+            } else if (i == 6) {
+              // Botón para volver al perfil de usuario común
+              setState(() {
+                viewingAsWorker = false;
+                selectedMenu = 1;
+              });
             } else {
               setState(() => selectedMenu = i);
             }
