@@ -5,8 +5,13 @@ import 'package:soluva/services/api_services/request_service.dart';
 
 class ProfileSolicitudes extends StatefulWidget {
   final String? selectedTab;
+  final bool viewingAsWorker;
 
-  const ProfileSolicitudes({super.key, this.selectedTab});
+  const ProfileSolicitudes({
+    super.key,
+    this.selectedTab,
+    this.viewingAsWorker = false,
+  });
 
   @override
   State<ProfileSolicitudes> createState() => _ProfileSolicitudesState();
@@ -33,6 +38,15 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
     });
   }
 
+  @override
+  void didUpdateWidget(ProfileSolicitudes oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si cambió el modo de visualización, recargar las solicitudes
+    if (oldWidget.viewingAsWorker != widget.viewingAsWorker) {
+      _loadRequests();
+    }
+  }
+
   Future<void> _loadRequests() async {
     setState(() {
       _loading = true;
@@ -40,7 +54,10 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
     });
 
     try {
-      final result = await RequestService.getMyRequests(page: _page);
+      // Usar el endpoint correcto según el modo de visualización
+      final result = widget.viewingAsWorker
+          ? await RequestService.getWorkerRequests(page: _page)
+          : await RequestService.getUserRequests(page: _page);
 
       setState(() {
         _requests = result['data'];
@@ -59,7 +76,10 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
 
     try {
       _page++;
-      final result = await RequestService.getMyRequests(page: _page);
+      // Usar el endpoint correcto según el modo de visualización
+      final result = widget.viewingAsWorker
+          ? await RequestService.getWorkerRequests(page: _page)
+          : await RequestService.getUserRequests(page: _page);
 
       setState(() {
         _requests.addAll(result['data']);

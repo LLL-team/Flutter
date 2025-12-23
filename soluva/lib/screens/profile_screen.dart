@@ -190,8 +190,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Solicitudes - con tabs
         return ProfileCardContainer(
           tabs: const ['Todos', 'Pendientes', 'Terminados'],
-          contentBuilder: (selectedTab) =>
-              ProfileSolicitudes(selectedTab: selectedTab),
+          contentBuilder: (selectedTab) => ProfileSolicitudes(
+            selectedTab: selectedTab,
+            viewingAsWorker: viewingAsWorker,
+          ),
         );
 
       case 3:
