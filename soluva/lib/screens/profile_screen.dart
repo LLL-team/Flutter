@@ -179,12 +179,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildContent() {
     switch (selectedMenu) {
       case 1:
-        // Mis Datos - con tabs
-        return ProfileCardContainer(
-          tabs: const ['Perfil', 'Servicios', 'Horarios'],
-          contentBuilder: (selectedTab) =>
-              ProfileMisDatos(selectedTab: selectedTab),
-        );
+        // Mis Datos - con tabs según el modo
+        if (viewingAsWorker) {
+          // En modo trabajador, mostrar todas las tabs (Perfil, Servicios, Horarios)
+          return ProfileCardContainer(
+            tabs: const ['Perfil', 'Servicios', 'Horarios'],
+            contentBuilder: (selectedTab) => ProfileMisDatos(
+              selectedTab: selectedTab,
+              viewingAsWorker: true,
+            ),
+          );
+        } else {
+          // En modo usuario, solo mostrar la tab "Perfil"
+          return ProfileCardContainer(
+            contentBuilder: (selectedTab) => ProfileMisDatos(
+              selectedTab: 'Perfil',
+              viewingAsWorker: false,
+            ),
+          );
+        }
 
       case 2:
         // Solicitudes - con tabs
@@ -197,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
 
       case 3:
-        // Formas de pago - sin tabs
+        // Formas de pago/cobro - sin tabs
         return ProfileCardContainer(
           contentBuilder: (selectedTab) => const ProfilePagos(),
         );

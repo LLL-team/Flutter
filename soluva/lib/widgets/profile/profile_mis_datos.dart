@@ -4,8 +4,13 @@ import 'package:soluva/theme/app_colors.dart';
 
 class ProfileMisDatos extends StatefulWidget {
   final String? selectedTab;
+  final bool viewingAsWorker;
 
-  const ProfileMisDatos({super.key, this.selectedTab});
+  const ProfileMisDatos({
+    super.key,
+    this.selectedTab,
+    this.viewingAsWorker = false,
+  });
 
   @override
   State<ProfileMisDatos> createState() => _ProfileMisDatosState();
@@ -64,8 +69,11 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
         _buildField("Apellido", userData!['last_name'] ?? ''),
         const SizedBox(height: 16),
         _buildField("Email", userData!['email'] ?? ''),
-        const SizedBox(height: 16),
-        _buildField("Descripción", userData!['description'] ?? ''),
+        // Solo mostrar descripción en modo trabajador
+        if (widget.viewingAsWorker) ...[
+          const SizedBox(height: 16),
+          _buildField("Descripción", userData!['description'] ?? ''),
+        ],
       ],
     );
   }

@@ -67,7 +67,7 @@ class ProfileMenu extends StatelessWidget {
           // Botones del menú estándar
           _menuButton("Mis Datos", 1),
           _menuButton("Solicitudes", 2),
-          _menuButton("Formas de pago", 3),
+          _menuButton(viewingAsWorker ? "Formas de cobro" : "Formas de pago", 3),
           _menuButton("Notificaciones", 4),
           const SizedBox(height: 20),
           // Mostrar botón según el estado
@@ -178,7 +178,7 @@ class ProfileMenu extends StatelessWidget {
             const SizedBox(width: 12),
             _mobileTab("Datos", 1),
             _mobileTab("Solicitudes", 2),
-            _mobileTab("Pago", 3),
+            _mobileTab(viewingAsWorker ? "Cobro" : "Pago", 3),
             _mobileTab("Notificaciones", 4),
             // Mostrar botón según el estado
             if (!isWorker)
