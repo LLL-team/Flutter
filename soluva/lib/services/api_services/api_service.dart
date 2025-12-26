@@ -172,6 +172,35 @@ class ApiService {
     );
   }
 
+  /// Actualiza el precio de un servicio del trabajador
+  static Future<bool> updateWorkerServiceCost({
+    required String service,
+    required String category,
+    required double cost,
+  }) async {
+    return await WorkerService.updateWorkerServiceCost(
+      service: service,
+      category: category,
+      cost: cost,
+    );
+  }
+
+  // ==================== HORARIOS DEL TRABAJADOR ====================
+
+  /// Obtiene los horarios de un trabajador
+  static Future<List<Map<String, dynamic>>> getWorkerSchedule(
+    String uuid,
+  ) async {
+    return await WorkerService.getWorkerSchedule(uuid);
+  }
+
+  /// Actualiza los horarios del trabajador
+  static Future<bool> updateWorkerSchedule({
+    required List<Map<String, String>> schedule,
+  }) async {
+    return await WorkerService.updateWorkerSchedule(schedule: schedule);
+  }
+
   // ==================== SOLICITUDES ====================
 
   /// Obtiene las solicitudes del usuario actual

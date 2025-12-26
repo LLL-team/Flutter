@@ -181,9 +181,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 1:
         // Mis Datos - con tabs según el modo
         if (viewingAsWorker) {
-          // En modo trabajador, mostrar todas las tabs (Perfil, Servicios, Horarios)
+          // En modo trabajador, mostrar tabs de Perfil y Servicios
           return ProfileCardContainer(
-            tabs: const ['Perfil', 'Servicios', 'Horarios'],
+            tabs: const ['Perfil', 'Servicios'],
             contentBuilder: (selectedTab) => ProfileMisDatos(
               selectedTab: selectedTab,
               viewingAsWorker: true,

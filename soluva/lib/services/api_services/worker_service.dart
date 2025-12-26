@@ -235,4 +235,86 @@ class WorkerService {
       throw Exception('Error al obtener servicios: ${response.statusCode}');
     }
   }
+
+  /// Actualiza el precio de un servicio del trabajador
+  static Future<bool> updateWorkerServiceCost({
+    required String service,
+    required String category,
+    required double cost,
+  }) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No hay token de autenticación');
+    }
+
+    final url = Uri.parse('$baseUrl/workerServices/update');
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'service': service,
+        'category': category,
+        'cost': cost,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      // Mostrar el error del servidor para depuración
+      print('ERROR del servidor (${response.statusCode}): ${response.body}');
+      throw Exception('Error ${response.statusCode}: ${response.body}');
+    }
+  }
+
+  /// Crea o actualiza horarios del trabajador
+  static Future<bool> updateWorkerSchedule({
+    required List<Map<String, String>> schedule,
+  }) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('No hay token de autenticación');
+    }
+
+    final url = Uri.parse('$baseUrl/schedule/new');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'schedule': schedule,
+      }),
+    );
+
+    return response.statusCode == 201;
+  }
+
+  /// Obtiene los horarios de un trabajador
+  static Future<List<Map<String, dynamic>>> getWorkerSchedule(
+    String uuid,
+  ) async {
+    final url = Uri.parse('$baseUrl/schedule?uuid=$uuid');
+
+    final response = await http.get(
+      url,
+      headers: {'Accept': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> schedules = data['schedules'] ?? [];
+      return schedules.map((e) => Map<String, dynamic>.from(e)).toList();
+    } else {
+      return [];
+    }
+  }
 }

@@ -18,6 +18,7 @@ class ProfileMisDatos extends StatefulWidget {
 
 class _ProfileMisDatosState extends State<ProfileMisDatos> {
   Map<String, dynamic>? userData;
+  List<Map<String, dynamic>> workerServices = [];
   bool loading = true;
   int selectedServiceTab = 0; // Para tabs de categorías de servicios
 
@@ -29,8 +30,20 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
 
   Future<void> _loadUserData() async {
     final data = await ApiService.getUserProfile();
+
+    // Si estamos en modo trabajador, cargar servicios del trabajador
+    List<Map<String, dynamic>> services = [];
+    if (widget.viewingAsWorker && data != null && data['uuid'] != null) {
+      try {
+        services = await ApiService.getWorkerServices(data['uuid']);
+      } catch (e) {
+        print('Error cargando servicios del trabajador: $e');
+      }
+    }
+
     setState(() {
       userData = data;
+      workerServices = services;
       loading = false;
     });
   }
@@ -79,7 +92,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
   }
 
   Widget _buildServiciosTab() {
-    final services = userData!['services'] as List<dynamic>? ?? [];
+    final services = workerServices;
 
     if (services.isEmpty) {
       return Center(
@@ -196,19 +209,38 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
           ],
         ),
         const SizedBox(height: 16),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.secondary,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          ),
-          onPressed: () {
-            // Navegar para editar servicios
-          },
-          child: const Text(
-            "Editar Servicios",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                onPressed: () => _showChangePriceDialog(),
+                child: const Text(
+                  "Cambiar precio",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A90E2),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                onPressed: () => _showChangeScheduleDialog(),
+                child: const Text(
+                  "Cambiar horario",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -313,6 +345,373 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showChangePriceDialog() {
+    final services = userData!['services'] as List<dynamic>? ?? [];
+    if (services.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No tienes servicios para editar')),
+      );
+      return;
+    }
+
+    // DEBUG: Imprimir estructura de servicios
+    print('DEBUG: Estructura de servicios:');
+    for (var service in services) {
+      print('  Servicio: $service');
+    }
+
+    // Obtener el servicio actual de la categoría seleccionada
+    Map<String, List<Map<String, dynamic>>> serviciosPorCategoria = {};
+    for (var service in services) {
+      final category = service['category'] ?? 'Sin categoría';
+      serviciosPorCategoria.putIfAbsent(category, () => []);
+      serviciosPorCategoria[category]!.add(service as Map<String, dynamic>);
+    }
+
+    final categorias = serviciosPorCategoria.keys.toList();
+    final selectedCategory = categorias.isNotEmpty ? categorias[selectedServiceTab] : '';
+    final serviciosDeLaCategoria = serviciosPorCategoria[selectedCategory] ?? [];
+
+    if (serviciosDeLaCategoria.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        String? selectedService;
+        final priceController = TextEditingController();
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Cambiar precio de servicio'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Seleccionar servicio',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: selectedService,
+                    items: serviciosDeLaCategoria.map<DropdownMenuItem<String>>((servicio) {
+                      final serviceName = servicio['service']?.toString() ?? servicio['type']?.toString() ?? '';
+                      return DropdownMenuItem<String>(
+                        value: serviceName,
+                        child: Text(serviceName),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedService = value;
+                        final servicio = serviciosDeLaCategoria.firstWhere(
+                          (s) => (s['service']?.toString() ?? s['type']?.toString()) == value,
+                        );
+                        priceController.text = servicio['cost']?.toString() ?? '0';
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Nuevo precio',
+                      border: OutlineInputBorder(),
+                      prefixText: '\$ ',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                  ),
+                  onPressed: () async {
+                    if (selectedService == null || priceController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Completa todos los campos')),
+                      );
+                      return;
+                    }
+
+                    final newPrice = double.tryParse(priceController.text);
+                    if (newPrice == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Precio inválido')),
+                      );
+                      return;
+                    }
+
+                    try {
+                      print('DEBUG: Enviando actualización de precio');
+                      print('  service: $selectedService');
+                      print('  category: $selectedCategory');
+                      print('  cost: $newPrice');
+
+                      final success = await ApiService.updateWorkerServiceCost(
+                        service: selectedService!,
+                        category: selectedCategory,
+                        cost: newPrice,
+                      );
+
+                      if (success && mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Precio actualizado correctamente')),
+                        );
+                        _loadUserData(); // Recargar datos
+                      } else if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('No se pudo actualizar el precio')),
+                        );
+                      }
+                    } catch (e) {
+                      print('ERROR al actualizar precio: $e');
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: ${e.toString()}')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Genera lista de horas en formato H:i (sin ceros a la izquierda en horas)
+  List<String> _generateTimeOptions() {
+    final times = <String>[];
+    for (int hour = 0; hour < 24; hour++) {
+      for (int minute = 0; minute < 60; minute += 30) {
+        final hourStr = hour.toString(); // Sin padLeft para cumplir con H:i
+        final minuteStr = minute.toString().padLeft(2, '0');
+        times.add('$hourStr:$minuteStr');
+      }
+    }
+    return times;
+  }
+
+  // Remueve el cero a la izquierda de horas (09:00 -> 9:00)
+  String _removeLeadingZero(String time) {
+    if (time.startsWith('0') && time.length > 1) {
+      return time.substring(1);
+    }
+    return time;
+  }
+
+  void _showChangeScheduleDialog() async {
+    // Cargar horarios actuales
+    final userUuid = userData!['uuid'];
+    if (userUuid == null) return;
+
+    List<Map<String, dynamic>> currentSchedules = [];
+    try {
+      currentSchedules = await ApiService.getWorkerSchedule(userUuid);
+    } catch (e) {
+      // Si no hay horarios, continuamos con lista vacía
+    }
+
+    if (!mounted) return;
+
+    final timeOptions = _generateTimeOptions();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final scheduleControllers = <Map<String, dynamic>>[];
+
+        // Inicializar con horarios existentes o crear uno nuevo
+        if (currentSchedules.isNotEmpty) {
+          for (var schedule in currentSchedules) {
+            // Convertir formato de tiempo si es necesario (quitar segundos y ceros a la izquierda)
+            String startTime = schedule['start_time'] ?? '9:00';
+            String endTime = schedule['end_time'] ?? '17:00';
+
+            // Si viene con segundos (HH:MM:SS), convertir a H:MM
+            if (startTime.length > 5) startTime = startTime.substring(0, 5);
+            if (endTime.length > 5) endTime = endTime.substring(0, 5);
+
+            // Remover cero a la izquierda si existe (09:00 -> 9:00)
+            startTime = _removeLeadingZero(startTime);
+            endTime = _removeLeadingZero(endTime);
+
+            scheduleControllers.add({
+              'day': schedule['day_of_week'] ?? 'Monday',
+              'start': startTime,
+              'end': endTime,
+            });
+          }
+        } else {
+          scheduleControllers.add({
+            'day': 'Monday',
+            'start': '9:00',
+            'end': '17:00',
+          });
+        }
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Configurar horarios'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: scheduleControllers.length,
+                  itemBuilder: (context, index) {
+                    final schedule = scheduleControllers[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          children: [
+                            DropdownButtonFormField<String>(
+                              value: schedule['day'],
+                              decoration: const InputDecoration(
+                                labelText: 'Día',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'Monday', child: Text('Lunes')),
+                                DropdownMenuItem(value: 'Tuesday', child: Text('Martes')),
+                                DropdownMenuItem(value: 'Wednesday', child: Text('Miércoles')),
+                                DropdownMenuItem(value: 'Thursday', child: Text('Jueves')),
+                                DropdownMenuItem(value: 'Friday', child: Text('Viernes')),
+                                DropdownMenuItem(value: 'Saturday', child: Text('Sábado')),
+                                DropdownMenuItem(value: 'Sunday', child: Text('Domingo')),
+                              ],
+                              onChanged: (value) {
+                                setDialogState(() => schedule['day'] = value!);
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: schedule['start'],
+                                    decoration: const InputDecoration(
+                                      labelText: 'Hora inicio',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: timeOptions.map((time) {
+                                      return DropdownMenuItem<String>(
+                                        value: time,
+                                        child: Text(time),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setDialogState(() => schedule['start'] = value!);
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: schedule['end'],
+                                    decoration: const InputDecoration(
+                                      labelText: 'Hora fin',
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    items: timeOptions.map((time) {
+                                      return DropdownMenuItem<String>(
+                                        value: time,
+                                        child: Text(time),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setDialogState(() => schedule['end'] = value!);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (scheduleControllers.length > 1)
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setDialogState(() => scheduleControllers.removeAt(index));
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setDialogState(() {
+                      scheduleControllers.add({
+                        'day': 'Monday',
+                        'start': '9:00',
+                        'end': '17:00',
+                      });
+                    });
+                  },
+                  child: const Text('Agregar horario'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A90E2),
+                  ),
+                  onPressed: () async {
+                    final schedules = scheduleControllers.map((s) {
+                      return {
+                        'day_of_week': s['day'] as String,
+                        'start_time': s['start'] as String,
+                        'end_time': s['end'] as String,
+                      };
+                    }).toList();
+
+                    try {
+                      final success = await ApiService.updateWorkerSchedule(
+                        schedule: schedules,
+                      );
+
+                      if (success && mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Horarios actualizados correctamente')),
+                        );
+                        _loadUserData();
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: ${e.toString()}')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Guardar', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
