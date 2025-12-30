@@ -43,6 +43,18 @@ class RequestService {
           "status": status,
           "cost": item["amount"],
           "rejected": status == 'rejected',
+          // Datos adicionales para los popups
+          "id": item["uuid"] ?? item["id"],
+          "uuid": item["uuid"],
+          "user": item["user"],
+          "worker": item["worker"],
+          "category": item["category"],
+          "date": item["date"],
+          "time": item["time"],
+          "location": item["location"],
+          "address": item["address"],
+          "amount": item["amount"],
+          "type": item["type"],
         };
       }).toList();
 
@@ -93,6 +105,18 @@ class RequestService {
           "status": status,
           "cost": item["amount"],
           "rejected": status == 'rejected',
+          // Datos adicionales para los popups
+          "id": item["uuid"] ?? item["id"],
+          "uuid": item["uuid"],
+          "user": item["user"],
+          "worker": item["worker"],
+          "category": item["category"],
+          "date": item["date"],
+          "time": item["time"],
+          "location": item["location"],
+          "address": item["address"],
+          "amount": item["amount"],
+          "type": item["type"],
         };
       }).toList();
 
@@ -110,5 +134,39 @@ class RequestService {
   @Deprecated('Use getUserRequests or getWorkerRequests instead')
   static Future<Map<String, dynamic>> getMyRequests({int page = 1}) async {
     return getUserRequests(page: page);
+  }
+
+  /// Cambia el estado de una solicitud
+  static Future<Map<String, dynamic>> changeStatus({
+    required String uuid,
+    required String status,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return {"success": false, "message": "No autenticado"};
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/request/changeStatus'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'uuid': uuid,
+          'status': status,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final decoded = jsonDecode(response.body);
+        return {"success": true, "message": decoded['message'] ?? "Estado cambiado correctamente"};
+      } else {
+        final decoded = jsonDecode(response.body);
+        return {"success": false, "message": decoded['message'] ?? "Error al cambiar el estado"};
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error de conexión: $e"};
+    }
   }
 }

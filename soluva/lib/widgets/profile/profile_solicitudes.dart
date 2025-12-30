@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:soluva/services/api_services/request_service.dart';
+import 'package:soluva/widgets/dialogs/new_request_dialog.dart';
+import 'package:soluva/widgets/dialogs/request_detail_dialog.dart';
 
 class ProfileSolicitudes extends StatefulWidget {
   final String? selectedTab;
@@ -145,6 +147,7 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
         return _RequestCard(
           request: _filteredRequests[index],
           onUpdate: _loadRequests,
+          viewingAsWorker: widget.viewingAsWorker,
         );
       },
     );
@@ -154,8 +157,13 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
 class _RequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final VoidCallback onUpdate;
+  final bool viewingAsWorker;
 
-  const _RequestCard({required this.request, required this.onUpdate});
+  const _RequestCard({
+    required this.request,
+    required this.onUpdate,
+    this.viewingAsWorker = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -190,15 +198,17 @@ class _RequestCard extends StatelessWidget {
       borderWidth = 2;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: borderWidth),
-      ),
-      child: Column(
+    return GestureDetector(
+      onTap: viewingAsWorker ? () => _showRequestDialog(context) : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor, width: borderWidth),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -367,8 +377,38 @@ class _RequestCard extends StatelessWidget {
               ),
             ),
         ],
+        ),
       ),
     );
+  }
+
+  void _showRequestDialog(BuildContext context) {
+    // DEBUG: Imprimir todos los datos de la solicitud
+    print('DEBUG: Datos completos de la solicitud:');
+    print(request);
+
+    final status = request['status']?.toString().toLowerCase() ?? 'pending';
+
+    // Mostrar el popup correspondiente según el estado
+    if (status == 'pending') {
+      // Nueva solicitud (sin aceptar)
+      showDialog(
+        context: context,
+        builder: (context) => NewRequestDialog(
+          request: request,
+          onUpdate: onUpdate,
+        ),
+      );
+    } else {
+      // Solicitud aceptada, en progreso o completada
+      showDialog(
+        context: context,
+        builder: (context) => RequestDetailDialog(
+          request: request,
+          onUpdate: onUpdate,
+        ),
+      );
+    }
   }
 
   void _showConfirmationDialog(BuildContext context, bool isFinished) {
