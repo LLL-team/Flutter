@@ -145,27 +145,47 @@ class RequestService {
     final token = prefs.getString('auth_token');
     if (token == null) return {"success": false, "message": "No autenticado"};
 
+    print('DEBUG changeStatus - UUID: $uuid');
+    print('DEBUG changeStatus - Status: $status');
+    print('DEBUG changeStatus - URL: $baseUrl/request/changeStatus');
+
     try {
+      final body = jsonEncode({
+        'uuid': uuid,
+        'status': status,
+      });
+      print('DEBUG changeStatus - Body: $body');
+
       final response = await http.post(
         Uri.parse('$baseUrl/request/changeStatus'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'uuid': uuid,
-          'status': status,
-        }),
+        body: body,
       );
 
-      if (response.statusCode == 201) {
+      print('DEBUG changeStatus - Response status: ${response.statusCode}');
+      print('DEBUG changeStatus - Response body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         return {"success": true, "message": decoded['message'] ?? "Estado cambiado correctamente"};
       } else {
         final decoded = jsonDecode(response.body);
-        return {"success": false, "message": decoded['message'] ?? "Error al cambiar el estado"};
+        var message = "Error al cambiar el estado";
+        if (decoded['message'] != null) {
+          if (decoded['message'] is String) {
+            message = decoded['message'];
+          } else {
+            // If message is an Exception object or other type, extract meaningful info
+            message = decoded['message'].toString();
+          }
+        }
+        return {"success": false, "message": message};
       }
     } catch (e) {
+      print('DEBUG changeStatus - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }

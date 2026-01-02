@@ -194,16 +194,59 @@ class RequestDetailDialog extends StatelessWidget {
     } else if (status == 'accepted') {
       return Column(
         children: [
+          Text(
+            'Esperando que el cliente asigne el trabajo',
+            style: AppTextStyles.bodyText.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      );
+    } else if (status == 'assigned') {
+      return Column(
+        children: [
           _buildActionButton(
             'Finalizar trabajo',
             AppColors.button,
             () => _confirmCompleteWork(context),
           ),
+        ],
+      );
+    } else if (status == 'worker_completed' || status == 'provider_completed') {
+      // Trabajador ya confirmó, esperando confirmación del cliente
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Esperando confirmación del cliente.\n\nCuando el cliente confirme o pasen 6 días se le enviará su dinero.',
+              style: AppTextStyles.bodyText.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      );
+    } else if (status == 'user_completed') {
+      // Usuario ya confirmó, trabajador debe confirmar también
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              'El cliente confirmó que el trabajo está finalizado',
+              style: AppTextStyles.bodyText.copyWith(color: AppColors.textSecondary),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          _buildActionButton(
+            'Sí, ya está finalizado',
+            AppColors.button,
+            () => _confirmCompleteWork(context),
+          ),
           const SizedBox(height: 12),
           _buildActionButton(
-            'Cancelar solicitud',
+            'No, todavía no',
             AppColors.secondary,
-            () => _confirmCancelRequest(context),
+            () => Navigator.pop(context),
           ),
         ],
       );
@@ -446,7 +489,7 @@ class RequestDetailDialog extends StatelessWidget {
       );
     }
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'worker_completed');
+    final result = await RequestService.changeStatus(uuid: uuid, status: 'completed');
 
     if (context.mounted) Navigator.pop(context);
 

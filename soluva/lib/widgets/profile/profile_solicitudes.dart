@@ -190,7 +190,7 @@ class _RequestCard extends StatelessWidget {
     Color borderColor = Colors.grey[200]!;
     double borderWidth = 1;
 
-    if (status == 'completed') {
+    if (status == 'completed' || status == 'cancelled') {
       backgroundColor = const Color(0xFFEAE6DB).withOpacity(0.8);
     } else if (status == 'worker_completed' || status == 'provider_completed') {
       backgroundColor = const Color(0xFFFFF4E6); // Color naranja claro para llamar la atención
@@ -198,8 +198,11 @@ class _RequestCard extends StatelessWidget {
       borderWidth = 2;
     }
 
+    // Deshabilitar clic si está cancelada o completada
+    final canTap = viewingAsWorker && status != 'cancelled' && status != 'completed';
+
     return GestureDetector(
-      onTap: viewingAsWorker ? () => _showRequestDialog(context) : null,
+      onTap: canTap ? () => _showRequestDialog(context) : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
@@ -308,7 +311,7 @@ class _RequestCard extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A4A),
+                  color: AppColors.text,
                   borderRadius: BorderRadius.circular(24),
                 ),
                 child: const Text(
@@ -320,8 +323,29 @@ class _RequestCard extends StatelessWidget {
                   ),
                 ),
               ),
+            )
+          else if (status == 'cancelled')
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 48,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.text,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Text(
+                  'Cancelada',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
             ),
-          if (status == 'provider_completed' || status == 'worker_completed')
+          if ((status == 'provider_completed' || status == 'worker_completed') && !viewingAsWorker)
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: Row(
@@ -682,10 +706,20 @@ class _StatusProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int currentStep = 0;
-    if (status == 'confirmed' || status == 'accepted') currentStep = 1;
+    if (status == 'confirmed' || status == 'accepted' || status == 'assigned') currentStep = 1;
     if (status == 'in_progress') currentStep = 2;
-    if (status == 'provider_completed' || status == 'worker_completed') currentStep = 2;
+    if (status == 'provider_completed' || status == 'worker_completed' || status == 'user_completed') currentStep = 2;
     if (status == 'completed') currentStep = 3;
+
+    // Determinar el texto del paso 3 según quién completó primero
+    String step3Label;
+    if (status == 'user_completed') {
+      step3Label = 'Usuario confirmó\nla prestación\ndel servicio';
+    } else if (status == 'worker_completed' || status == 'provider_completed') {
+      step3Label = 'Prestador\ncomunica la finalización\ndel servicio';
+    } else {
+      step3Label = 'Prestador\ncomunica la finalización\ndel servicio';
+    }
 
     final steps = [
       {'label': 'Pendiente de\nconfirmación', 'icon': Icons.schedule},
@@ -694,7 +728,7 @@ class _StatusProgress extends StatelessWidget {
         'icon': Icons.check_circle_outline,
       },
       {
-        'label': 'Prestador\ncomunica la finalización\ndel servicio',
+        'label': step3Label,
         'icon': Icons.verified_outlined,
       },
       {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
