@@ -76,17 +76,12 @@ class NewRequestDialog extends StatelessWidget {
             Row(
               children: [
                 // Icono del servicio
-                Container(
-                  width: 60,
-                  height: 60,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                SizedBox(
+                  width: 80,
+                  height: 80,
                   child: _getCategoryImage(service),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
 
                 // Servicio
                 Expanded(
@@ -272,53 +267,53 @@ class NewRequestDialog extends StatelessWidget {
 
     switch (category?.toLowerCase()) {
       case 'electricidad':
-        imagePath = 'assets/icons/servicios/Boton-I.Electricidad.png';
+        imagePath = 'icons/servicios/Boton-I.Electricidad.png';
         break;
       case 'plomería':
       case 'plomeria':
-        imagePath = 'assets/icons/servicios/Boton-I.Plomeria.png';
+        imagePath = 'icons/servicios/Boton-I.Plomeria.png';
         break;
       case 'limpieza':
-        imagePath = 'assets/icons/servicios/Boton-I.Limpieza.png';
+        imagePath = 'icons/servicios/Boton-I.Limpieza.png';
         break;
       case 'jardinería':
       case 'jardineria':
-        imagePath = 'assets/icons/servicios/Boton-I.Jardineria.png';
+        imagePath = 'icons/servicios/Boton-I.Jardineria.png';
         break;
       case 'aire acondicionado':
       case 'aire':
-        imagePath = 'assets/icons/servicios/Boton-I.Aire.png';
+        imagePath = 'icons/servicios/Boton-I.Aire.png';
         break;
       case 'gas':
-        imagePath = 'assets/icons/servicios/Boton-I.Gas.png';
+        imagePath = 'icons/servicios/Boton-I.Gas.png';
         break;
       case 'carpintería':
       case 'carpinteria':
-        imagePath = 'assets/icons/servicios/Boton-I.Carpinteria.png';
+        imagePath = 'icons/servicios/Boton-I.Carpinteria.png';
         break;
       case 'pintura':
-        imagePath = 'assets/icons/servicios/Boton-I.Pintura.png';
+        imagePath = 'icons/servicios/Boton-I.Pintura.png';
         break;
       case 'albañilería':
       case 'albanileria':
-        imagePath = 'assets/icons/servicios/Boton-I.Albanileria.png';
+        imagePath = 'icons/servicios/Boton-I.Albanileria.png';
         break;
       case 'cerrajería':
       case 'cerrajeria':
-        imagePath = 'assets/icons/servicios/Boton-I.Cerrajeria.png';
+        imagePath = 'icons/servicios/Boton-I.Cerrajeria.png';
         break;
       case 'herrería':
       case 'herreria':
-        imagePath = 'assets/icons/servicios/Boton-I.Herreria.png';
+        imagePath = 'icons/servicios/Boton-I.Herreria.png';
         break;
       case 'durlock':
-        imagePath = 'assets/icons/servicios/Boton-I.Durlock.png';
+        imagePath = 'icons/servicios/Boton-I.Durlock.png';
         break;
       case 'flete':
-        imagePath = 'assets/icons/servicios/Boton-I.Flete.png';
+        imagePath = 'icons/servicios/Boton-I.Flete.png';
         break;
       default:
-        imagePath = 'assets/icons/servicios/Boton-I.Service.png';
+        imagePath = 'icons/servicios/Boton-I.Service.png';
     }
 
     return Image.asset(

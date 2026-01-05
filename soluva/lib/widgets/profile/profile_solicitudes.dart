@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:soluva/services/api_services/request_service.dart';
 import 'package:soluva/widgets/dialogs/new_request_dialog.dart';
 import 'package:soluva/widgets/dialogs/request_detail_dialog.dart';
+import 'package:soluva/widgets/dialogs/user_assign_dialog.dart';
 
 class ProfileSolicitudes extends StatefulWidget {
   final String? selectedTab;
@@ -198,8 +199,9 @@ class _RequestCard extends StatelessWidget {
       borderWidth = 2;
     }
 
-    // Deshabilitar clic si está cancelada o completada
-    final canTap = viewingAsWorker && status != 'cancelled' && status != 'completed';
+    // Determinar si se puede hacer clic
+    final canTap = (viewingAsWorker && status != 'cancelled' && status != 'completed') ||
+                   (!viewingAsWorker && status == 'accepted');
 
     return GestureDetector(
       onTap: canTap ? () => _showRequestDialog(context) : null,
@@ -413,7 +415,19 @@ class _RequestCard extends StatelessWidget {
 
     final status = request['status']?.toString().toLowerCase() ?? 'pending';
 
-    // Mostrar el popup correspondiente según el estado
+    // Si es usuario y el estado es 'accepted', mostrar diálogo de asignación
+    if (!viewingAsWorker && status == 'accepted') {
+      showDialog(
+        context: context,
+        builder: (context) => UserAssignDialog(
+          request: request,
+          onUpdate: onUpdate,
+        ),
+      );
+      return;
+    }
+
+    // Para trabajadores: mostrar el popup correspondiente según el estado
     if (status == 'pending') {
       // Nueva solicitud (sin aceptar)
       showDialog(
