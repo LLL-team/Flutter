@@ -200,7 +200,7 @@ class _RequestCard extends StatelessWidget {
     }
 
     // Determinar si se puede hacer clic
-    final canTap = (viewingAsWorker && status != 'cancelled' && status != 'completed') ||
+    final canTap = (viewingAsWorker && status != 'cancelled' && status != 'completed' && status != 'rejected') ||
                    (!viewingAsWorker && status == 'accepted');
 
     return GestureDetector(
@@ -538,8 +538,62 @@ class _RequestCard extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      // Validar que todas las calificaciones estén completas
+                      if (qualityRating == 0 || punctualityRating == 0 || kindnessRating == 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Por favor completa todas las calificaciones'),
+                            backgroundColor: AppColors.secondary,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final uuid = request['id']?.toString();
+                      if (uuid == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error: No se pudo identificar la solicitud'),
+                            backgroundColor: AppColors.secondary,
+                          ),
+                        );
+                        return;
+                      }
+
+                      // Cerrar el diálogo de calificación
                       Navigator.pop(ctx);
+
+                      // Mostrar indicador de carga
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(child: CircularProgressIndicator()),
+                      );
+
+                      // Enviar calificación
+                      final result = await RequestService.createRating(
+                        requestUuid: uuid,
+                        workQuality: qualityRating,
+                        punctuality: punctualityRating,
+                        friendliness: kindnessRating,
+                        review: commentController.text.trim(),
+                      );
+
+                      // Cerrar indicador de carga
+                      if (context.mounted) Navigator.pop(context);
+
+                      // Mostrar resultado
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(result['message'] ?? 'Operación completada'),
+                            backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+                          ),
+                        );
+                      }
+
+                      // Actualizar lista
                       onUpdate();
                     },
                     style: ElevatedButton.styleFrom(

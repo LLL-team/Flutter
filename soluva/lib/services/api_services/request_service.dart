@@ -189,4 +189,61 @@ class RequestService {
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }
+
+  /// Crea una calificación para una solicitud
+  static Future<Map<String, dynamic>> createRating({
+    required String requestUuid,
+    required int workQuality,
+    required int punctuality,
+    required int friendliness,
+    String? review,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return {"success": false, "message": "No autenticado"};
+
+    print('DEBUG createRating - Request UUID: $requestUuid');
+    print('DEBUG createRating - Ratings: work_quality=$workQuality, punctuality=$punctuality, friendliness=$friendliness');
+
+    try {
+      final body = jsonEncode({
+        'request': requestUuid,
+        'work_quality': workQuality,
+        'punctuality': punctuality,
+        'friendliness': friendliness,
+        if (review != null && review.isNotEmpty) 'review': review,
+      });
+      print('DEBUG createRating - Body: $body');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/ratings'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
+      print('DEBUG createRating - Response status: ${response.statusCode}');
+      print('DEBUG createRating - Response body: ${response.body}');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {"success": true, "message": "Calificación enviada correctamente"};
+      } else {
+        final decoded = jsonDecode(response.body);
+        var message = "Error al enviar la calificación";
+        if (decoded['message'] != null) {
+          if (decoded['message'] is String) {
+            message = decoded['message'];
+          } else if (decoded['error'] != null) {
+            message = decoded['error'].toString();
+          }
+        }
+        return {"success": false, "message": message};
+      }
+    } catch (e) {
+      print('DEBUG createRating - Error: $e');
+      return {"success": false, "message": "Error de conexión: $e"};
+    }
+  }
 }

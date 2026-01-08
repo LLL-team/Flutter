@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+import 'package:soluva/services/api_services/schedule_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 
 class ProfileMisDatos extends StatefulWidget {
@@ -492,25 +493,17 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
     );
   }
 
-  // Genera lista de horas en formato H:i (sin ceros a la izquierda en horas)
+  // Genera lista de horas en formato HH:mm (con ceros a la izquierda en horas)
   List<String> _generateTimeOptions() {
     final times = <String>[];
     for (int hour = 0; hour < 24; hour++) {
       for (int minute = 0; minute < 60; minute += 30) {
-        final hourStr = hour.toString(); // Sin padLeft para cumplir con H:i
+        final hourStr = hour.toString().padLeft(2, '0'); // Con padLeft para formato HH:mm
         final minuteStr = minute.toString().padLeft(2, '0');
         times.add('$hourStr:$minuteStr');
       }
     }
     return times;
-  }
-
-  // Remueve el cero a la izquierda de horas (09:00 -> 9:00)
-  String _removeLeadingZero(String time) {
-    if (time.startsWith('0') && time.length > 1) {
-      return time.substring(1);
-    }
-    return time;
   }
 
   void _showChangeScheduleDialog() async {
@@ -537,17 +530,17 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
         // Inicializar con horarios existentes o crear uno nuevo
         if (currentSchedules.isNotEmpty) {
           for (var schedule in currentSchedules) {
-            // Convertir formato de tiempo si es necesario (quitar segundos y ceros a la izquierda)
-            String startTime = schedule['start_time'] ?? '9:00';
+            // Convertir formato de tiempo si es necesario (mantener formato HH:mm)
+            String startTime = schedule['start_time'] ?? '09:00';
             String endTime = schedule['end_time'] ?? '17:00';
 
-            // Si viene con segundos (HH:MM:SS), convertir a H:MM
+            // Si viene con segundos (HH:MM:SS), convertir a HH:MM
             if (startTime.length > 5) startTime = startTime.substring(0, 5);
             if (endTime.length > 5) endTime = endTime.substring(0, 5);
 
-            // Remover cero a la izquierda si existe (09:00 -> 9:00)
-            startTime = _removeLeadingZero(startTime);
-            endTime = _removeLeadingZero(endTime);
+            // Asegurar que tenga padding (9:00 -> 09:00)
+            if (startTime.length == 4) startTime = '0$startTime';
+            if (endTime.length == 4) endTime = '0$endTime';
 
             scheduleControllers.add({
               'day': schedule['day_of_week'] ?? 'Monday',
@@ -558,7 +551,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
         } else {
           scheduleControllers.add({
             'day': 'Monday',
-            'start': '9:00',
+            'start': '09:00',
             'end': '17:00',
           });
         }
@@ -661,7 +654,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
                     setDialogState(() {
                       scheduleControllers.add({
                         'day': 'Monday',
-                        'start': '9:00',
+                        'start': '09:00',
                         'end': '17:00',
                       });
                     });
@@ -677,25 +670,37 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
                     backgroundColor: const Color(0xFF4A90E2),
                   ),
                   onPressed: () async {
-                    final schedules = scheduleControllers.map((s) {
-                      return {
-                        'day_of_week': s['day'] as String,
-                        'start_time': s['start'] as String,
-                        'end_time': s['end'] as String,
-                      };
-                    }).toList();
+                    // Convert to the format expected by /schedule/replace endpoint
+                    // Group schedules by day of week
+                    final schedulesByDay = <String, List<Map<String, String>>>{};
+
+                    // Initialize all days with empty arrays
+                    for (var day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']) {
+                      schedulesByDay[day] = [];
+                    }
+
+                    // Add schedules to their respective days
+                    for (var s in scheduleControllers) {
+                      final day = s['day'] as String;
+                      schedulesByDay[day]!.add({
+                        'start': s['start'] as String,
+                        'end': s['end'] as String,
+                      });
+                    }
 
                     try {
-                      final success = await ApiService.updateWorkerSchedule(
-                        schedule: schedules,
-                      );
+                      final result = await ScheduleService.replaceSchedules(schedulesByDay);
 
-                      if (success && mounted) {
+                      if (result['success'] == true && mounted) {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Horarios actualizados correctamente')),
+                          SnackBar(content: Text(result['message'] ?? 'Horarios actualizados correctamente')),
                         );
                         _loadUserData();
+                      } else if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result['message'] ?? 'Error al actualizar horarios')),
+                        );
                       }
                     } catch (e) {
                       if (mounted) {

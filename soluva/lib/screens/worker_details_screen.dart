@@ -12,6 +12,7 @@ class WorkerDetailsScreen extends StatefulWidget {
 class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   bool _loading = true;
   Map<String, dynamic>? _worker;
+  final Map<String, bool> _expandedCategories = {};
 
   @override
   void initState() {
@@ -50,19 +51,45 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     }
 
     final trade = _worker!['trade'] as Map<String, dynamic>? ?? {};
-    final tradeWidgets = trade.entries.map((entry) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(entry.key, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Wrap(
-          spacing: 8,
-          children: (entry.value as List<dynamic>)
-              .map((s) => Chip(label: Text(s.toString())))
-              .toList(),
-        ),
-        const SizedBox(height: 8),
-      ],
-    ));
+    final tradeWidgets = trade.entries.map((entry) {
+      final categoryKey = entry.key;
+      final services = entry.value as List<dynamic>;
+      final isExpanded = _expandedCategories[categoryKey] ?? false;
+      final maxInitialServices = 4; // Mostrar máximo 4 servicios inicialmente
+      final hasMore = services.length > maxInitialServices;
+      final displayServices = (isExpanded || !hasMore)
+          ? services
+          : services.take(maxInitialServices).toList();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(categoryKey, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: displayServices
+                .map((s) => Chip(label: Text(s.toString())))
+                .toList(),
+          ),
+          if (hasMore)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _expandedCategories[categoryKey] = !isExpanded;
+                });
+              },
+              child: Text(
+                isExpanded
+                    ? 'Ver menos'
+                    : 'Ver más (+${services.length - maxInitialServices})',
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          const SizedBox(height: 8),
+        ],
+      );
+    });
 
     return Scaffold(
       appBar: AppBar(title: Text('${_worker!['name']} ${_worker!['last_name']}')),
