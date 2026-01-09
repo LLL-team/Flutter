@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/services/api_services/worker_service.dart';
 import 'package:soluva/widgets/header_widget.dart';
+import 'package:soluva/widgets/dialogs/send_request_dialog.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WorkersByCategoryScreen extends StatefulWidget {
   final String category;
@@ -15,11 +20,79 @@ class WorkersByCategoryScreen extends StatefulWidget {
 class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
   bool _loading = true;
   List<dynamic> _workers = [];
+  List<dynamic> _allWorkers = [];
+  List<String> _subcategories = [];
+  String? _selectedSubcategory;
+  bool _loadingSubcategories = true;
 
   @override
   void initState() {
     super.initState();
+    _loadSubcategories();
     _fetchWorkers();
+  }
+
+  Future<void> _loadSubcategories() async {
+    setState(() => _loadingSubcategories = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final baseUrl = dotenv.env['BASE_URL'] ?? '';
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/service'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        List<String> foundSubcategories = [];
+
+        // Buscar las subcategorías de esta categoría
+        for (var mainCategory in data.entries) {
+          final mainCategoryData = mainCategory.value as Map<String, dynamic>;
+
+          for (var subCategory in mainCategoryData.entries) {
+            // Comparación flexible (normalizar para comparar)
+            if (_categoriesMatch(widget.category, subCategory.key)) {
+              final services = subCategory.value as Map<String, dynamic>;
+              foundSubcategories = services.keys.toList();
+              break;
+            }
+          }
+
+          if (foundSubcategories.isNotEmpty) break;
+        }
+
+        setState(() {
+          _subcategories = foundSubcategories;
+          _loadingSubcategories = false;
+        });
+      } else {
+        setState(() => _loadingSubcategories = false);
+      }
+    } catch (e) {
+      setState(() => _loadingSubcategories = false);
+    }
+  }
+
+  bool _categoriesMatch(String cat1, String cat2) {
+    final norm1 = cat1.toLowerCase().trim();
+    final norm2 = cat2.toLowerCase().trim();
+
+    // Comparación directa
+    if (norm1.contains(norm2) || norm2.contains(norm1)) {
+      return true;
+    }
+
+    // Comparación por palabras
+    final words1 = norm1.split(' ').where((w) => w.length >= 3).toSet();
+    final words2 = norm2.split(' ').where((w) => w.length >= 3).toSet();
+    return words1.intersection(words2).isNotEmpty;
   }
 
   Future<void> _fetchWorkers() async {
@@ -27,6 +100,7 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
     try {
       final workers = await WorkerService.getWorkersByCategory(widget.category);
       setState(() {
+        _allWorkers = workers;
         _workers = workers;
         _loading = false;
       });
@@ -36,6 +110,24 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
         SnackBar(content: Text('Error al cargar trabajadores: $e')),
       );
     }
+  }
+
+  void _filterWorkersBySubcategory(String? subcategory) {
+    setState(() {
+      _selectedSubcategory = subcategory;
+      if (subcategory == null) {
+        _workers = _allWorkers;
+      } else {
+        // Filtrar trabajadores que tengan esta subcategoría en sus servicios
+        _workers = _allWorkers.where((worker) {
+          final services = worker['services'] as List<dynamic>? ?? [];
+          return services.any((service) {
+            final serviceName = service['service']?.toString().toLowerCase() ?? '';
+            return serviceName.contains(subcategory.toLowerCase());
+          });
+        }).toList();
+      }
+    });
   }
 
   @override
@@ -75,7 +167,10 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                     ),
                                   ]
                                 : _workers
-                                      .map((w) => _WorkerCard(worker: w))
+                                      .map((w) => _WorkerCard(
+                                            worker: w,
+                                            category: widget.category,
+                                          ))
                                       .toList(),
                           ),
                         ),
@@ -131,14 +226,101 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                             ),
                           ),
                           const Spacer(),
-                          const Text(
-                            "*(Filtro de servicio requerido)*",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 13,
-                              fontStyle: FontStyle.italic,
+                          if (_loadingSubcategories)
+                            const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          else if (_subcategories.length == 1)
+                            // Si solo hay una subcategoría, mostrar solo un label
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.primary,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    _subcategories[0],
+                                    style: const TextStyle(
+                                      color: AppColors.text,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else if (_subcategories.length > 1)
+                            // Si hay múltiples subcategorías, mostrar dropdown
+                            Container(
+                              constraints: const BoxConstraints(maxWidth: 300),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.text.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.filter_list,
+                                    color: AppColors.primary,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: _selectedSubcategory,
+                                        dropdownColor: AppColors.background,
+                                        style: const TextStyle(
+                                          color: AppColors.text,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.arrow_drop_down,
+                                          color: AppColors.text,
+                                          size: 20,
+                                        ),
+                                        isDense: true,
+                                        items: [
+                                          const DropdownMenuItem<String>(
+                                            value: null,
+                                            child: Text('Todos'),
+                                          ),
+                                          ..._subcategories.map((subcat) {
+                                            return DropdownMenuItem<String>(
+                                              value: subcat,
+                                              child: Text(subcat),
+                                            );
+                                          }),
+                                        ],
+                                        onChanged: (value) {
+                                          _filterWorkersBySubcategory(value);
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
@@ -152,7 +334,8 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
 
 class _WorkerCard extends StatefulWidget {
   final Map<String, dynamic> worker;
-  const _WorkerCard({required this.worker});
+  final String category;
+  const _WorkerCard({required this.worker, required this.category});
 
   @override
   State<_WorkerCard> createState() => _WorkerCardState();
@@ -199,6 +382,12 @@ class _WorkerCardState extends State<_WorkerCard> {
       if (i == 0) return "Hoy\n${_formatDate(date)}";
       if (i == 1) return "Mañana\n${_formatDate(date)}";
       return "${_weekdayName(date.weekday)}\n${_formatDate(date)}";
+    });
+
+    // Guardar las fechas formateadas para usarlas en el diálogo
+    final diasFormatted = List.generate(3, (i) {
+      final date = now.add(Duration(days: i));
+      return "${date.day} ${_monthName(date.month)} ${date.year}";
     });
 
     final schedules = worker['available_schedules'] as List<dynamic>? ?? [];
@@ -321,6 +510,7 @@ class _WorkerCardState extends State<_WorkerCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(horarios.length, (i) {
                       final list = horarios[i];
+                      final dateFormatted = diasFormatted[i];
 
                       return Expanded(
                         child: AnimatedContainer(
@@ -331,10 +521,18 @@ class _WorkerCardState extends State<_WorkerCard> {
                           child: expanded
                               ? Column(
                                   children: list
-                                      .map((h) => _HorarioItem(h))
+                                      .map((h) => _HorarioItem(
+                                            h,
+                                            onTap: () => _showRequestDialog(
+                                              context,
+                                              worker,
+                                              h,
+                                              dateFormatted,
+                                            ),
+                                          ))
                                       .toList(),
                                 )
-                              : _CollapsedScheduleColumn(list),
+                              : _CollapsedScheduleColumn(list, dateFormatted, worker),
                         ),
                       );
                     }),
@@ -366,7 +564,24 @@ class _WorkerCardState extends State<_WorkerCard> {
     );
   }
 
-  Widget _CollapsedScheduleColumn(List<String> list) {
+  void _showRequestDialog(
+    BuildContext context,
+    Map<String, dynamic> worker,
+    String time,
+    String date,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => SendRequestDialog(
+        worker: worker,
+        selectedTime: time,
+        selectedDate: date,
+        category: widget.category,
+      ),
+    );
+  }
+
+  Widget _CollapsedScheduleColumn(List<String> list, String dateFormatted, Map<String, dynamic> worker) {
     return ClipRect(
       child: SizedBox(
         height: 150,
@@ -375,7 +590,18 @@ class _WorkerCardState extends State<_WorkerCard> {
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(), // no deja scrollear
             child: Column(
-              children: list.take(5).map((h) => _HorarioItem(h)).toList(),
+              children: list
+                  .take(5)
+                  .map((h) => _HorarioItem(
+                        h,
+                        onTap: () => _showRequestDialog(
+                          context,
+                          worker,
+                          h,
+                          dateFormatted,
+                        ),
+                      ))
+                  .toList(),
             ),
           ),
         ),
@@ -384,22 +610,25 @@ class _WorkerCardState extends State<_WorkerCard> {
   }
 
   // ítem de horario
-  Widget _HorarioItem(String h) {
+  Widget _HorarioItem(String h, {VoidCallback? onTap}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.button,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Center(
-          child: Text(
-            h,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.button,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Center(
+            child: Text(
+              h,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
         ),
