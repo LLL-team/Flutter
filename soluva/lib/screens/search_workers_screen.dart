@@ -54,7 +54,14 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar Trabajadores')),
+      appBar: AppBar(
+        title: const Text('Buscar Trabajadores'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 20),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Volver',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(

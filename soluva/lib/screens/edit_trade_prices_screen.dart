@@ -47,7 +47,14 @@ class _EditTradePricesScreenState extends State<EditTradePricesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar precios por categoría')),
+      appBar: AppBar(
+        title: const Text('Editar precios por categoría'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 20),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Volver',
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

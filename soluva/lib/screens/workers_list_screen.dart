@@ -139,6 +139,37 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Stack(
               children: [
+                // Botón de volver sutil
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => Navigator.pop(context),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.background.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: AppColors.text,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 // Cards de trabajadores
                 Padding(
                   padding: const EdgeInsets.only(top: 90),

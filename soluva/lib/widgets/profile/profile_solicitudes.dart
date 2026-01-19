@@ -168,7 +168,13 @@ class _RequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final workerName = request['worker_name'] ?? 'Trabajador';
+    // Si estamos viendo como trabajador, mostrar el nombre del usuario; si no, el del trabajador
+    final displayName = viewingAsWorker
+        ? (request['user'] != null
+            ? "${request['user']['name'] ?? ''} ${request['user']['last_name'] ?? ''}".trim()
+            : 'Usuario')
+        : (request['worker_name'] ?? 'Trabajador');
+
     final service = request['service'] ?? 'Servicio';
     final createdAt = request['created_at'] ?? '';
     final scheduledDate = request['scheduled_date'] ?? '';
@@ -201,7 +207,7 @@ class _RequestCard extends StatelessWidget {
 
     // Determinar si se puede hacer clic
     final canTap = (viewingAsWorker && status != 'cancelled' && status != 'completed' && status != 'rejected') ||
-                   (!viewingAsWorker && status == 'accepted');
+                   (!viewingAsWorker && (status == 'accepted' || status == 'pending'));
 
     return GestureDetector(
       onTap: canTap ? () => _showRequestDialog(context) : null,
@@ -237,7 +243,7 @@ class _RequestCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      workerName,
+                      displayName,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -415,6 +421,12 @@ class _RequestCard extends StatelessWidget {
 
     final status = request['status']?.toString().toLowerCase() ?? 'pending';
 
+    // Si es usuario y el estado es 'pending', mostrar diálogo de cancelación
+    if (!viewingAsWorker && status == 'pending') {
+      _showCancelDialog(context);
+      return;
+    }
+
     // Si es usuario y el estado es 'accepted', mostrar diálogo de asignación
     if (!viewingAsWorker && status == 'accepted') {
       showDialog(
@@ -447,6 +459,132 @@ class _RequestCard extends StatelessWidget {
         ),
       );
     }
+  }
+
+  void _showCancelDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF1E3A4A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                color: AppColors.secondary,
+                size: 64,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Quires cancelar esta solicitud?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: Colors.white,
+                          width: 2,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: const Text(
+                        'No',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final uuid = request['uuid']?.toString();
+                        if (uuid == null) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Error: No se pudo identificar la solicitud'),
+                              backgroundColor: AppColors.secondary,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // Cerrar el diálogo de confirmación
+                        Navigator.pop(ctx);
+
+                        // Mostrar indicador de carga
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => const Center(child: CircularProgressIndicator()),
+                        );
+
+                        // Cambiar el estado a 'cancelled'
+                        final result = await RequestService.changeStatus(
+                          uuid: uuid,
+                          status: 'cancelled',
+                        );
+
+                        // Cerrar indicador de carga
+                        if (context.mounted) Navigator.pop(context);
+
+                        // Mostrar resultado
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result['message'] ?? 'Operación completada'),
+                              backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+                            ),
+                          );
+                        }
+
+                        // Actualizar lista
+                        onUpdate();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: const Text(
+                        'Sí, cancelar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showConfirmationDialog(BuildContext context, bool isFinished) {

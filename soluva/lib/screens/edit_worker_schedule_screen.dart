@@ -37,6 +37,10 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
   };
 
   bool _isLoading = true;
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, List<GlobalKey>> _rangeKeys = {};
+  String? _highlightedDay;
+  int? _highlightedIndex;
 
   @override
   void initState() {
@@ -184,7 +188,38 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppColors.secondary,
+              primary: AppColors.secondary, // Color del círculo y botones
+              onPrimary: Colors.white, // Color del texto en el círculo
+              onSurface: AppColors.text, // Color del texto general
+              surface: Colors.white, // Fondo del diálogo
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,
+              hourMinuteTextColor: AppColors.text,
+              hourMinuteColor: AppColors.background,
+              dayPeriodTextColor: AppColors.text,
+              dayPeriodColor: AppColors.background,
+              dialHandColor: AppColors.secondary,
+              dialBackgroundColor: AppColors.background,
+              dialTextColor: AppColors.text,
+              entryModeIconColor: AppColors.secondary,
+              helpTextStyle: TextStyle(
+                color: AppColors.text,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           child: child!,
@@ -201,7 +236,38 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.light(
-              primary: AppColors.secondary,
+              primary: AppColors.secondary, // Color del círculo y botones
+              onPrimary: Colors.white, // Color del texto en el círculo
+              onSurface: AppColors.text, // Color del texto general
+              surface: Colors.white, // Fondo del diálogo
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: Colors.white,
+              hourMinuteTextColor: AppColors.text,
+              hourMinuteColor: AppColors.background,
+              dayPeriodTextColor: AppColors.text,
+              dayPeriodColor: AppColors.background,
+              dialHandColor: AppColors.secondary,
+              dialBackgroundColor: AppColors.background,
+              dialTextColor: AppColors.text,
+              entryModeIconColor: AppColors.secondary,
+              helpTextStyle: TextStyle(
+                color: AppColors.text,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
           child: child!,
@@ -227,12 +293,54 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
 
     setState(() {
       _schedulesByDay[day]!.add(TimeRange(start: startTime, end: endTime));
+      // Inicializar la lista de keys si no existe
+      if (!_rangeKeys.containsKey(day)) {
+        _rangeKeys[day] = [];
+      }
+      // Agregar un GlobalKey para el nuevo rango
+      _rangeKeys[day]!.add(GlobalKey());
+
+      // Marcar como destacado
+      _highlightedDay = day;
+      _highlightedIndex = _schedulesByDay[day]!.length - 1;
+    });
+
+    // Desplazar hacia el nuevo elemento después de que se renderice
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dayIndex = _schedulesByDay.keys.toList().indexOf(day);
+      if (dayIndex != -1 && _rangeKeys[day] != null) {
+        final keyIndex = _schedulesByDay[day]!.length - 1;
+        if (keyIndex >= 0 && keyIndex < _rangeKeys[day]!.length) {
+          final key = _rangeKeys[day]![keyIndex];
+          if (key.currentContext != null) {
+            Scrollable.ensureVisible(
+              key.currentContext!,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+              alignment: 0.5,
+            );
+          }
+        }
+      }
+
+      // Quitar el destacado después de 2 segundos
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _highlightedDay = null;
+            _highlightedIndex = null;
+          });
+        }
+      });
     });
   }
 
   void _removeTimeRange(String day, int index) {
     setState(() {
       _schedulesByDay[day]!.removeAt(index);
+      if (_rangeKeys.containsKey(day) && index < _rangeKeys[day]!.length) {
+        _rangeKeys[day]!.removeAt(index);
+      }
     });
   }
 
@@ -258,6 +366,7 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
               children: [
                 Expanded(
                   child: ListView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     children: _schedulesByDay.keys.map((day) {
                       return _buildDaySection(day);
@@ -270,7 +379,7 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
                     color: Colors.white,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),
@@ -284,15 +393,28 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
                         backgroundColor: AppColors.secondary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(24),
                         ),
+                        elevation: 0,
                       ),
-                      child: Text(
-                        'Guardar Horarios',
-                        style: AppTextStyles.buttonText.copyWith(
-                          color: Colors.white,
-                          fontSize: 16,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.check_circle_outline,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Guardar Horarios',
+                            style: AppTextStyles.buttonText.copyWith(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -305,6 +427,15 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
   Widget _buildDaySection(String day) {
     final ranges = _schedulesByDay[day]!;
 
+    // Asegurar que tenemos keys para todos los rangos
+    if (!_rangeKeys.containsKey(day)) {
+      _rangeKeys[day] = List.generate(ranges.length, (_) => GlobalKey());
+    } else if (_rangeKeys[day]!.length < ranges.length) {
+      // Agregar keys faltantes
+      final diff = ranges.length - _rangeKeys[day]!.length;
+      _rangeKeys[day]!.addAll(List.generate(diff, (_) => GlobalKey()));
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -313,7 +444,7 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -327,11 +458,20 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
             children: [
               Text(
                 _dayNames[day]!,
-                style: AppTextStyles.heading2.copyWith(fontSize: 18),
+                style: AppTextStyles.heading2.copyWith(
+                  fontSize: 18,
+                  color: AppColors.text,
+                ),
               ),
-              IconButton(
-                onPressed: () => _addTimeRange(day),
-                icon: const Icon(Icons.add_circle, color: AppColors.secondary),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.secondary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: IconButton(
+                  onPressed: () => _addTimeRange(day),
+                  icon: const Icon(Icons.add_circle, color: AppColors.secondary, size: 28),
+                ),
               ),
             ],
           ),
@@ -350,23 +490,55 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
             ...ranges.asMap().entries.map((entry) {
               final index = entry.key;
               final range = entry.value;
+              final isHighlighted = _highlightedDay == day && _highlightedIndex == index;
+
               return Container(
+                key: _rangeKeys[day]![index],
                 margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: isHighlighted
+                      ? AppColors.secondary.withValues(alpha: 0.2)
+                      : AppColors.background,
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isHighlighted
+                        ? AppColors.secondary
+                        : Colors.transparent,
+                    width: 2,
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${range.start.format(context)} - ${range.end.format(context)}',
-                      style: AppTextStyles.bodyText,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          color: isHighlighted ? AppColors.secondary : AppColors.text,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${range.start.format(context)} - ${range.end.format(context)}',
+                          style: AppTextStyles.bodyText.copyWith(
+                            fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+                            color: AppColors.text,
+                          ),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      onPressed: () => _removeTimeRange(day, index),
-                      icon: const Icon(Icons.delete, color: AppColors.secondary, size: 20),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _removeTimeRange(day, index),
+                        icon: const Icon(Icons.delete_outline, color: AppColors.secondary, size: 20),
+                        padding: const EdgeInsets.all(4),
+                        constraints: const BoxConstraints(),
+                      ),
                     ),
                   ],
                 ),

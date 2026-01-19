@@ -231,7 +231,14 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
     if (_workerStatus == "approved") {
       return Scaffold(
-        appBar: AppBar(title: const Text("Estado de tu perfil")),
+        appBar: AppBar(
+          title: const Text("Estado de tu perfil"),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, size: 20),
+            onPressed: () => Navigator.pop(context),
+            tooltip: 'Volver',
+          ),
+        ),
         body: const Center(
           child: Text(
             "✅ Tu perfil de trabajador ya fue aprobado",
@@ -258,6 +265,34 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                     Color.fromARGB(255, 255, 120, 4),
                   ],
                   stops: [0.2, 1.0],
+                ),
+              ),
+            ),
+          ),
+          // Botón de volver sutil
+          Positioned(
+            top: 16,
+            left: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => Navigator.pop(context),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ),

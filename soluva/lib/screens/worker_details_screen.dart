@@ -92,7 +92,14 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text('${_worker!['name']} ${_worker!['last_name']}')),
+      appBar: AppBar(
+        title: Text('${_worker!['name']} ${_worker!['last_name']}'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 20),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'Volver',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
