@@ -12,7 +12,16 @@ import 'package:soluva/widgets/profile/profile_pagos.dart';
 import 'package:soluva/widgets/profile/profile_notifications.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool initialViewingAsWorker;
+  final int initialSelectedMenu;
+  final String? initialWorkerTab; // 'Perfil' o 'Servicios'
+
+  const ProfileScreen({
+    super.key,
+    this.initialViewingAsWorker = false,
+    this.initialSelectedMenu = 1,
+    this.initialWorkerTab,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -23,12 +32,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Uint8List? _imageBytes;
   bool loading = true;
   bool isWorker = false;
-  bool viewingAsWorker = false; // Modo de visualización actual
-  int selectedMenu = 1;
+  late bool viewingAsWorker; // Modo de visualización actual
+  late int selectedMenu;
 
   @override
   void initState() {
     super.initState();
+    viewingAsWorker = widget.initialViewingAsWorker;
+    selectedMenu = widget.initialSelectedMenu;
     loadUser();
   }
 
@@ -184,6 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // En modo trabajador, mostrar tabs de Perfil y Servicios
           return ProfileCardContainer(
             tabs: const ['Perfil', 'Servicios'],
+            initialTab: widget.initialWorkerTab,
             contentBuilder: (selectedTab) => ProfileMisDatos(
               selectedTab: selectedTab,
               viewingAsWorker: true,

@@ -5,6 +5,8 @@ import 'package:soluva/screens/auth_screen.dart';
 // import 'package:soluva/screens/search_workers_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
+import 'package:soluva/screens/profile_screen.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/theme/app_colors.dart';
 
@@ -73,13 +75,44 @@ class _HomePageState extends State<HomePage> {
                       final token = prefs.getString('auth_token');
 
                       if (token != null && token.isNotEmpty) {
-                        // Usuario logueado → ir a pantalla de aplicación
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const WorkerApplicationScreen(),
-                          ),
-                        );
+                        // Usuario logueado → verificar si ya es trabajador aprobado
+                        try {
+                          final response = await ApiService.getWorkerStatus();
+                          final status = response['status'];
+
+                          if (!context.mounted) return;
+
+                          if (status == 'approved') {
+                            // Ya es trabajador aprobado → ir al perfil en modo trabajador, sección servicios
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ProfileScreen(
+                                  initialViewingAsWorker: true,
+                                  initialSelectedMenu: 1,
+                                  initialWorkerTab: 'Servicios',
+                                ),
+                              ),
+                            );
+                          } else {
+                            // No es trabajador o está pendiente → ir a pantalla de aplicación
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const WorkerApplicationScreen(),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          // Error al verificar estado → ir a pantalla de aplicación
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const WorkerApplicationScreen(),
+                            ),
+                          );
+                        }
                       } else {
                         // Usuario NO logueado → ir a AuthScreen con redirección
                         Navigator.push(
