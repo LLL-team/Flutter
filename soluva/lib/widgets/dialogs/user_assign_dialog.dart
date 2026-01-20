@@ -2,32 +2,27 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/api_services/request_service.dart';
+import '../../screens/payment_screen.dart';
 
 class UserAssignDialog extends StatelessWidget {
   final Map<String, dynamic> request;
   final VoidCallback? onUpdate;
 
-  const UserAssignDialog({
-    super.key,
-    required this.request,
-    this.onUpdate,
-  });
+  const UserAssignDialog({super.key, required this.request, this.onUpdate});
 
   @override
   Widget build(BuildContext context) {
     final workerName = request['worker_name']?.toString() ?? 'Trabajador';
-    final service = request['service']?.toString() ?? request['type']?.toString() ?? 'servicio';
+    final service =
+        request['service']?.toString() ??
+        request['type']?.toString() ??
+        'servicio';
 
     return Dialog(
       backgroundColor: AppColors.text,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 400,
-          maxHeight: 300,
-        ),
+        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 300),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -60,7 +55,23 @@ class UserAssignDialog extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _confirmAssign(context),
+                  onPressed: () {
+                    // Cerrar el dialog
+                    Navigator.pop(context);
+
+                    // Ir a la pantalla de pago
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PaymentScreen(
+                          request: request,
+                          onPaymentSuccess: () async {
+                            await _confirmAssign(context);
+                          },
+                        ),
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
@@ -112,20 +123,30 @@ class UserAssignDialog extends StatelessWidget {
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'assigned');
+    final result = await RequestService.changeStatus(
+      uuid: uuid,
+      status: 'assigned',
+    );
 
     // Cerrar indicador de carga
     if (context.mounted) Navigator.pop(context);
 
     if (result['success'] == true) {
       if (context.mounted) {
-        _showSuccessDialog(context, 'Trabajo asignado', result['message'] ?? 'El trabajo ha sido asignado correctamente.');
+        _showSuccessDialog(
+          context,
+          'Trabajo asignado',
+          result['message'] ?? 'El trabajo ha sido asignado correctamente.',
+        );
       }
       // Actualizar la lista
       onUpdate?.call();
     } else {
       if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al asignar el trabajo');
+        _showErrorDialog(
+          context,
+          result['message'] ?? 'Error al asignar el trabajo',
+        );
       }
     }
   }
@@ -140,7 +161,12 @@ class UserAssignDialog extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: AppTextStyles.buttonText.copyWith(color: AppColors.secondary)),
+            child: Text(
+              'OK',
+              style: AppTextStyles.buttonText.copyWith(
+                color: AppColors.secondary,
+              ),
+            ),
           ),
         ],
       ),
@@ -152,12 +178,20 @@ class UserAssignDialog extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.background,
-        title: Text('Error', style: AppTextStyles.heading2.copyWith(color: AppColors.secondary)),
+        title: Text(
+          'Error',
+          style: AppTextStyles.heading2.copyWith(color: AppColors.secondary),
+        ),
         content: Text(message, style: AppTextStyles.bodyText),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: AppTextStyles.buttonText.copyWith(color: AppColors.secondary)),
+            child: Text(
+              'OK',
+              style: AppTextStyles.buttonText.copyWith(
+                color: AppColors.secondary,
+              ),
+            ),
           ),
         ],
       ),
