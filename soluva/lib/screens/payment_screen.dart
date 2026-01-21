@@ -145,6 +145,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("--...---");
+    print(widget.request);
     final service = widget.request['service'] ?? 'Servicio';
     final cost = widget.request['cost']?.toString() ?? '0';
     final worker = widget.request['worker_name'] ?? 'Trabajador';
@@ -184,21 +186,122 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   /// ---------------- LEFT ----------------
   Widget _buildSummary(String service, String worker, String cost) {
+    final workerData = widget.request['worker'];
+    final workerUser = workerData?['user'];
+
+    final description = workerData?['description'] ?? '';
+    final email = workerUser?['email'];
+    final status = widget.request['status'] ?? '';
+    final date = widget.request['scheduled_date'];
+    final shortId = widget.request['id']?.toString().substring(0, 8);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          service,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        _infoCard(
+          title: 'Servicio',
+          icon: Icons.build,
+          children: [
+            _infoRow(service, bold: true),
+            if (date != null)
+              _infoRow('Fecha: ${date.toString().split('T').first}'),
+            _infoRow('Estado: Aceptado'),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text('Prestador: $worker'),
-        const SizedBox(height: 24),
-        Text('Monto a pagar', style: TextStyle(color: Colors.grey[600])),
-        const SizedBox(height: 8),
-        Text(
-          '\$$cost',
-          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+
+        const SizedBox(height: 16),
+
+        _infoCard(
+          title: 'Prestador',
+          icon: Icons.person,
+          children: [
+            _infoRow(worker, bold: true),
+            if (description.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  description,
+                  style: TextStyle(color: Colors.grey[700]),
+                ),
+              ),
+            if (email != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _infoRow(email, icon: Icons.email),
+              ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        _infoCard(
+          title: 'Total a pagar',
+          icon: Icons.payments,
+          children: [
+            Text(
+              '\$$cost',
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'El monto se cobrará al confirmar',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _infoCard({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: AppColors.secondary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String text, {bool bold = false, IconData? icon}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 18, color: Colors.grey[600]),
+          const SizedBox(width: 6),
+        ],
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
+            ),
+          ),
         ),
       ],
     );
