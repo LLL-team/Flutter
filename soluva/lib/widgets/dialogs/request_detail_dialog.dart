@@ -419,28 +419,18 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    // Mostrar indicador de carga
+    final result = await RequestService.changeStatus(uuid: uuid, status: 'cancelled');
+
     if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Solicitud cancelada' : 'Error al cancelar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
       );
     }
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'cancelled');
-
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(context, 'Solicitud cancelada', result['message'] ?? 'La solicitud ha sido cancelada.');
-      }
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al cancelar la solicitud');
-      }
-    }
+    onUpdate?.call();
   }
 
   Future<void> _confirmCompleteWork(BuildContext context) async{
@@ -475,28 +465,18 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    // Mostrar indicador de carga
+    final result = await RequestService.changeStatus(uuid: uuid, status: 'completed');
+
     if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Trabajo finalizado' : 'Error al finalizar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
       );
     }
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'completed');
-
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(context, 'Trabajo finalizado', result['message'] ?? 'El trabajo ha sido marcado como completado.');
-      }
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al finalizar el trabajo');
-      }
-    }
+    onUpdate?.call();
   }
 
   Future<void> _confirmAcceptRequest(BuildContext context) async {
@@ -531,28 +511,18 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    // Mostrar indicador de carga
+    final result = await RequestService.changeStatus(uuid: uuid, status: 'accepted');
+
     if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Solicitud aceptada' : 'Error al aceptar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
       );
     }
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'accepted');
-
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(context, 'Solicitud aceptada', result['message'] ?? 'Has aceptado esta solicitud.');
-      }
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al aceptar la solicitud');
-      }
-    }
+    onUpdate?.call();
   }
 
   Future<void> _confirmRejectRequest(BuildContext context) async {
@@ -587,48 +557,18 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    // Mostrar indicador de carga
+    final result = await RequestService.changeStatus(uuid: uuid, status: 'rejected');
+
     if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Solicitud rechazada' : 'Error al rechazar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
       );
     }
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'rejected');
-
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(context, 'Solicitud rechazada', result['message'] ?? 'Has rechazado esta solicitud.');
-      }
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al rechazar la solicitud');
-      }
-    }
-  }
-
-  void _showSuccessDialog(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: Text(title, style: AppTextStyles.heading2.copyWith(color: AppColors.secondary)),
-        content: Text(message, style: AppTextStyles.bodyText),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onUpdate?.call();
-            },
-            child: Text('OK', style: AppTextStyles.buttonText.copyWith(color: AppColors.button)),
-          ),
-        ],
-      ),
-    );
+    onUpdate?.call();
   }
 
   void _showErrorDialog(BuildContext context, String message) {

@@ -457,6 +457,8 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
         }
       } else {
         // Error en la solicitud
+        if (mounted) Navigator.pop(context); // Cerrar indicador de carga
+
         final errorData = jsonDecode(response.body);
         String errorMessage = 'Error al enviar la solicitud';
 

@@ -116,61 +116,22 @@ class UserAssignDialog extends StatelessWidget {
     // Cerrar el diálogo principal
     Navigator.pop(context);
 
-    // Mostrar indicador de carga
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
     final result = await RequestService.changeStatus(
       uuid: uuid,
       status: 'assigned',
     );
 
-    // Cerrar indicador de carga
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(
-          context,
-          'Trabajo asignado',
-          result['message'] ?? 'El trabajo ha sido asignado correctamente.',
-        );
-      }
-      // Actualizar la lista
-      onUpdate?.call();
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(
-          context,
-          result['message'] ?? 'Error al asignar el trabajo',
-        );
-      }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Trabajo asignado' : 'Error al asignar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
+      );
     }
-  }
 
-  void _showSuccessDialog(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: Text(title, style: AppTextStyles.heading2),
-        content: Text(message, style: AppTextStyles.bodyText),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: AppTextStyles.buttonText.copyWith(
-                color: AppColors.secondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    // Actualizar la lista
+    onUpdate?.call();
   }
 
   void _showErrorDialog(BuildContext context, String message) {

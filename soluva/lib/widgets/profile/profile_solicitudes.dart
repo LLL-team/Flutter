@@ -51,6 +51,8 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
   }
 
   Future<void> _loadRequests() async {
+    if (!mounted) return;
+
     setState(() {
       _loading = true;
       _page = 1;
@@ -62,13 +64,15 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
           ? await RequestService.getWorkerRequests(page: _page)
           : await RequestService.getUserRequests(page: _page);
 
+      if (!mounted) return;
+
       setState(() {
         _requests = result['data'];
         _lastPage = result['last_page'];
         _loading = false;
       });
     } catch (e) {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -532,21 +536,11 @@ class _RequestCard extends StatelessWidget {
                         // Cerrar el diálogo de confirmación
                         Navigator.pop(ctx);
 
-                        // Mostrar indicador de carga
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => const Center(child: CircularProgressIndicator()),
-                        );
-
                         // Cambiar el estado a 'cancelled'
                         final result = await RequestService.changeStatus(
                           uuid: uuid,
                           status: 'cancelled',
                         );
-
-                        // Cerrar indicador de carga
-                        if (context.mounted) Navigator.pop(context);
 
                         // Mostrar resultado
                         if (context.mounted) {
@@ -702,13 +696,6 @@ class _RequestCard extends StatelessWidget {
                       // Cerrar el diálogo de calificación
                       Navigator.pop(ctx);
 
-                      // Mostrar indicador de carga
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const Center(child: CircularProgressIndicator()),
-                      );
-
                       // Enviar calificación
                       final result = await RequestService.createRating(
                         requestUuid: uuid,
@@ -717,9 +704,6 @@ class _RequestCard extends StatelessWidget {
                         friendliness: kindnessRating,
                         review: commentController.text.trim(),
                       );
-
-                      // Cerrar indicador de carga
-                      if (context.mounted) Navigator.pop(context);
 
                       // Mostrar resultado
                       if (context.mounted) {

@@ -358,27 +358,19 @@ class NewRequestDialog extends StatelessWidget {
     // Cerrar el diálogo principal
     Navigator.pop(context);
 
-    // Mostrar indicador de carga
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-
     final result = await RequestService.changeStatus(uuid: uuid, status: 'accepted');
 
-    // Cerrar indicador de carga
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(context, 'Trabajo aceptado', result['message'] ?? 'Has aceptado esta solicitud de trabajo.');
-      }
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al aceptar la solicitud');
-      }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Trabajo aceptado' : 'Error al aceptar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
+      );
     }
+
+    // Actualizar la lista
+    onUpdate?.call();
   }
 
   void _rejectRequest(BuildContext context) async {
@@ -388,23 +380,20 @@ class NewRequestDialog extends StatelessWidget {
       return;
     }
 
-    // Cerrar el diálogo principal
-    Navigator.pop(context);
-
     // Mostrar diálogo de confirmación
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.background,
         title: Text('Rechazar trabajo', style: AppTextStyles.heading2),
         content: Text('¿Estás seguro que deseas rechazar esta solicitud?', style: AppTextStyles.bodyText),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(ctx, false),
             child: Text('Cancelar', style: AppTextStyles.buttonText.copyWith(color: AppColors.textSecondary)),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             child: Text('Sí, rechazar', style: AppTextStyles.buttonText.copyWith(color: AppColors.secondary)),
           ),
         ],
@@ -413,49 +402,22 @@ class NewRequestDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    // Mostrar indicador de carga
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
-      );
-    }
+    // Cerrar el diálogo principal
+    if (context.mounted) Navigator.pop(context);
 
     final result = await RequestService.changeStatus(uuid: uuid, status: 'rejected');
 
-    // Cerrar indicador de carga
-    if (context.mounted) Navigator.pop(context);
-
-    if (result['success'] == true) {
-      if (context.mounted) {
-        _showSuccessDialog(context, 'Trabajo rechazado', result['message'] ?? 'Has rechazado esta solicitud.');
-      }
-    } else {
-      if (context.mounted) {
-        _showErrorDialog(context, result['message'] ?? 'Error al rechazar la solicitud');
-      }
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? (result['success'] == true ? 'Trabajo rechazado' : 'Error al rechazar')),
+          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+        ),
+      );
     }
-  }
 
-  void _showSuccessDialog(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: Text(title, style: AppTextStyles.heading2.copyWith(color: AppColors.secondary)),
-        content: Text(message, style: AppTextStyles.bodyText),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onUpdate?.call();
-            },
-            child: Text('OK', style: AppTextStyles.buttonText.copyWith(color: AppColors.button)),
-          ),
-        ],
-      ),
-    );
+    // Actualizar la lista
+    onUpdate?.call();
   }
 
   void _showErrorDialog(BuildContext context, String message) {
