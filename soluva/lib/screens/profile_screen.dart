@@ -123,6 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   viewingAsWorker = true;
                   selectedMenu = 1;
                 });
+                loadUser(); // Recargar datos del perfil
               }
             } else if (i == 6) {
               // Botón para volver al perfil de usuario común
@@ -130,6 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 viewingAsWorker = false;
                 selectedMenu = 1;
               });
+              loadUser(); // Recargar datos del perfil
             } else {
               setState(() => selectedMenu = i);
             }
@@ -169,6 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   viewingAsWorker = true;
                   selectedMenu = 1;
                 });
+                loadUser(); // Recargar datos del perfil
               }
             } else if (i == 6) {
               // Botón para volver al perfil de usuario común
@@ -176,6 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 viewingAsWorker = false;
                 selectedMenu = 1;
               });
+              loadUser(); // Recargar datos del perfil
             } else {
               setState(() => selectedMenu = i);
             }
