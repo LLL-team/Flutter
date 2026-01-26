@@ -190,6 +190,59 @@ class RequestService {
     }
   }
 
+  /// Obtiene una solicitud por su UUID
+  static Future<Map<String, dynamic>?> getRequestById(String uuid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return null;
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/request/$uuid'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final item = jsonDecode(response.body);
+
+        final worker = item['worker']?['user'];
+        final workerName = worker != null
+            ? "${worker['name']} ${worker['last_name']}"
+            : "Trabajador";
+
+        final status = item["status"]?.toString().toLowerCase() ?? 'pending';
+
+        return {
+          "worker_name": workerName,
+          "service": item["type"],
+          "created_at": item["date"],
+          "scheduled_date": item["date"],
+          "status": status,
+          "cost": item["amount"],
+          "rejected": status == 'rejected',
+          "id": item["uuid"] ?? item["id"],
+          "uuid": item["uuid"],
+          "user": item["user"],
+          "worker": item["worker"],
+          "category": item["category"],
+          "date": item["date"],
+          "time": item["time"],
+          "location": item["location"],
+          "address": item["address"],
+          "amount": item["amount"],
+          "type": item["type"],
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting request by ID: $e');
+      return null;
+    }
+  }
+
   /// Crea una calificación para una solicitud
   static Future<Map<String, dynamic>> createRating({
     required String requestUuid,

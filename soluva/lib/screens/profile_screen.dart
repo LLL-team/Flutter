@@ -198,9 +198,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (viewingAsWorker) {
           // En modo trabajador, mostrar tabs de Perfil y Servicios
           return ProfileCardContainer(
+            key: const ValueKey('worker_profile'),
             tabs: const ['Perfil', 'Servicios'],
             initialTab: widget.initialWorkerTab,
             contentBuilder: (selectedTab) => ProfileMisDatos(
+              key: ValueKey('mis_datos_worker_$selectedTab'),
               selectedTab: selectedTab,
               viewingAsWorker: true,
             ),
@@ -208,7 +210,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         } else {
           // En modo usuario, solo mostrar la tab "Perfil"
           return ProfileCardContainer(
+            key: const ValueKey('user_profile'),
             contentBuilder: (selectedTab) => ProfileMisDatos(
+              key: const ValueKey('mis_datos_user'),
               selectedTab: 'Perfil',
               viewingAsWorker: false,
             ),
@@ -234,7 +238,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 4:
         // Notificaciones - sin tabs
         return ProfileCardContainer(
-          contentBuilder: (selectedTab) => const ProfileNotifications(),
+          contentBuilder: (selectedTab) => ProfileNotifications(
+            viewingAsWorker: viewingAsWorker,
+          ),
         );
 
       case 5:

@@ -29,6 +29,15 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
     _loadUserData();
   }
 
+  @override
+  void didUpdateWidget(ProfileMisDatos oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Recargar datos cuando cambia el modo de visualización
+    if (oldWidget.viewingAsWorker != widget.viewingAsWorker) {
+      _loadUserData();
+    }
+  }
+
   Future<void> _loadUserData() async {
     final data = await ApiService.getUserProfile();
 
