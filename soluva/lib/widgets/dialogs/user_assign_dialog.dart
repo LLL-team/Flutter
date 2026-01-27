@@ -7,8 +7,13 @@ import '../../screens/payment_screen.dart';
 class UserAssignDialog extends StatelessWidget {
   final Map<String, dynamic> request;
   final VoidCallback? onUpdate;
-
-  const UserAssignDialog({super.key, required this.request, this.onUpdate});
+  final VoidCallback? onPaymentFinished;
+  const UserAssignDialog({
+    super.key,
+    required this.request,
+    this.onUpdate,
+    this.onPaymentFinished,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,14 +68,12 @@ class UserAssignDialog extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => PaymentScreen(
-                          request: request,
-                          onPaymentSuccess: () async {
-                            await _confirmAssign(context);
-                          },
-                        ),
+                        builder: (_) => PaymentScreen(request: request),
                       ),
-                    );
+                    ).then((_) {
+                      // ⬅️ Esto se ejecuta SIEMPRE que vuelve del pago
+                      onPaymentFinished?.call();
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
@@ -124,8 +127,15 @@ class UserAssignDialog extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? (result['success'] == true ? 'Trabajo asignado' : 'Error al asignar')),
-          backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+          content: Text(
+            result['message'] ??
+                (result['success'] == true
+                    ? 'Trabajo asignado'
+                    : 'Error al asignar'),
+          ),
+          backgroundColor: result['success'] == true
+              ? Colors.green
+              : AppColors.secondary,
         ),
       );
     }

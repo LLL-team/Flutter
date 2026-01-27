@@ -11,10 +11,7 @@ import 'package:intl/intl.dart';
 class ProfileNotifications extends StatefulWidget {
   final bool viewingAsWorker;
 
-  const ProfileNotifications({
-    super.key,
-    this.viewingAsWorker = false,
-  });
+  const ProfileNotifications({super.key, this.viewingAsWorker = false});
 
   @override
   State<ProfileNotifications> createState() => _ProfileNotificationsState();
@@ -123,10 +120,7 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
       if (!mounted) return;
       Navigator.pop(context); // Cerrar loading
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     }
   }
@@ -150,10 +144,8 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
     if (!widget.viewingAsWorker && status == 'accepted') {
       showDialog(
         context: context,
-        builder: (context) => UserAssignDialog(
-          request: request,
-          onUpdate: _loadNotifications,
-        ),
+        builder: (context) =>
+            UserAssignDialog(request: request, onUpdate: _loadNotifications),
       );
       return;
     }
@@ -163,28 +155,22 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
       // Nueva solicitud (sin aceptar) - mostrar para aceptar/rechazar
       showDialog(
         context: context,
-        builder: (context) => NewRequestDialog(
-          request: request,
-          onUpdate: _loadNotifications,
-        ),
+        builder: (context) =>
+            NewRequestDialog(request: request, onUpdate: _loadNotifications),
       );
     } else if (widget.viewingAsWorker) {
       // Solicitud aceptada, en progreso o completada - mostrar detalles
       showDialog(
         context: context,
-        builder: (context) => RequestDetailDialog(
-          request: request,
-          onUpdate: _loadNotifications,
-        ),
+        builder: (context) =>
+            RequestDetailDialog(request: request, onUpdate: _loadNotifications),
       );
     } else {
       // Usuario viendo otros estados - mostrar detalles
       showDialog(
         context: context,
-        builder: (context) => RequestDetailDialog(
-          request: request,
-          onUpdate: _loadNotifications,
-        ),
+        builder: (context) =>
+            RequestDetailDialog(request: request, onUpdate: _loadNotifications),
       );
     }
   }
@@ -278,10 +264,7 @@ class _NotificationCard extends StatelessWidget {
   final Map<String, dynamic> notification;
   final VoidCallback? onTap;
 
-  const _NotificationCard({
-    required this.notification,
-    this.onTap,
-  });
+  const _NotificationCard({required this.notification, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -352,7 +335,10 @@ class _NotificationCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       message,
-                      style: const TextStyle(fontSize: 16, color: AppColors.text),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.text,
+                      ),
                     ),
                     // Mostrar indicador si se puede ver más detalles
                     if (hasRequest) ...[
@@ -381,11 +367,7 @@ class _NotificationCard extends StatelessWidget {
               ),
               // Flecha indicando que es clickeable
               if (hasRequest)
-                Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey[400],
-                  size: 24,
-                ),
+                Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
             ],
           ),
         ),

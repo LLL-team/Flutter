@@ -4,13 +4,8 @@ import '../../services/api_services/request_service.dart';
 
 class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic> request;
-  final VoidCallback onPaymentSuccess;
 
-  const PaymentScreen({
-    super.key,
-    required this.request,
-    required this.onPaymentSuccess,
-  });
+  const PaymentScreen({super.key, required this.request});
 
   @override
   State<PaymentScreen> createState() => _PaymentScreenState();
@@ -68,7 +63,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      widget.onPaymentSuccess();
       Navigator.pop(context);
     } else {
       _showErrorDialog(
@@ -113,8 +107,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         'Trabajo asignado',
         result['message'] ?? 'El trabajo ha sido asignado correctamente.',
       );
-
-      widget.onPaymentSuccess();
     } else {
       _showErrorDialog(
         context,
@@ -432,7 +424,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               SizedBox(
                 width: 280,
                 child: ElevatedButton(
-                  onPressed: isProcessing ? null : () => _confirmPaymentAndAssign(),
+                  onPressed: isProcessing
+                      ? null
+                      : () => _confirmPaymentAndAssign(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -457,7 +451,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
               SizedBox(
                 width: 280,
                 child: OutlinedButton(
-                  onPressed: isProcessing ? null : () => _testAssignWithoutPayment(),
+                  onPressed: isProcessing
+                      ? null
+                      : () => _testAssignWithoutPayment(),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.grey[600],
                     side: BorderSide(color: Colors.grey[400]!),

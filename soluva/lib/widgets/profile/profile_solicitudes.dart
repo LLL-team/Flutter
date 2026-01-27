@@ -175,8 +175,9 @@ class _RequestCard extends StatelessWidget {
     // Si estamos viendo como trabajador, mostrar el nombre del usuario; si no, el del trabajador
     final displayName = viewingAsWorker
         ? (request['user'] != null
-            ? "${request['user']['name'] ?? ''} ${request['user']['last_name'] ?? ''}".trim()
-            : 'Usuario')
+              ? "${request['user']['name'] ?? ''} ${request['user']['last_name'] ?? ''}"
+                    .trim()
+              : 'Usuario')
         : (request['worker_name'] ?? 'Trabajador');
 
     final service = request['service'] ?? 'Servicio';
@@ -204,14 +205,21 @@ class _RequestCard extends StatelessWidget {
     if (status == 'completed' || status == 'cancelled') {
       backgroundColor = const Color(0xFFEAE6DB).withOpacity(0.8);
     } else if (status == 'worker_completed' || status == 'provider_completed') {
-      backgroundColor = const Color(0xFFFFF4E6); // Color naranja claro para llamar la atención
-      borderColor = AppColors.secondary; // Borde naranja para llamar más la atención
+      backgroundColor = const Color(
+        0xFFFFF4E6,
+      ); // Color naranja claro para llamar la atención
+      borderColor =
+          AppColors.secondary; // Borde naranja para llamar más la atención
       borderWidth = 2;
     }
 
     // Determinar si se puede hacer clic
-    final canTap = (viewingAsWorker && status != 'cancelled' && status != 'completed' && status != 'rejected') ||
-                   (!viewingAsWorker && (status == 'accepted' || status == 'pending'));
+    final canTap =
+        (viewingAsWorker &&
+            status != 'cancelled' &&
+            status != 'completed' &&
+            status != 'rejected') ||
+        (!viewingAsWorker && (status == 'accepted' || status == 'pending'));
 
     return GestureDetector(
       onTap: canTap ? () => _showRequestDialog(context) : null,
@@ -224,195 +232,200 @@ class _RequestCard extends StatelessWidget {
           border: Border.all(color: borderColor, width: borderWidth),
         ),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(8),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.description_outlined,
+                    color: AppColors.text,
+                    size: 24,
+                  ),
                 ),
-                child: Icon(
-                  Icons.description_outlined,
-                  color: AppColors.text,
-                  size: 24,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.text,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        service,
+                        style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                      ),
+                      if (scheduled != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatScheduledDate(scheduled),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
+                    if (created != null)
+                      Text(
+                        _formatCreatedDate(created),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    const SizedBox(height: 8),
                     Text(
-                      displayName,
+                      '\$${cost.toStringAsFixed(0)}',
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: AppColors.text,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      service,
-                      style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            _StatusProgress(status: status, isRejected: isRejected),
+            const SizedBox(height: 16),
+            // Mostrar botón de estado según el estado de la solicitud
+            if (isRejected)
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 48,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E3A4A),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Text(
+                    'Solicitud rechazada',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
-                    if (scheduled != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatScheduledDate(scheduled),
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ),
+              )
+            else if (status == 'completed')
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 48,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.text,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Text(
+                    'Finalizado',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              )
+            else if (status == 'cancelled')
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 48,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.text,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: const Text(
+                    'Cancelada',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+            if ((status == 'provider_completed' ||
+                    status == 'worker_completed') &&
+                !viewingAsWorker)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _showConfirmationDialog(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
                       ),
-                    ],
+                      child: const Text(
+                        'Si, ya está finalizado',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    OutlinedButton(
+                      onPressed: () => _showConfirmationDialog(context, false),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: AppColors.secondary,
+                          width: 2,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: const Text(
+                        'No, todavía no',
+                        style: TextStyle(
+                          color: AppColors.secondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (created != null)
-                    Text(
-                      _formatCreatedDate(created),
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '\$${cost.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _StatusProgress(status: status, isRejected: isRejected),
-          const SizedBox(height: 16),
-          // Mostrar botón de estado según el estado de la solicitud
-          if (isRejected)
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 48,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E3A4A),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Text(
-                  'Solicitud rechazada',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            )
-          else if (status == 'completed')
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 48,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.text,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Text(
-                  'Finalizado',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            )
-          else if (status == 'cancelled')
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 48,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.text,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Text(
-                  'Cancelada',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ),
-          if ((status == 'provider_completed' || status == 'worker_completed') && !viewingAsWorker)
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _showConfirmationDialog(context, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.secondary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Text(
-                      'Si, ya está finalizado',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  OutlinedButton(
-                    onPressed: () => _showConfirmationDialog(context, false),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                        color: AppColors.secondary,
-                        width: 2,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: const Text(
-                      'No, todavía no',
-                      style: TextStyle(
-                        color: AppColors.secondary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+          ],
         ),
       ),
     );
@@ -437,7 +450,9 @@ class _RequestCard extends StatelessWidget {
         context: context,
         builder: (context) => UserAssignDialog(
           request: request,
-          onUpdate: onUpdate,
+          onPaymentFinished: () {
+            onUpdate();
+          },
         ),
       );
       return;
@@ -448,19 +463,15 @@ class _RequestCard extends StatelessWidget {
       // Nueva solicitud (sin aceptar)
       showDialog(
         context: context,
-        builder: (context) => NewRequestDialog(
-          request: request,
-          onUpdate: onUpdate,
-        ),
+        builder: (context) =>
+            NewRequestDialog(request: request, onUpdate: onUpdate),
       );
     } else {
       // Solicitud aceptada, en progreso o completada
       showDialog(
         context: context,
-        builder: (context) => RequestDetailDialog(
-          request: request,
-          onUpdate: onUpdate,
-        ),
+        builder: (context) =>
+            RequestDetailDialog(request: request, onUpdate: onUpdate),
       );
     }
   }
@@ -498,10 +509,7 @@ class _RequestCard extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: Colors.white,
-                          width: 2,
-                        ),
+                        side: const BorderSide(color: Colors.white, width: 2),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -526,7 +534,9 @@ class _RequestCard extends StatelessWidget {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Error: No se pudo identificar la solicitud'),
+                              content: Text(
+                                'Error: No se pudo identificar la solicitud',
+                              ),
                               backgroundColor: AppColors.secondary,
                             ),
                           );
@@ -546,8 +556,12 @@ class _RequestCard extends StatelessWidget {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(result['message'] ?? 'Operación completada'),
-                              backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+                              content: Text(
+                                result['message'] ?? 'Operación completada',
+                              ),
+                              backgroundColor: result['success'] == true
+                                  ? Colors.green
+                                  : AppColors.secondary,
                             ),
                           );
                         }
@@ -672,10 +686,14 @@ class _RequestCard extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () async {
                       // Validar que todas las calificaciones estén completas
-                      if (qualityRating == 0 || punctualityRating == 0 || kindnessRating == 0) {
+                      if (qualityRating == 0 ||
+                          punctualityRating == 0 ||
+                          kindnessRating == 0) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Por favor completa todas las calificaciones'),
+                            content: Text(
+                              'Por favor completa todas las calificaciones',
+                            ),
                             backgroundColor: AppColors.secondary,
                           ),
                         );
@@ -686,7 +704,9 @@ class _RequestCard extends StatelessWidget {
                       if (uuid == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Error: No se pudo identificar la solicitud'),
+                            content: Text(
+                              'Error: No se pudo identificar la solicitud',
+                            ),
                             backgroundColor: AppColors.secondary,
                           ),
                         );
@@ -709,8 +729,12 @@ class _RequestCard extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(result['message'] ?? 'Operación completada'),
-                            backgroundColor: result['success'] == true ? Colors.green : AppColors.secondary,
+                            content: Text(
+                              result['message'] ?? 'Operación completada',
+                            ),
+                            backgroundColor: result['success'] == true
+                                ? Colors.green
+                                : AppColors.secondary,
                           ),
                         );
                       }
@@ -896,9 +920,13 @@ class _StatusProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int currentStep = 0;
-    if (status == 'confirmed' || status == 'accepted' || status == 'assigned') currentStep = 1;
+    if (status == 'confirmed' || status == 'accepted' || status == 'assigned')
+      currentStep = 1;
     if (status == 'in_progress') currentStep = 2;
-    if (status == 'provider_completed' || status == 'worker_completed' || status == 'user_completed') currentStep = 2;
+    if (status == 'provider_completed' ||
+        status == 'worker_completed' ||
+        status == 'user_completed')
+      currentStep = 2;
     if (status == 'completed') currentStep = 3;
 
     // Determinar el texto del paso 3 según quién completó primero
@@ -917,10 +945,7 @@ class _StatusProgress extends StatelessWidget {
         'label': 'Confirmado,\nEsperando visita',
         'icon': Icons.check_circle_outline,
       },
-      {
-        'label': step3Label,
-        'icon': Icons.verified_outlined,
-      },
+      {'label': step3Label, 'icon': Icons.verified_outlined},
       {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
     ];
 
