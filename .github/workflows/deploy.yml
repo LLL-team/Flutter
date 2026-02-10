@@ -36,7 +36,7 @@ jobs:
           port: 21 # Puerto 21 para FTPS, 22 para SFTP
           protocol: ftps # Cambiar a sftp si usás SSH
           local-dir: soluva/build/web/ # Carpeta local compilada
-          server-dir: /public_html/ # Carpeta remota en el servidor
+          server-dir: /
 
       - name: Deployment completed
         run: echo "Deploy completed at $(date)"
