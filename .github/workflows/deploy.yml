@@ -1,0 +1,42 @@
+name: Build and Deploy Flutter Web
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.6"
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+        working-directory: soluva
+
+      - name: Build Flutter Web
+        run: flutter build web --release
+        working-directory: soluva
+
+      - name: List compiled assets
+        run: ls -lh soluva/build/web/assets/
+
+      - name: Deploy via FTP/FTPS
+        uses: SamKirkland/FTP-Deploy-Action@4.3.1
+        with:
+          server: ${{ secrets.SFTP_HOST }} # Host FTP/FTPS
+          username: ${{ secrets.SFTP_USER }} # Usuario
+          password: ${{ secrets.SFTP_PASS }} # Contraseña
+          port: 21 # Puerto 21 para FTPS, 22 para SFTP
+          protocol: ftps # Cambiar a sftp si usás SSH
+          local-dir: soluva/build/web/ # Carpeta local compilada
+          server-dir: /public_html/ # Carpeta remota en el servidor
+
+      - name: Deployment completed
+        run: echo "Deploy completed at $(date)"
