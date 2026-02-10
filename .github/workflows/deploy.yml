@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -20,23 +21,25 @@ jobs:
         run: flutter pub get
         working-directory: soluva
 
+      - name: Create temporary .env
+        run: |
+          echo "BASE_URL=${{ secrets.ENV_API_URL }}" >> soluva/.env
+          echo "ENV_DEBUG=${{ secrets.ENV_OTHER_KEY }}" >> soluva/.env
+
       - name: Build Flutter Web
         run: flutter build web --release
         working-directory: soluva
 
-      - name: List compiled assets
-        run: ls -lh soluva/build/web/assets/
-
       - name: Deploy via FTP/FTPS
         uses: SamKirkland/FTP-Deploy-Action@4.3.1
         with:
-          server: ${{ secrets.SFTP_HOST }} # Host FTP/FTPS
-          username: ${{ secrets.SFTP_USER }} # Usuario
-          password: ${{ secrets.SFTP_PASS }} # Contraseña
-          port: 21 # Puerto 21 para FTPS, 22 para SFTP
-          protocol: ftps # Cambiar a sftp si usás SSH
-          local-dir: soluva/build/web/ # Carpeta local compilada
-          server-dir: /
+          server: ${{ secrets.SFTP_HOST }}
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASS }}
+          port: 21
+          protocol: ftps
+          local-dir: soluva/build/web/
+          server-dir: / # sube directo al public_html
 
       - name: Deployment completed
         run: echo "Deploy completed at $(date)"
