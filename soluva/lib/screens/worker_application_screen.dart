@@ -1,9 +1,8 @@
 import 'dart:io' show File;
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show Category, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/header_widget.dart';
@@ -33,15 +32,13 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
   String? _workerStatus;
 
-  // Nueva estructura para 3 niveles
-  Map<String, dynamic> _services =
-      {}; // {categoria: {subcategoria: {servicio: {tipo_costo: ...}}}}
+  // Nueva estructura para categorías
+  List<Map<String, dynamic>> _categories = [];
 
-  List<String> _selectedCategories = [];
-  Map<String, List<String>> _selectedSubcategoriesByCategory =
-      {}; // {categoria: [subcategorias]}
-  Map<String, Map<String, List<String>>> _selectedServicesBySubcategory =
-      {}; // {categoria: {subcategoria: [servicios]}}
+  // Selección: categoría -> subcategoría -> tareas
+  Map<String, dynamic>? _selectedCategory;
+  Map<String, dynamic>? _selectedSubcategory;
+  List<String> _selectedTasks = [];
 
   File? _certificationPhoto;
   Uint8List? _webCertificationBytes;
@@ -83,14 +80,16 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     try {
       final services = await ApiService.getServices();
       setState(() {
-        _services = services;
+        _categories = List<Map<String, dynamic>>.from(services['categories'] ?? []);
         _loadingServices = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to load services: $e")));
-      setState(() => _loadingServices = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al cargar servicios: $e")),
+        );
+      }
+      if (mounted) setState(() => _loadingServices = false);
     }
   }
 
@@ -143,28 +142,21 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
   void _submitApplication() async {
     if (_formKey.currentState!.validate() &&
         (_facePhoto != null || _webImageBytes != null) &&
-        _selectedCategories.isNotEmpty &&
-        _validateAllSelectionsComplete()) {
+        _selectedSubcategory != null &&
+        _selectedTasks.isNotEmpty) {
       final token = await ApiService.getToken();
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Error: not authenticated")),
+          const SnackBar(content: Text("Error: no autenticado")),
         );
         return;
       }
 
-      Map<String, dynamic> tradeMap = {};
-
-      for (String category in _selectedCategories) {
-        final subcategories = _selectedSubcategoriesByCategory[category] ?? [];
-        for (String subcategory in subcategories) {
-          final services =
-              _selectedServicesBySubcategory[category]?[subcategory] ?? [];
-          if (services.isNotEmpty) {
-            tradeMap = {"categoria": subcategory, "tareas": services};
-          }
-        }
-      }
+      // Construir el trade map con la nueva estructura
+      Map<String, dynamic> tradeMap = {
+        "categoria": _selectedSubcategory!['name'],
+        "tareas": _selectedTasks,
+      };
 
       final response = await ApiService.enviarSolicitudTrabajador(
         nationalId: _dniController.text,
@@ -188,9 +180,9 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
           Navigator.of(context).pop();
         });
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: ${response.body}")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: ${response.body}")),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -203,18 +195,14 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     }
   }
 
-  bool _validateAllSelectionsComplete() {
-    for (String category in _selectedCategories) {
-      final subcategories = _selectedSubcategoriesByCategory[category] ?? [];
-      if (subcategories.isEmpty) return false;
+  List<Map<String, dynamic>> get _subcategories {
+    if (_selectedCategory == null) return [];
+    return List<Map<String, dynamic>>.from(_selectedCategory!['subcategories'] ?? []);
+  }
 
-      for (String subcategory in subcategories) {
-        final services =
-            _selectedServicesBySubcategory[category]?[subcategory] ?? [];
-        if (services.isEmpty) return false;
-      }
-    }
-    return true;
+  List<Map<String, dynamic>> get _tasks {
+    if (_selectedSubcategory == null) return [];
+    return List<Map<String, dynamic>>.from(_selectedSubcategory!['tasks'] ?? []);
   }
 
   @override
@@ -225,7 +213,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
     if (!_isAuthenticated) {
       return const Scaffold(
-        body: Center(child: Text("You must be logged in to access this page.")),
+        body: Center(child: Text("Debes iniciar sesión para acceder a esta página.")),
       );
     }
 
@@ -241,7 +229,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         ),
         body: const Center(
           child: Text(
-            "✅ Tu perfil de trabajador ya fue aprobado",
+            "Tu perfil de trabajador ya fue aprobado",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
@@ -354,8 +342,11 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
+                      // Disclaimer colapsable
+                      const _InfoDisclaimer(),
+                      const SizedBox(height: 18),
                       _CustomField(
-                        label: "Dni:",
+                        label: "DNI:",
                         child: TextFormField(
                           controller: _dniController,
                           decoration: _inputDecoration(),
@@ -372,149 +363,152 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Selección de CATEGORÍAS
+                      // Selección de CATEGORÍA
                       _CustomField(
-                        label: "Seleccionar categoría:",
-                        child: MultiSelectDialogField<String>(
-                          title: const Text("Categoría"),
-                          buttonText: const Text("Seleccionar categoría"),
-                          items: _services.keys
-                              .map(
-                                (e) => MultiSelectItem<String>(
-                                  e,
-                                  _formatCategoryName(e),
-                                ),
-                              )
-                              .toList(),
-                          listType: MultiSelectListType.CHIP,
-                          initialValue: _selectedCategories,
-                          onConfirm: (values) {
+                        label: "Categoría:",
+                        child: DropdownButtonFormField<Map<String, dynamic>>(
+                          decoration: _inputDecoration(),
+                          hint: const Text("Seleccionar categoría"),
+                          value: _selectedCategory,
+                          items: _categories.map((category) {
+                            return DropdownMenuItem<Map<String, dynamic>>(
+                              value: category,
+                              child: Text(category['name'] ?? 'Sin nombre'),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
                             setState(() {
-                              _selectedCategories = List<String>.from(values);
-                              // Elimina subcategorías y servicios de categorías deseleccionadas
-                              _selectedSubcategoriesByCategory.removeWhere(
-                                (key, _) => !_selectedCategories.contains(key),
-                              );
-                              _selectedServicesBySubcategory.removeWhere(
-                                (key, _) => !_selectedCategories.contains(key),
-                              );
+                              _selectedCategory = value;
+                              _selectedSubcategory = null;
+                              _selectedTasks = [];
                             });
                           },
-                          validator: (values) =>
-                              (values == null || values.isEmpty)
-                              ? "Selecciona al menos una categoría"
-                              : null,
+                          validator: (value) =>
+                              value == null ? "Selecciona una categoría" : null,
                         ),
                       ),
                       const SizedBox(height: 12),
 
-                      // Para cada categoría seleccionada, mostrar selector de SUBCATEGORÍAS
-                      ..._selectedCategories.map(
-                        (category) => Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _CustomField(
-                                label:
-                                    "Subcategorías de ${_formatCategoryName(category)}:",
-                                child: MultiSelectDialogField<String>(
-                                  title: Text(
-                                    "Subcategorías de ${_formatCategoryName(category)}",
-                                  ),
-                                  buttonText: const Text(
-                                    "Seleccionar subcategorías",
-                                  ),
-                                  items:
-                                      (_services[category]
-                                              as Map<String, dynamic>)
-                                          .keys
-                                          .map(
-                                            (e) =>
-                                                MultiSelectItem<String>(e, e),
-                                          )
-                                          .toList(),
-                                  listType: MultiSelectListType.CHIP,
-                                  initialValue:
-                                      _selectedSubcategoriesByCategory[category] ??
-                                      [],
-                                  onConfirm: (values) {
-                                    setState(() {
-                                      _selectedSubcategoriesByCategory[category] =
-                                          List<String>.from(values);
+                      // Selección de SUBCATEGORÍA
+                      if (_selectedCategory != null)
+                        _CustomField(
+                          label: "Subcategoría:",
+                          child: DropdownButtonFormField<Map<String, dynamic>>(
+                            decoration: _inputDecoration(),
+                            hint: const Text("Seleccionar subcategoría"),
+                            value: _selectedSubcategory,
+                            items: _subcategories.map((subcategory) {
+                              return DropdownMenuItem<Map<String, dynamic>>(
+                                value: subcategory,
+                                child: Text(subcategory['name'] ?? 'Sin nombre'),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedSubcategory = value;
+                                _selectedTasks = [];
+                              });
+                            },
+                            validator: (value) =>
+                                value == null ? "Selecciona una subcategoría" : null,
+                          ),
+                        ),
+                      if (_selectedCategory != null) const SizedBox(height: 12),
 
-                                      // Elimina servicios de subcategorías deseleccionadas
-                                      if (_selectedServicesBySubcategory[category] !=
-                                          null) {
-                                        _selectedServicesBySubcategory[category]!
-                                            .removeWhere(
-                                              (key, _) =>
-                                                  !_selectedSubcategoriesByCategory[category]!
-                                                      .contains(key),
-                                            );
+                      // Selección de TAREAS (múltiple)
+                      if (_selectedSubcategory != null)
+                        _CustomField(
+                          label: "Tareas que realizas:",
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: AppColors.primary, width: 2),
+                            ),
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              children: _tasks.map((task) {
+                                final taskName = task['name'] ?? '';
+                                final isSelected = _selectedTasks.contains(taskName);
+                                return CheckboxListTile(
+                                  title: Text(
+                                    taskName,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  subtitle: Text(
+                                    _getPriceTypeLabel(task['price_type']),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  value: isSelected,
+                                  activeColor: AppColors.secondary,
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                  onChanged: (checked) {
+                                    setState(() {
+                                      if (checked == true) {
+                                        _selectedTasks.add(taskName);
+                                      } else {
+                                        _selectedTasks.remove(taskName);
                                       }
                                     });
                                   },
-                                  validator: (values) =>
-                                      (values == null || values.isEmpty)
-                                      ? "Selecciona al menos una subcategoría"
-                                      : null,
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      if (_selectedSubcategory != null) const SizedBox(height: 12),
+
+                      // Mostrar tareas seleccionadas
+                      if (_selectedTasks.isNotEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Tareas seleccionadas:",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
                               ),
-                            ),
-
-                            // Para cada subcategoría seleccionada, mostrar selector de SERVICIOS
-                            ...(_selectedSubcategoriesByCategory[category] ?? []).map(
-                              (subcategory) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _CustomField(
-                                  label: "Servicios de $subcategory:",
-                                  child: MultiSelectDialogField<String>(
-                                    title: Text("Servicios de $subcategory"),
-                                    buttonText: const Text(
-                                      "Seleccionar servicios",
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _selectedTasks.map((task) {
+                                  return Chip(
+                                    label: Text(
+                                      task,
+                                      style: const TextStyle(fontSize: 12),
                                     ),
-                                    items:
-                                        ((_services[category]
-                                                    as Map<
-                                                      String,
-                                                      dynamic
-                                                    >)[subcategory]
-                                                as Map<String, dynamic>)
-                                            .keys
-                                            .map(
-                                              (e) =>
-                                                  MultiSelectItem<String>(e, e),
-                                            )
-                                            .toList(),
-                                    listType: MultiSelectListType.CHIP,
-                                    initialValue:
-                                        _selectedServicesBySubcategory[category]?[subcategory] ??
-                                        [],
-                                    onConfirm: (values) {
+                                    backgroundColor: AppColors.background,
+                                    deleteIcon: const Icon(Icons.close, size: 16),
+                                    onDeleted: () {
                                       setState(() {
-                                        if (_selectedServicesBySubcategory[category] ==
-                                            null) {
-                                          _selectedServicesBySubcategory[category] =
-                                              {};
-                                        }
-                                        _selectedServicesBySubcategory[category]![subcategory] =
-                                            List<String>.from(values);
+                                        _selectedTasks.remove(task);
                                       });
                                     },
-                                    validator: (values) =>
-                                        (values == null || values.isEmpty)
-                                        ? "Selecciona al menos un servicio"
-                                        : null,
-                                  ),
-                                ),
+                                  );
+                                }).toList(),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      if (_selectedTasks.isNotEmpty) const SizedBox(height: 12),
 
                       _CustomField(
-                        label: "Certificación / Matrícula:",
+                        label: "Certificación / Matrícula (opcional):",
                         child: TextFormField(
                           controller: _certificationController,
                           decoration: _inputDecoration(),
@@ -522,7 +516,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       ),
                       const SizedBox(height: 12),
                       _CustomField(
-                        label: "Descripción de tareas:",
+                        label: "Descripción de tus servicios:",
                         child: TextFormField(
                           controller: _descriptionController,
                           decoration: _inputDecoration(),
@@ -546,20 +540,41 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: _webImageBytes != null
-                                    ? Image.memory(
-                                        _webImageBytes!,
-                                        fit: BoxFit.cover,
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(11),
+                                        child: Image.memory(
+                                          _webImageBytes!,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                        ),
                                       )
                                     : _facePhoto != null
-                                    ? Image.file(_facePhoto!, fit: BoxFit.cover)
-                                    : const Center(
-                                        child: Text(
-                                          "Foto de rostro",
-                                          style: TextStyle(
-                                            color: Colors.black54,
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(11),
+                                            child: Image.file(
+                                              _facePhoto!,
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                            ),
+                                          )
+                                        : const Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.camera_alt, color: Colors.black54),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  "Foto de rostro",
+                                                  style: TextStyle(
+                                                    color: Colors.black54,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ),
                               ),
                             ),
                           ),
@@ -575,23 +590,42 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: _webCertificationBytes != null
-                                    ? Image.memory(
-                                        _webCertificationBytes!,
-                                        fit: BoxFit.cover,
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(11),
+                                        child: Image.memory(
+                                          _webCertificationBytes!,
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                        ),
                                       )
                                     : _certificationPhoto != null
-                                    ? Image.file(
-                                        _certificationPhoto!,
-                                        fit: BoxFit.cover,
-                                      )
-                                    : const Center(
-                                        child: Text(
-                                          "Foto de documento",
-                                          style: TextStyle(
-                                            color: Colors.black54,
+                                        ? ClipRRect(
+                                            borderRadius: BorderRadius.circular(11),
+                                            child: Image.file(
+                                              _certificationPhoto!,
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                            ),
+                                          )
+                                        : const Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.file_copy, color: Colors.black54),
+                                                SizedBox(height: 4),
+                                                Text(
+                                                  "Certificación",
+                                                  style: TextStyle(
+                                                    color: Colors.black54,
+                                                    fontSize: 12,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ),
                               ),
                             ),
                           ),
@@ -636,32 +670,44 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     );
   }
 
-  String _formatCategoryName(String category) {
-    // Capitaliza y formatea nombres de categorías
-    final Map<String, String> categoryNames = {
-      'casa': 'Casa',
-      'llaves': 'Llaves',
-      'auto': 'Auto',
-      'camion': 'Camión',
-      'jardin': 'Jardín',
-      'bienestar': 'Bienestar',
-    };
-    return categoryNames[category] ?? category;
+  String _getPriceTypeLabel(String? priceType) {
+    switch (priceType) {
+      case 'fixed':
+        return 'Precio fijo';
+      case 'fixed_per_hour':
+        return 'Precio por hora';
+      case 'fixed_m2':
+        return 'Precio por m²';
+      case 'fixed_km':
+        return 'Precio por km';
+      case 'visit_budget':
+        return 'Presupuesto con visita';
+      default:
+        return 'Precio a definir';
+    }
   }
 
   InputDecoration _inputDecoration() => InputDecoration(
-    filled: true,
-    fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(24),
-      borderSide: BorderSide(color: AppColors.primary, width: 2),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(24),
-      borderSide: BorderSide(color: AppColors.primary, width: 2),
-    ),
-  );
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+      );
 }
 
 class _CustomField extends StatelessWidget {
@@ -686,6 +732,79 @@ class _CustomField extends StatelessWidget {
         const SizedBox(height: 4),
         child,
       ],
+    );
+  }
+}
+
+class _InfoDisclaimer extends StatefulWidget {
+  const _InfoDisclaimer();
+
+  @override
+  State<_InfoDisclaimer> createState() => _InfoDisclaimerState();
+}
+
+class _InfoDisclaimerState extends State<_InfoDisclaimer> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => setState(() => _expanded = !_expanded),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.4),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Información importante",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ],
+            ),
+            if (_expanded) ...[
+              const SizedBox(height: 12),
+              const Text(
+                "• Seleccione solo su trabajo principal.\n"
+                "• Luego puede agregar más categorías una vez creado el perfil.\n"
+                "• Si tiene una certificación, se recomienda que elija el trabajo para el que está certificado.",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

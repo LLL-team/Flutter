@@ -106,7 +106,12 @@ class _HeaderWidgetState extends State<HeaderWidget> {
         ),
         PopupMenuItem<String>(
           onTap: () {
-            // Navegar a "Mis trabajos"
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ProfileScreen(initialSelectedMenu: 2),
+              ),
+            );
           },
           child: Row(
             children: [
