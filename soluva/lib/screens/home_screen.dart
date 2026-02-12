@@ -20,6 +20,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late ScrollController _scrollController;
   final _categoriesKey = GlobalKey();
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
   List<Map<String, dynamic>> _categories = [];
   bool _loadingCategories = true;
 
@@ -50,7 +52,50 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  /// Busca subcategorías y tareas que coincidan con el query.
+  /// Retorna una lista de {subcategoryName, categoryName, matchedOn} para mostrar resultados.
+  List<Map<String, String>> _searchResults() {
+    if (_searchQuery.isEmpty) return [];
+    final query = _searchQuery.toLowerCase();
+    final results = <Map<String, String>>[];
+
+    for (final category in _categories) {
+      final categoryName = category['name'] ?? '';
+      final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
+
+      for (final subcategory in subcategories) {
+        final subcategoryName = subcategory['name'] ?? '';
+        final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
+
+        // Match por nombre de subcategoría
+        if (subcategoryName.toLowerCase().contains(query)) {
+          results.add({
+            'subcategory': subcategoryName,
+            'category': categoryName,
+            'match': subcategoryName,
+          });
+          continue;
+        }
+
+        // Match por nombre de tarea
+        for (final task in tasks) {
+          final taskName = task['name'] ?? '';
+          if (taskName.toLowerCase().contains(query)) {
+            results.add({
+              'subcategory': subcategoryName,
+              'category': categoryName,
+              'match': taskName,
+            });
+            break; // Una sola coincidencia por subcategoría es suficiente
+          }
+        }
+      }
+    }
+    return results;
   }
 
   Future<void> _handleOfferService() async {
@@ -394,7 +439,137 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
+                  // Buscador
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (value) => setState(() => _searchQuery = value),
+                      decoration: InputDecoration(
+                        hintText: 'Buscar servicio...',
+                        prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close, size: 20),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(color: AppColors.primary, width: 2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(color: AppColors.secondary, width: 2),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Resultados de búsqueda
+                  if (_searchQuery.isNotEmpty) ...[
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
+                      child: Builder(
+                        builder: (context) {
+                          final results = _searchResults();
+                          if (results.isEmpty) {
+                            return Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: AppColors.background.withValues(alpha: 0.95),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Text(
+                                'No se encontraron servicios',
+                                style: TextStyle(color: AppColors.text, fontSize: 15),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          }
+                          return Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.background.withValues(alpha: 0.95),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              children: results.map((result) {
+                                return InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => WorkersByCategoryScreen(
+                                          category: result['subcategory']!,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          _getSubcategoryIcon(result['subcategory']!),
+                                          color: AppColors.secondary,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                result['subcategory']!,
+                                                style: const TextStyle(
+                                                  color: AppColors.text,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              if (result['match'] != result['subcategory'])
+                                                Text(
+                                                  'Tarea: ${result['match']}',
+                                                  style: TextStyle(
+                                                    color: AppColors.text.withValues(alpha: 0.6),
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              Text(
+                                                result['category']!,
+                                                style: TextStyle(
+                                                  color: AppColors.text.withValues(alpha: 0.5),
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: AppColors.secondary.withValues(alpha: 0.7),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
               Center(
                 key: _categoriesKey,
                 child: Container(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/theme/app_text_styles.dart';
-import 'package:soluva/services/api_services/request_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -29,14 +28,14 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  List<String> _subcategories = [];
-  String? _selectedSubcategory;
-  bool _loadingSubcategories = true;
+  List<String> _tasks = [];
+  String? _selectedTask;
+  bool _loadingTasks = true;
 
   @override
   void initState() {
     super.initState();
-    _loadSubcategories();
+    _loadTasks();
   }
 
   @override
@@ -46,55 +45,8 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
     super.dispose();
   }
 
-  String _normalizeString(String text) {
-    // Quitar acentos y convertir a minúsculas
-    final withoutAccents = text
-        .replaceAll('á', 'a')
-        .replaceAll('Á', 'a')
-        .replaceAll('é', 'e')
-        .replaceAll('É', 'e')
-        .replaceAll('í', 'i')
-        .replaceAll('Í', 'i')
-        .replaceAll('ó', 'o')
-        .replaceAll('Ó', 'o')
-        .replaceAll('ú', 'u')
-        .replaceAll('Ú', 'u')
-        .replaceAll('ñ', 'n')
-        .replaceAll('Ñ', 'n')
-        .toLowerCase()
-        .trim()
-        .replaceAll(RegExp(r'\s+'), ' '); // Normalizar múltiples espacios a uno solo
-
-    print('DEBUG NORMALIZE: "$text" -> "$withoutAccents"');
-    return withoutAccents;
-  }
-
-  bool _categoriesMatch(String cat1, String cat2) {
-    final norm1 = _normalizeString(cat1);
-    final norm2 = _normalizeString(cat2);
-
-    print('DEBUG MATCH: Comparing "$norm1" with "$norm2"');
-
-    // Comparación directa (contiene)
-    if (norm1.contains(norm2) || norm2.contains(norm1)) {
-      print('DEBUG MATCH: Direct match found!');
-      return true;
-    }
-
-    // Extraer palabras significativas
-    final words1 = norm1.split(' ').where((w) => w.length >= 3).toSet();
-    final words2 = norm2.split(' ').where((w) => w.length >= 3).toSet();
-
-    print('DEBUG MATCH: Words1: $words1, Words2: $words2');
-
-    // Si alguna palabra clave coincide, consideramos match
-    final hasMatch = words1.intersection(words2).isNotEmpty;
-    print('DEBUG MATCH: Intersection match: $hasMatch');
-    return hasMatch;
-  }
-
-  Future<void> _loadSubcategories() async {
-    setState(() => _loadingSubcategories = true);
+  Future<void> _loadTasks() async {
+    setState(() => _loadingTasks = true);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -109,53 +61,36 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
         },
       );
 
-      print('DEBUG: Response status: ${response.statusCode}');
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        print('DEBUG: Category to find: ${widget.category}');
+        final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
+        List<String> foundTasks = [];
 
-        // Buscar la categoría en la estructura anidada
-        List<String> foundSubcategories = [];
-
-        // Recorrer todos los niveles del JSON
-        for (var mainCategory in data.entries) {
-          print('DEBUG: Main category: ${mainCategory.key}');
-          final mainCategoryData = mainCategory.value as Map<String, dynamic>;
-
-          for (var subCategory in mainCategoryData.entries) {
-            print('DEBUG: Sub category: ${subCategory.key}');
-
-            // Si encontramos la categoría buscada
-            if (_categoriesMatch(widget.category, subCategory.key)) {
-              print('DEBUG: MATCH FOUND! ${subCategory.key}');
-
-              final services = subCategory.value as Map<String, dynamic>;
-              foundSubcategories = services.keys.toList();
-              print('DEBUG: Services found: $foundSubcategories');
+        for (final category in categories) {
+          final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
+          for (final subcategory in subcategories) {
+            final subcategoryName = subcategory['name'] ?? '';
+            if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
+              final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
+              foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
               break;
             }
           }
-
-          if (foundSubcategories.isNotEmpty) break;
+          if (foundTasks.isNotEmpty) break;
         }
 
         setState(() {
-          _subcategories = foundSubcategories;
-          if (_subcategories.isNotEmpty) {
-            _selectedSubcategory = _subcategories[0];
+          _tasks = foundTasks;
+          if (_tasks.isNotEmpty) {
+            _selectedTask = _tasks[0];
           }
-          _loadingSubcategories = false;
+          _loadingTasks = false;
         });
-
-        print('DEBUG: Final subcategories: $_subcategories');
       } else {
-        print('DEBUG: Error response: ${response.statusCode}');
-        setState(() => _loadingSubcategories = false);
+        setState(() => _loadingTasks = false);
       }
     } catch (e) {
-      print('Error loading subcategories: $e');
-      setState(() => _loadingSubcategories = false);
+      setState(() => _loadingTasks = false);
     }
   }
 
@@ -226,11 +161,11 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
               const SizedBox(height: 16),
 
               // Dropdown de subcategorías
-              if (_loadingSubcategories)
+              if (_loadingTasks)
                 const Center(child: CircularProgressIndicator())
-              else if (_subcategories.isNotEmpty)
+              else if (_tasks.isNotEmpty)
                 DropdownButtonFormField<String>(
-                  value: _selectedSubcategory,
+                  value: _selectedTask,
                   decoration: InputDecoration(
                     labelText: 'Tipo de servicio',
                     labelStyle: const TextStyle(color: Colors.white70),
@@ -243,7 +178,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
                   ),
                   dropdownColor: AppColors.text,
                   style: const TextStyle(color: Colors.white),
-                  items: _subcategories.map((subcat) {
+                  items: _tasks.map((subcat) {
                     return DropdownMenuItem<String>(
                       value: subcat,
                       child: Text(subcat),
@@ -251,7 +186,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
-                      _selectedSubcategory = value;
+                      _selectedTask = value;
                     });
                   },
                 ),
@@ -393,7 +328,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
       return;
     }
 
-    if (_selectedSubcategory == null || _selectedSubcategory!.isEmpty) {
+    if (_selectedTask == null || _selectedTask!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor selecciona un tipo de servicio'),
@@ -423,7 +358,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
         'location': address,
         'date': dateStr,
         'type': widget.category,
-        'subtype': _selectedSubcategory,
+        'subtype': _selectedTask,
         'uuid': widget.worker['uuid'],
         'start_at': widget.selectedTime,
         'ammount': widget.worker['price'] ?? 0,

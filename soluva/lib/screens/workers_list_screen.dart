@@ -21,19 +21,19 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
   bool _loading = true;
   List<dynamic> _workers = [];
   List<dynamic> _allWorkers = [];
-  List<String> _subcategories = [];
-  String? _selectedSubcategory;
-  bool _loadingSubcategories = true;
+  List<String> _tasks = [];
+  String? _selectedTask;
+  bool _loadingTasks = true;
 
   @override
   void initState() {
     super.initState();
-    _loadSubcategories();
+    _loadTasks();
     _fetchWorkers();
   }
 
-  Future<void> _loadSubcategories() async {
-    setState(() => _loadingSubcategories = true);
+  Future<void> _loadTasks() async {
+    setState(() => _loadingTasks = true);
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -50,49 +50,33 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        List<String> foundSubcategories = [];
+        final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
+        List<String> foundTasks = [];
 
-        // Buscar las subcategorías de esta categoría
-        for (var mainCategory in data.entries) {
-          final mainCategoryData = mainCategory.value as Map<String, dynamic>;
-
-          for (var subCategory in mainCategoryData.entries) {
-            // Comparación flexible (normalizar para comparar)
-            if (_categoriesMatch(widget.category, subCategory.key)) {
-              final services = subCategory.value as Map<String, dynamic>;
-              foundSubcategories = services.keys.toList();
+        // Buscar las tareas de esta subcategoría en la nueva estructura
+        for (final category in categories) {
+          final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
+          for (final subcategory in subcategories) {
+            final subcategoryName = subcategory['name'] ?? '';
+            if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
+              final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
+              foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
               break;
             }
           }
-
-          if (foundSubcategories.isNotEmpty) break;
+          if (foundTasks.isNotEmpty) break;
         }
 
         setState(() {
-          _subcategories = foundSubcategories;
-          _loadingSubcategories = false;
+          _tasks = foundTasks;
+          _loadingTasks = false;
         });
       } else {
-        setState(() => _loadingSubcategories = false);
+        setState(() => _loadingTasks = false);
       }
     } catch (e) {
-      setState(() => _loadingSubcategories = false);
+      setState(() => _loadingTasks = false);
     }
-  }
-
-  bool _categoriesMatch(String cat1, String cat2) {
-    final norm1 = cat1.toLowerCase().trim();
-    final norm2 = cat2.toLowerCase().trim();
-
-    // Comparación directa
-    if (norm1.contains(norm2) || norm2.contains(norm1)) {
-      return true;
-    }
-
-    // Comparación por palabras
-    final words1 = norm1.split(' ').where((w) => w.length >= 3).toSet();
-    final words2 = norm2.split(' ').where((w) => w.length >= 3).toSet();
-    return words1.intersection(words2).isNotEmpty;
   }
 
   Future<void> _fetchWorkers() async {
@@ -106,24 +90,25 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
       });
     } catch (e) {
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar trabajadores: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar trabajadores: $e')),
+        );
+      }
     }
   }
 
-  void _filterWorkersBySubcategory(String? subcategory) {
+  void _filterWorkersByTask(String? task) {
     setState(() {
-      _selectedSubcategory = subcategory;
-      if (subcategory == null) {
+      _selectedTask = task;
+      if (task == null) {
         _workers = _allWorkers;
       } else {
-        // Filtrar trabajadores que tengan esta subcategoría en sus servicios
         _workers = _allWorkers.where((worker) {
           final services = worker['services'] as List<dynamic>? ?? [];
           return services.any((service) {
             final serviceName = service['service']?.toString().toLowerCase() ?? '';
-            return serviceName.contains(subcategory.toLowerCase());
+            return serviceName.contains(task.toLowerCase());
           });
         }).toList();
       }
@@ -257,14 +242,13 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                             ),
                           ),
                           const Spacer(),
-                          if (_loadingSubcategories)
+                          if (_loadingTasks)
                             const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          else if (_subcategories.length == 1)
-                            // Si solo hay una subcategoría, mostrar solo un label
+                          else if (_tasks.length == 1)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -284,7 +268,7 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    _subcategories[0],
+                                    _tasks[0],
                                     style: const TextStyle(
                                       color: AppColors.text,
                                       fontSize: 13,
@@ -294,8 +278,7 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                 ],
                               ),
                             )
-                          else if (_subcategories.length > 1)
-                            // Si hay múltiples subcategorías, mostrar dropdown
+                          else if (_tasks.length > 1)
                             Container(
                               constraints: const BoxConstraints(maxWidth: 300),
                               padding: const EdgeInsets.symmetric(
@@ -318,7 +301,7 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                   Flexible(
                                     child: DropdownButtonHideUnderline(
                                       child: DropdownButton<String>(
-                                        value: _selectedSubcategory,
+                                        value: _selectedTask,
                                         dropdownColor: AppColors.background,
                                         style: const TextStyle(
                                           color: AppColors.text,
@@ -334,17 +317,17 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                         items: [
                                           const DropdownMenuItem<String>(
                                             value: null,
-                                            child: Text('Todos'),
+                                            child: Text('Todas las tareas'),
                                           ),
-                                          ..._subcategories.map((subcat) {
+                                          ..._tasks.map((task) {
                                             return DropdownMenuItem<String>(
-                                              value: subcat,
-                                              child: Text(subcat),
+                                              value: task,
+                                              child: Text(task),
                                             );
                                           }),
                                         ],
                                         onChanged: (value) {
-                                          _filterWorkersBySubcategory(value);
+                                          _filterWorkersByTask(value);
                                         },
                                       ),
                                     ),
