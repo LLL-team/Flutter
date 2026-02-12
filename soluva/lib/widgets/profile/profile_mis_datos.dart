@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/services/api_services/schedule_service.dart';
+import 'package:soluva/services/api_services/utils_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 
 class ProfileMisDatos extends StatefulWidget {
@@ -167,7 +168,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
           children: [
             if (selectedCategory.isNotEmpty)
               Text(
-                "Servicios de $selectedCategory:",
+                "Tareas de $selectedCategory:",
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -176,8 +177,8 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
               ),
             const SizedBox(height: 12),
             ...serviciosDeLaCategoria.map((servicio) {
-              final type = servicio['type'] ?? 'Servicio';
-              final price = servicio['price'] ?? 0;
+              final taskName = servicio['service'] ?? servicio['type'] ?? 'Servicio';
+              final cost = servicio['cost'] ?? servicio['price'] ?? 0;
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -191,25 +192,21 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
                     const Icon(Icons.check_circle, color: AppColors.button),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            type.toString(),
-                            style: const TextStyle(
-                              color: AppColors.text,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '\$$price',
-                            style: const TextStyle(
-                              color: AppColors.secondary,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        taskName.toString(),
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '\$$cost',
+                      style: const TextStyle(
+                        color: AppColors.secondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -251,6 +248,23 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.button,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            ),
+            onPressed: () => _showAddServiceDialog(),
+            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+            label: const Text(
+              "Agregar servicio",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
       ],
     );
@@ -495,6 +509,300 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
                   child: const Text('Guardar', style: TextStyle(color: Colors.white)),
                 ),
               ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showAddServiceDialog() async {
+    // Cargar servicios disponibles desde la API
+    Map<String, dynamic> allServices = {};
+    try {
+      allServices = await UtilsService.getServices();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar servicios: $e')),
+        );
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    // Parsear la estructura: categories[].subcategories[].tasks[]
+    final categories = List<Map<String, dynamic>>.from(allServices['categories'] ?? []);
+    if (categories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay servicios disponibles')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        String? selectedSubcategory;
+        Map<String, dynamic>? selectedTask;
+        List<Map<String, dynamic>> availableSubcategories = [];
+        List<Map<String, dynamic>> availableTasks = [];
+        final costController = TextEditingController();
+
+        // Recopilar todas las subcategorías
+        for (final cat in categories) {
+          final subcats = List<Map<String, dynamic>>.from(cat['subcategories'] ?? []);
+          for (final subcat in subcats) {
+            availableSubcategories.add({
+              'name': subcat['name'],
+              'tasks': subcat['tasks'] ?? [],
+            });
+          }
+        }
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E3A4A),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.button,
+                            AppColors.button.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.add_business, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Text(
+                              'Agregar servicio',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white70),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Dropdown subcategoría
+                          DropdownButtonFormField<String>(
+                            value: selectedSubcategory,
+                            decoration: InputDecoration(
+                              labelText: 'Subcategoría',
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            dropdownColor: const Color(0xFF1E3A4A),
+                            style: const TextStyle(color: Colors.white),
+                            items: availableSubcategories.map((subcat) {
+                              return DropdownMenuItem<String>(
+                                value: subcat['name'],
+                                child: Text(subcat['name']),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                selectedSubcategory = value;
+                                selectedTask = null;
+                                costController.clear();
+                                // Cargar tareas de la subcategoría seleccionada
+                                final subcat = availableSubcategories.firstWhere(
+                                  (s) => s['name'] == value,
+                                );
+                                availableTasks = List<Map<String, dynamic>>.from(subcat['tasks'] ?? []);
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          // Dropdown tarea
+                          DropdownButtonFormField<String>(
+                            value: selectedTask?['name'],
+                            decoration: InputDecoration(
+                              labelText: 'Tarea',
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            dropdownColor: const Color(0xFF1E3A4A),
+                            style: const TextStyle(color: Colors.white),
+                            items: availableTasks.map((task) {
+                              final name = task['name']?.toString() ?? '';
+                              final priceType = task['price_type'] == 'fixed' ? 'Fijo' : 'Por hora';
+                              return DropdownMenuItem<String>(
+                                value: name,
+                                child: Text('$name ($priceType)'),
+                              );
+                            }).toList(),
+                            onChanged: selectedSubcategory == null
+                                ? null
+                                : (value) {
+                                    setDialogState(() {
+                                      selectedTask = availableTasks.firstWhere(
+                                        (t) => t['name'] == value,
+                                      );
+                                    });
+                                  },
+                          ),
+                          const SizedBox(height: 16),
+                          // Campo precio
+                          TextField(
+                            controller: costController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              labelText: 'Precio',
+                              labelStyle: const TextStyle(color: Colors.white70),
+                              prefixText: '\$ ',
+                              prefixStyle: const TextStyle(color: Colors.white),
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Footer
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF152832),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(24),
+                          bottomRight: Radius.circular(24),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white54),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.button,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () async {
+                                if (selectedSubcategory == null || selectedTask == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Seleccioná una subcategoría y tarea')),
+                                  );
+                                  return;
+                                }
+                                final cost = double.tryParse(costController.text);
+                                if (cost == null || cost <= 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Ingresá un precio válido')),
+                                  );
+                                  return;
+                                }
+
+                                try {
+                                  final priceType = selectedTask!['price_type'] ?? 'fixed';
+                                  await ApiService.addWorkerService(
+                                    type: priceType,
+                                    category: selectedSubcategory!,
+                                    service: selectedTask!['name'],
+                                    cost: cost,
+                                  );
+
+                                  if (mounted) {
+                                    Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Servicio agregado correctamente')),
+                                    );
+                                    _loadUserData();
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Error: $e')),
+                                    );
+                                  }
+                                }
+                              },
+                              child: const Text(
+                                'Agregar',
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         );

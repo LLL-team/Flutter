@@ -205,7 +205,7 @@ class WorkerService {
       }),
     );
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     } else {
       throw Exception('Error al agregar servicio: ${response.statusCode}');
