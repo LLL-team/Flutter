@@ -305,6 +305,63 @@ class RequestService {
     }
   }
 
+  /// Crea una nueva solicitud de servicio
+  static Future<Map<String, dynamic>> createRequest({
+    required String location,
+    required String date,
+    required String type,
+    required String subtype,
+    required String workerUuid,
+    required String startAt,
+    required num amount,
+    String? description,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return {"success": false, "message": "No autenticado"};
+
+    try {
+      final bodyMap = <String, dynamic>{
+        'location': location,
+        'date': date,
+        'type': type,
+        'subtype': subtype,
+        'uuid': workerUuid,
+        'start_at': startAt,
+        'ammount': amount,
+      };
+
+      if (description != null && description.isNotEmpty) {
+        bodyMap['descripcion'] = description;
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/request/new'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(bodyMap),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {"success": true, "message": "Solicitud enviada correctamente"};
+      } else {
+        final decoded = jsonDecode(response.body);
+        String message = 'Error al enviar la solicitud';
+        if (decoded['errors'] != null) {
+          final errors = decoded['errors'] as Map<String, dynamic>;
+          message = errors.values.first[0].toString();
+        } else if (decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+        return {"success": false, "message": message};
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error de conexión: $e"};
+    }
+  }
+
   static Future<Map<String, dynamic>> payment(
     String requestUuid,
     String cardToken,

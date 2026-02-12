@@ -6,7 +6,6 @@ import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
 import 'package:soluva/screens/profile_screen.dart';
 import 'package:soluva/services/api_services/api_service.dart';
-import 'package:soluva/services/api_services/utils_service.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/theme/app_colors.dart';
 
@@ -34,7 +33,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadCategories() async {
     try {
-      final data = await UtilsService.getServices();
+      final data = await ApiService.getServices();
       if (mounted) {
         setState(() {
           _categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);

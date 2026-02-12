@@ -9,6 +9,7 @@ import 'package:soluva/services/api_services/user_service.dart';
 import 'package:soluva/services/api_services/utils_service.dart';
 import 'package:soluva/services/api_services/worker_service.dart';
 import 'package:soluva/services/api_services/request_service.dart';
+import 'package:soluva/services/api_services/schedule_service.dart';
 
 /// Clase centralizada para todas las llamadas a servicios
 /// TODAS las pantallas deben usar esta clase en lugar de llamar directamente a los servicios
@@ -206,6 +207,92 @@ class ApiService {
   /// Obtiene las solicitudes del usuario actual
   static Future<Map<String, dynamic>> getMyRequests() async {
     return await RequestService.getMyRequests();
+  }
+
+  /// Obtiene las solicitudes creadas por el usuario (paginadas)
+  static Future<Map<String, dynamic>> getUserRequests({int page = 1}) async {
+    return await RequestService.getUserRequests(page: page);
+  }
+
+  /// Obtiene las solicitudes asignadas al trabajador (paginadas)
+  static Future<Map<String, dynamic>> getWorkerRequests({int page = 1}) async {
+    return await RequestService.getWorkerRequests(page: page);
+  }
+
+  /// Cambia el estado de una solicitud
+  static Future<Map<String, dynamic>> changeRequestStatus({
+    required String uuid,
+    required String status,
+  }) async {
+    return await RequestService.changeStatus(uuid: uuid, status: status);
+  }
+
+  /// Obtiene una solicitud por su UUID
+  static Future<Map<String, dynamic>?> getRequestById(String uuid) async {
+    return await RequestService.getRequestById(uuid);
+  }
+
+  /// Crea una calificación para una solicitud
+  static Future<Map<String, dynamic>> createRating({
+    required String requestUuid,
+    required int workQuality,
+    required int punctuality,
+    required int friendliness,
+    String? review,
+  }) async {
+    return await RequestService.createRating(
+      requestUuid: requestUuid,
+      workQuality: workQuality,
+      punctuality: punctuality,
+      friendliness: friendliness,
+      review: review,
+    );
+  }
+
+  /// Procesa un pago con Mercado Pago
+  static Future<Map<String, dynamic>> processPayment({
+    required String requestUuid,
+    required String cardToken,
+    required String paymentMethodId,
+  }) async {
+    return await RequestService.payment(requestUuid, cardToken, paymentMethodId);
+  }
+
+  /// Crea una nueva solicitud de servicio
+  static Future<Map<String, dynamic>> createRequest({
+    required String location,
+    required String date,
+    required String type,
+    required String subtype,
+    required String workerUuid,
+    required String startAt,
+    required num amount,
+    String? description,
+  }) async {
+    return await RequestService.createRequest(
+      location: location,
+      date: date,
+      type: type,
+      subtype: subtype,
+      workerUuid: workerUuid,
+      startAt: startAt,
+      amount: amount,
+      description: description,
+    );
+  }
+
+  // ==================== HORARIOS (SCHEDULE SERVICE) ====================
+
+  /// Obtiene los horarios de un trabajador (via ScheduleService)
+  static Future<Map<String, dynamic>> getSchedules(String uuid) async {
+    return await ScheduleService.getSchedules(uuid);
+  }
+
+  /// Reemplaza los horarios del trabajador
+  static Future<Map<String, dynamic>> replaceSchedules(
+    Map<String, List<Map<String, String>>> schedulesByDay,
+  ) async {
+    return await ScheduleService.replaceSchedules(schedulesByDay);
   }
 
   // ==================== TOKEN FCM ====================

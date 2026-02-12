@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../../services/api_services/request_service.dart';
+import '../services/api_services/api_service.dart';
 import '../services/mercadoPago_services/MP_service.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -48,7 +48,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     setState(() => isProcessing = true);
 
-    final result = await RequestService.changeStatus(
+    final result = await ApiService.changeRequestStatus(
       uuid: uuid,
       status: 'assigned',
     );
@@ -108,10 +108,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       identificationNumber: documentController.text.trim(),
     );
 
-    final result = await RequestService.payment(
-      uuid,
-      cardToken,
-      'master', //temporal, hay que obtenerlo de la api de mercadopago o permitir elegir al usuario
+    final result = await ApiService.processPayment(
+      requestUuid: uuid,
+      cardToken: cardToken,
+      paymentMethodId: 'master', //temporal, hay que obtenerlo de la api de mercadopago o permitir elegir al usuario
     );
 
     if (!mounted) return;

@@ -373,26 +373,19 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
   }
 
   void _showChangePriceDialog() {
-    final services = userData!['services'] as List<dynamic>? ?? [];
-    if (services.isEmpty) {
+    if (workerServices.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No tienes servicios para editar')),
       );
       return;
     }
 
-    // DEBUG: Imprimir estructura de servicios
-    print('DEBUG: Estructura de servicios:');
-    for (var service in services) {
-      print('  Servicio: $service');
-    }
-
-    // Obtener el servicio actual de la categoría seleccionada
+    // Agrupar por categoría (misma lógica que _buildServiciosTab)
     Map<String, List<Map<String, dynamic>>> serviciosPorCategoria = {};
-    for (var service in services) {
+    for (var service in workerServices) {
       final category = service['category'] ?? 'Sin categoría';
       serviciosPorCategoria.putIfAbsent(category, () => []);
-      serviciosPorCategoria[category]!.add(service as Map<String, dynamic>);
+      serviciosPorCategoria[category]!.add(service);
     }
 
     final categorias = serviciosPorCategoria.keys.toList();
@@ -404,111 +397,260 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
     showDialog(
       context: context,
       builder: (ctx) {
-        String? selectedService;
+        int? selectedIndex;
         final priceController = TextEditingController();
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Cambiar precio de servicio'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Seleccionar servicio',
-                      border: OutlineInputBorder(),
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E3A4A),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.secondary,
+                            AppColors.secondary.withValues(alpha: 0.1),
+                          ],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(24),
+                          topRight: Radius.circular(24),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.attach_money, color: Colors.white, size: 28),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Text(
+                              'Cambiar precio',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white70),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
                     ),
-                    value: selectedService,
-                    items: serviciosDeLaCategoria.map<DropdownMenuItem<String>>((servicio) {
-                      final serviceName = servicio['service']?.toString() ?? servicio['type']?.toString() ?? '';
-                      return DropdownMenuItem<String>(
-                        value: serviceName,
-                        child: Text(serviceName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setDialogState(() {
-                        selectedService = value;
-                        final servicio = serviciosDeLaCategoria.firstWhere(
-                          (s) => (s['service']?.toString() ?? s['type']?.toString()) == value,
-                        );
-                        priceController.text = servicio['cost']?.toString() ?? '0';
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: priceController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nuevo precio',
-                      border: OutlineInputBorder(),
-                      prefixText: '\$ ',
+                    // Lista de tareas
+                    Flexible(
+                      child: Container(
+                        constraints: const BoxConstraints(maxHeight: 350),
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tareas de $selectedCategory:',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Flexible(
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                itemCount: serviciosDeLaCategoria.length,
+                                itemBuilder: (context, index) {
+                                  final servicio = serviciosDeLaCategoria[index];
+                                  final taskName = servicio['service'] ?? servicio['type'] ?? 'Servicio';
+                                  final cost = servicio['cost'] ?? servicio['price'] ?? 0;
+                                  final isSelected = selectedIndex == index;
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setDialogState(() {
+                                        selectedIndex = index;
+                                        priceController.text = cost.toString();
+                                      });
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 8),
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? AppColors.secondary.withValues(alpha: 0.3)
+                                            : const Color(0xFFEAE6DB),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: isSelected ? AppColors.secondary : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                                            color: isSelected ? AppColors.secondary : Colors.grey,
+                                            size: 22,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              taskName.toString(),
+                                              style: TextStyle(
+                                                color: AppColors.text,
+                                                fontSize: 15,
+                                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            '\$$cost',
+                                            style: const TextStyle(
+                                              color: AppColors.secondary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            if (selectedIndex != null) ...[
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: priceController,
+                                keyboardType: TextInputType.number,
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'Nuevo precio',
+                                  labelStyle: const TextStyle(color: Colors.white70),
+                                  prefixText: '\$ ',
+                                  prefixStyle: const TextStyle(color: Colors.white),
+                                  filled: true,
+                                  fillColor: Colors.white.withValues(alpha: 0.1),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    // Footer
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF152832),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(24),
+                          bottomRight: Radius.circular(24),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Colors.white54),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancelar',
+                                style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.secondary,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: selectedIndex == null
+                                  ? null
+                                  : () async {
+                                      final newPrice = double.tryParse(priceController.text);
+                                      if (newPrice == null) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Precio inválido')),
+                                        );
+                                        return;
+                                      }
+
+                                      final servicio = serviciosDeLaCategoria[selectedIndex!];
+                                      final serviceName = servicio['service']?.toString() ?? servicio['type']?.toString() ?? '';
+
+                                      try {
+                                        final success = await ApiService.updateWorkerServiceCost(
+                                          service: serviceName,
+                                          category: selectedCategory,
+                                          cost: newPrice,
+                                        );
+
+                                        if (success && mounted) {
+                                          Navigator.pop(ctx);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Precio actualizado correctamente')),
+                                          );
+                                          _loadUserData();
+                                        } else if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('No se pudo actualizar el precio')),
+                                          );
+                                        }
+                                      } catch (e) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Error: $e')),
+                                          );
+                                        }
+                                      }
+                                    },
+                              child: const Text(
+                                'Guardar',
+                                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                  ),
-                  onPressed: () async {
-                    if (selectedService == null || priceController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Completa todos los campos')),
-                      );
-                      return;
-                    }
-
-                    final newPrice = double.tryParse(priceController.text);
-                    if (newPrice == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Precio inválido')),
-                      );
-                      return;
-                    }
-
-                    try {
-                      print('DEBUG: Enviando actualización de precio');
-                      print('  service: $selectedService');
-                      print('  category: $selectedCategory');
-                      print('  cost: $newPrice');
-
-                      final success = await ApiService.updateWorkerServiceCost(
-                        service: selectedService!,
-                        category: selectedCategory,
-                        cost: newPrice,
-                      );
-
-                      if (success && mounted) {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Precio actualizado correctamente')),
-                        );
-                        _loadUserData(); // Recargar datos
-                      } else if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No se pudo actualizar el precio')),
-                        );
-                      }
-                    } catch (e) {
-                      print('ERROR al actualizar precio: $e');
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: ${e.toString()}')),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text('Guardar', style: TextStyle(color: Colors.white)),
-                ),
-              ],
             );
           },
         );

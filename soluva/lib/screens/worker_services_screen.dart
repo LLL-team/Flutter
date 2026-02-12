@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:soluva/services/api_services/utils_service.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
 
 class SearchWorkersScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
   Future<void> _loadServices() async {
     setState(() => _loading = true);
     try {
-      final services = await UtilsService.getServices();
+      final services = await ApiService.getServices();
       setState(() {
         _services = services;
         _loading = false;

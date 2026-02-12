@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:soluva/services/api_services/api_service.dart';
-import 'package:soluva/services/api_services/request_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/widgets/dialogs/new_request_dialog.dart';
 import 'package:soluva/widgets/dialogs/request_detail_dialog.dart';
@@ -101,7 +100,7 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
     );
 
     try {
-      final request = await RequestService.getRequestById(requestId);
+      final request = await ApiService.getRequestById(requestId);
 
       if (!mounted) return;
       Navigator.pop(context); // Cerrar loading

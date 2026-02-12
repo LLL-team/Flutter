@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/api_services/schedule_service.dart';
+import '../services/api_services/api_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
@@ -51,7 +51,7 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
   Future<void> _loadSchedules() async {
     setState(() => _isLoading = true);
 
-    final result = await ScheduleService.getSchedules(widget.workerUuid);
+    final result = await ApiService.getSchedules(widget.workerUuid);
 
     if (result['success'] == true) {
       final schedules = result['schedules'] as List;
@@ -134,7 +134,7 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
-    final result = await ScheduleService.replaceSchedules(schedulesByDayFormatted);
+    final result = await ApiService.replaceSchedules(schedulesByDayFormatted);
 
     if (mounted) Navigator.pop(context); // Cerrar indicador de carga
 

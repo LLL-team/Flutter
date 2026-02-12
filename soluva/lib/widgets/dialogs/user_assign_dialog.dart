@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
-import '../../services/api_services/request_service.dart';
+import '../../services/api_services/api_service.dart';
 import '../../screens/payment_screen.dart';
 
 class UserAssignDialog extends StatelessWidget {
@@ -119,7 +119,7 @@ class UserAssignDialog extends StatelessWidget {
     // Cerrar el diálogo principal
     Navigator.pop(context);
 
-    final result = await RequestService.changeStatus(
+    final result = await ApiService.changeRequestStatus(
       uuid: uuid,
       status: 'assigned',
     );

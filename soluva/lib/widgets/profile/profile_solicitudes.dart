@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:intl/intl.dart';
-import 'package:soluva/services/api_services/request_service.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/widgets/dialogs/new_request_dialog.dart';
 import 'package:soluva/widgets/dialogs/request_detail_dialog.dart';
 import 'package:soluva/widgets/dialogs/user_assign_dialog.dart';
@@ -61,8 +61,8 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
     try {
       // Usar el endpoint correcto según el modo de visualización
       final result = widget.viewingAsWorker
-          ? await RequestService.getWorkerRequests(page: _page)
-          : await RequestService.getUserRequests(page: _page);
+          ? await ApiService.getWorkerRequests(page: _page)
+          : await ApiService.getUserRequests(page: _page);
 
       if (!mounted) return;
 
@@ -85,8 +85,8 @@ class _ProfileSolicitudesState extends State<ProfileSolicitudes> {
       _page++;
       // Usar el endpoint correcto según el modo de visualización
       final result = widget.viewingAsWorker
-          ? await RequestService.getWorkerRequests(page: _page)
-          : await RequestService.getUserRequests(page: _page);
+          ? await ApiService.getWorkerRequests(page: _page)
+          : await ApiService.getUserRequests(page: _page);
 
       setState(() {
         _requests.addAll(result['data']);
@@ -547,7 +547,7 @@ class _RequestCard extends StatelessWidget {
                         Navigator.pop(ctx);
 
                         // Cambiar el estado a 'cancelled'
-                        final result = await RequestService.changeStatus(
+                        final result = await ApiService.changeRequestStatus(
                           uuid: uuid,
                           status: 'cancelled',
                         );
@@ -717,7 +717,7 @@ class _RequestCard extends StatelessWidget {
                       Navigator.pop(ctx);
 
                       // Enviar calificación
-                      final result = await RequestService.createRating(
+                      final result = await ApiService.createRating(
                         requestUuid: uuid,
                         workQuality: qualityRating,
                         punctuality: punctualityRating,

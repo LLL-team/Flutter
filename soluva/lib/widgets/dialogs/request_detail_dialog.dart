@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/theme/app_text_styles.dart';
-import 'package:soluva/services/api_services/request_service.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 
 class RequestDetailDialog extends StatelessWidget {
   final Map<String, dynamic> request;
@@ -419,7 +419,7 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'cancelled');
+    final result = await ApiService.changeRequestStatus(uuid: uuid, status: 'cancelled');
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -465,7 +465,7 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'completed');
+    final result = await ApiService.changeRequestStatus(uuid: uuid, status: 'completed');
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -511,7 +511,7 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'accepted');
+    final result = await ApiService.changeRequestStatus(uuid: uuid, status: 'accepted');
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -557,7 +557,7 @@ class RequestDetailDialog extends StatelessWidget {
 
     if (confirmed != true) return;
 
-    final result = await RequestService.changeStatus(uuid: uuid, status: 'rejected');
+    final result = await ApiService.changeRequestStatus(uuid: uuid, status: 'rejected');
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

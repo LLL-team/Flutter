@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
-import 'package:soluva/services/api_services/worker_service.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/widgets/dialogs/send_request_dialog.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WorkersByCategoryScreen extends StatefulWidget {
   final String category;
@@ -36,44 +32,28 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
     setState(() => _loadingTasks = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      final baseUrl = dotenv.env['BASE_URL'] ?? '';
+      final data = await ApiService.getServices();
+      final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
+      List<String> foundTasks = [];
 
-      final response = await http.get(
-        Uri.parse('$baseUrl/service'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
-        List<String> foundTasks = [];
-
-        // Buscar las tareas de esta subcategoría en la nueva estructura
-        for (final category in categories) {
-          final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
-          for (final subcategory in subcategories) {
-            final subcategoryName = subcategory['name'] ?? '';
-            if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
-              final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
-              foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
-              break;
-            }
+      // Buscar las tareas de esta subcategoría en la nueva estructura
+      for (final category in categories) {
+        final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
+        for (final subcategory in subcategories) {
+          final subcategoryName = subcategory['name'] ?? '';
+          if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
+            final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
+            foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
+            break;
           }
-          if (foundTasks.isNotEmpty) break;
         }
-
-        setState(() {
-          _tasks = foundTasks;
-          _loadingTasks = false;
-        });
-      } else {
-        setState(() => _loadingTasks = false);
+        if (foundTasks.isNotEmpty) break;
       }
+
+      setState(() {
+        _tasks = foundTasks;
+        _loadingTasks = false;
+      });
     } catch (e) {
       setState(() => _loadingTasks = false);
     }
@@ -82,7 +62,7 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
   Future<void> _fetchWorkers() async {
     setState(() => _loading = true);
     try {
-      final workers = await WorkerService.getWorkersByCategory(widget.category);
+      final workers = await ApiService.getWorkersByCategory(widget.category);
       setState(() {
         _allWorkers = workers;
         _workers = workers;
