@@ -293,13 +293,13 @@ class _HomePageState extends State<HomePage> {
 
   String _getCategoryImage(String categoryName) {
     final nameLower = categoryName.toLowerCase();
-    if (nameLower.contains('hogar')) return 'icons/servicios/Boton-I.Electricidad.png';
-    if (nameLower.contains('construcci')) return 'icons/servicios/Boton-I.Albanileria.png';
-    if (nameLower.contains('limpieza')) return 'icons/servicios/Boton-I.Limpieza.png';
-    if (nameLower.contains('vehículo') || nameLower.contains('vehiculo') || nameLower.contains('transporte')) return 'icons/servicios/Boton-I.Auto.png';
-    if (nameLower.contains('seguridad')) return 'icons/servicios/Boton-I.Cerrajeria.png';
-    if (nameLower.contains('bienestar')) return 'icons/servicios/Boton-I.Bienestar.png';
-    return 'icons/servicios/Boton-I.Service.png';
+    if (nameLower.contains('hogar')) return 'assets/icons/servicios/Boton-I.Electricidad.png';
+    if (nameLower.contains('construcci')) return 'assets/icons/servicios/Boton-I.Albanileria.png';
+    if (nameLower.contains('limpieza')) return 'assets/icons/servicios/Boton-I.Limpieza.png';
+    if (nameLower.contains('vehículo') || nameLower.contains('vehiculo') || nameLower.contains('transporte')) return 'assets/icons/servicios/Boton-I.Auto.png';
+    if (nameLower.contains('seguridad')) return 'assets/icons/servicios/Boton-I.Cerrajeria.png';
+    if (nameLower.contains('bienestar')) return 'assets/icons/servicios/Boton-I.Bienestar.png';
+    return 'assets/icons/servicios/Boton-I.Service.png';
   }
 
   @override
