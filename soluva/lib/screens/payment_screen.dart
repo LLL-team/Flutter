@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../../services/api_services/request_service.dart';
+import '../services/mercadoPago_services/MP_service.dart';
 
 class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic> request;
@@ -90,9 +91,27 @@ class _PaymentScreenState extends State<PaymentScreen> {
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
-    final result = await RequestService.changeStatus(
-      uuid: uuid,
-      status: 'assigned',
+    final expiryParts = expiryController.text.split('/');
+    final expirationMonth = expiryParts[0].trim();
+    final expirationYear = expiryParts[1].trim().length == 2
+        ? '20${expiryParts[1].trim()}'
+        : expiryParts[1].trim();
+
+    // Generar card token
+    final cardToken = await generarCardToken(
+      cardNumber: cardNumberController.text.trim(),
+      cardHolderName: cardHolderController.text.trim(),
+      cardExpirationMonth: expirationMonth,
+      cardExpirationYear: expirationYear,
+      securityCode: cvvController.text.trim(),
+      identificationType: 'DNI', // o el tipo que estés usando
+      identificationNumber: documentController.text.trim(),
+    );
+
+    final result = await RequestService.payment(
+      uuid,
+      cardToken,
+      'master', //temporal, hay que obtenerlo de la api de mercadopago o permitir elegir al usuario
     );
 
     if (!mounted) return;

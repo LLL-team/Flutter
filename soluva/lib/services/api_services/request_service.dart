@@ -150,10 +150,7 @@ class RequestService {
     print('DEBUG changeStatus - URL: $baseUrl/request/changeStatus');
 
     try {
-      final body = jsonEncode({
-        'uuid': uuid,
-        'status': status,
-      });
+      final body = jsonEncode({'uuid': uuid, 'status': status});
       print('DEBUG changeStatus - Body: $body');
 
       final response = await http.post(
@@ -170,7 +167,10 @@ class RequestService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        return {"success": true, "message": decoded['message'] ?? "Estado cambiado correctamente"};
+        return {
+          "success": true,
+          "message": decoded['message'] ?? "Estado cambiado correctamente",
+        };
       } else {
         final decoded = jsonDecode(response.body);
         var message = "Error al cambiar el estado";
@@ -256,7 +256,9 @@ class RequestService {
     if (token == null) return {"success": false, "message": "No autenticado"};
 
     print('DEBUG createRating - Request UUID: $requestUuid');
-    print('DEBUG createRating - Ratings: work_quality=$workQuality, punctuality=$punctuality, friendliness=$friendliness');
+    print(
+      'DEBUG createRating - Ratings: work_quality=$workQuality, punctuality=$punctuality, friendliness=$friendliness',
+    );
 
     try {
       final body = jsonEncode({
@@ -281,7 +283,10 @@ class RequestService {
       print('DEBUG createRating - Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return {"success": true, "message": "Calificación enviada correctamente"};
+        return {
+          "success": true,
+          "message": "Calificación enviada correctamente",
+        };
       } else {
         final decoded = jsonDecode(response.body);
         var message = "Error al enviar la calificación";
@@ -296,6 +301,52 @@ class RequestService {
       }
     } catch (e) {
       print('DEBUG createRating - Error: $e');
+      return {"success": false, "message": "Error de conexión: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> payment(
+    String requestUuid,
+    String cardToken,
+    String paymentMethodId,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return {"success": false, "message": "No autenticado"};
+
+    try {
+      final body = jsonEncode({
+        'request_uuid': requestUuid,
+        'metodo_de_pago': "mercadopago", //temp
+        'token': cardToken,
+        'payment_method_id': paymentMethodId,
+      });
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/transaction/mercadopago'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        return {"success": true, "message": "Pago realizado correctamente"};
+      } else {
+        final decoded = jsonDecode(response.body);
+        var message = "Error al procesar el pago";
+        if (decoded['message'] != null) {
+          if (decoded['message'] is String) {
+            message = decoded['message'];
+          } else if (decoded['error'] != null) {
+            message = decoded['error'].toString();
+          }
+        }
+        return {"success": false, "message": message};
+      }
+    } catch (e) {
+      print('DEBUG payment - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }
