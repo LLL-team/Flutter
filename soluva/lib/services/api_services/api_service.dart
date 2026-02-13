@@ -51,6 +51,11 @@ class ApiService {
     );
   }
 
+  /// Inicia sesión con Google
+  static Future<Map<String, dynamic>?> loginWithGoogle() async {
+    return await AuthService.loginWithGoogle();
+  }
+
   /// Cierra sesión del usuario
   static Future<void> logout() async {
     await AuthService.logout();

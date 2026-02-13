@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:soluva/services/api_services/worker_service.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 
 class WorkerDetailsScreen extends StatefulWidget {
   final String uuid;
@@ -23,7 +23,7 @@ class _WorkerDetailsScreenState extends State<WorkerDetailsScreen> {
   Future<void> _fetchWorker() async {
     setState(() => _loading = true);
     try {
-      final worker = await WorkerService.getWorkerByUuid(widget.uuid);
+      final worker = await ApiService.getWorkerByUuid(widget.uuid);
       setState(() {
         _worker = worker;
         _loading = false;

@@ -3,7 +3,9 @@
     "allow": [
       "Bash(flutter analyze:*)",
       "Bash(dir:*)",
-      "Bash(flutter clean:*)"
+      "Bash(flutter clean:*)",
+      "Bash(findstr:*)",
+      "Bash(flutter pub get:*)"
     ],
     "deny": [],
     "ask": []

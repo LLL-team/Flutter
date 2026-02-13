@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/services/api_services/api_service.dart';
-import 'package:soluva/services/api_services/schedule_service.dart';
-import 'package:soluva/services/api_services/utils_service.dart';
 import 'package:soluva/theme/app_colors.dart';
 
 class ProfileMisDatos extends StatefulWidget {
@@ -662,7 +660,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
     // Cargar servicios disponibles desde la API
     Map<String, dynamic> allServices = {};
     try {
-      allServices = await UtilsService.getServices();
+      allServices = await ApiService.getServices();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1375,7 +1373,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
                                 }
 
                                 try {
-                                  final result = await ScheduleService.replaceSchedules(schedulesByDay);
+                                  final result = await ApiService.replaceSchedules(schedulesByDay);
 
                                   if (result['success'] == true && mounted) {
                                     Navigator.pop(ctx);

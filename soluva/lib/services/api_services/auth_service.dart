@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../notidication_services/Firebase_notification_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'api_service.dart';
 
 class AuthService {
@@ -75,6 +76,64 @@ class AuthService {
 
       return data;
     } else {
+      return null;
+    }
+  }
+
+  /// Login con Google
+  static Future<Map<String, dynamic>?> loginWithGoogle() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+
+      // Cerrar sesión previa de Google si existe
+      await googleSignIn.signOut();
+
+      // Iniciar sesión con Google
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // El usuario canceló el login
+        return null;
+      }
+
+      // Obtener los detalles de autenticación
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        return null;
+      }
+
+      // Enviar el token al backend
+      final response = await http.post(
+        Uri.parse("$baseUrl/auth/google"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "token": idToken,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        final token = data['accessToken'];
+        final name = data['name'];
+        final lastName = data['last_name'];
+
+        if (token != null) {
+          await _saveToken(token);
+          await _saveUserName(name, lastName);
+        }
+
+        return data;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error en login con Google: $e');
+      }
       return null;
     }
   }

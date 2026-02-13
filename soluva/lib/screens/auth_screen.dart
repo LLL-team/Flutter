@@ -185,7 +185,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: () {},
+                            onPressed: _handleGoogleLogin,
                             icon: Icon(
                               Icons.g_mobiledata,
                               color: AppColors.secondary,
@@ -293,6 +293,55 @@ class _AuthScreenState extends State<AuthScreen> {
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
             duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    // Mostrar loading mientras se procesa el login
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final data = await ApiService.loginWithGoogle();
+
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading
+
+        if (data != null) {
+          // Login exitoso
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => widget.redirectTo ?? const HomePage(),
+            ),
+          );
+        } else {
+          // Login fallido o cancelado
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo iniciar sesión con Google.'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Cerrar loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al iniciar sesión: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
           ),
         );
       }

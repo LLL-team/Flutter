@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/theme/app_text_styles.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 
 class SendRequestDialog extends StatefulWidget {
   final Map<String, dynamic> worker;
@@ -49,46 +46,30 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
     setState(() => _loadingTasks = true);
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      final baseUrl = dotenv.env['BASE_URL'] ?? '';
+      final data = await ApiService.getServices();
+      final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
+      List<String> foundTasks = [];
 
-      final response = await http.get(
-        Uri.parse('$baseUrl/service'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
-        List<String> foundTasks = [];
-
-        for (final category in categories) {
-          final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
-          for (final subcategory in subcategories) {
-            final subcategoryName = subcategory['name'] ?? '';
-            if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
-              final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
-              foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
-              break;
-            }
+      for (final category in categories) {
+        final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
+        for (final subcategory in subcategories) {
+          final subcategoryName = subcategory['name'] ?? '';
+          if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
+            final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
+            foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
+            break;
           }
-          if (foundTasks.isNotEmpty) break;
         }
-
-        setState(() {
-          _tasks = foundTasks;
-          if (_tasks.isNotEmpty) {
-            _selectedTask = _tasks[0];
-          }
-          _loadingTasks = false;
-        });
-      } else {
-        setState(() => _loadingTasks = false);
+        if (foundTasks.isNotEmpty) break;
       }
+
+      setState(() {
+        _tasks = foundTasks;
+        if (_tasks.isNotEmpty) {
+          _selectedTask = _tasks[0];
+        }
+        _loadingTasks = false;
+      });
     } catch (e) {
       setState(() => _loadingTasks = false);
     }
@@ -346,69 +327,35 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
     );
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
-      final baseUrl = dotenv.env['BASE_URL'] ?? '';
-
       // Parsear la fecha del formato "8 Ene 2026" al formato "2026-01-08"
       final dateStr = _parseDate(widget.selectedDate);
 
-      // Construir el body de la solicitud
-      final body = {
-        'location': address,
-        'date': dateStr,
-        'type': widget.category,
-        'subtype': _selectedTask,
-        'uuid': widget.worker['uuid'],
-        'start_at': widget.selectedTime,
-        'ammount': widget.worker['price'] ?? 0,
-      };
-
-      // Agregar descripción solo si no está vacía
-      if (description.isNotEmpty) {
-        body['descripcion'] = description;
-      }
-
-      final response = await http.post(
-        Uri.parse('$baseUrl/request/new'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(body),
+      final result = await ApiService.createRequest(
+        location: address,
+        date: dateStr,
+        type: widget.category,
+        subtype: _selectedTask!,
+        workerUuid: widget.worker['uuid'],
+        startAt: widget.selectedTime,
+        amount: widget.worker['price'] ?? 0,
+        description: description.isNotEmpty ? description : null,
       );
 
       if (mounted) Navigator.pop(context); // Cerrar indicador de carga
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (mounted) {
+      if (mounted) {
+        if (result['success'] == true) {
           Navigator.pop(context); // Cerrar diálogo
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Solicitud enviada correctamente'),
+            SnackBar(
+              content: Text(result['message'] ?? 'Solicitud enviada correctamente'),
               backgroundColor: Colors.green,
             ),
           );
-        }
-      } else {
-        // Error en la solicitud
-        if (mounted) Navigator.pop(context); // Cerrar indicador de carga
-
-        final errorData = jsonDecode(response.body);
-        String errorMessage = 'Error al enviar la solicitud';
-
-        if (errorData['errors'] != null) {
-          // Formatear errores de validación
-          final errors = errorData['errors'] as Map<String, dynamic>;
-          errorMessage = errors.values.first[0].toString();
-        } else if (errorData['message'] != null) {
-          errorMessage = errorData['message'].toString();
-        }
-
-        if (mounted) {
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(errorMessage),
+              content: Text(result['message'] ?? 'Error al enviar la solicitud'),
               backgroundColor: AppColors.secondary,
             ),
           );
