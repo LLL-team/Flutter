@@ -1,5 +1,5 @@
-importScripts('https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.14.0/firebase-messaging-compat.js');
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
 
 // Configuración de Firebase (debe coincidir con la de index.html)
 firebase.initializeApp({
