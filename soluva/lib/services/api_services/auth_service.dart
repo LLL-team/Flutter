@@ -102,8 +102,12 @@ class AuthService {
       // Obtener los detalles de autenticación
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
+      final String? accessToken = googleAuth.accessToken;
 
-      if (idToken == null) {
+      final String? tokenToSend = idToken ?? accessToken;
+      final String tokenType = idToken != null ? 'id_token' : 'access_token';
+
+      if (tokenToSend == null) {
         return null;
       }
 
@@ -112,7 +116,8 @@ class AuthService {
         Uri.parse("$baseUrl/auth/google"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "token": idToken,
+          "token": tokenToSend,
+          "token_type": tokenType,
         }),
       );
 
