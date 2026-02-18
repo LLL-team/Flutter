@@ -20,12 +20,13 @@ class FirebaseService {
       // 🔹 Inicializa Firebase
       await Firebase.initializeApp(
         options: const FirebaseOptions(
-          apiKey: "AIzaSyBydFW3DPVO1E8YE3GziH2kWaA57y9ejC0",
-          authDomain: "soluva-1abd4.firebaseapp.com",
-          projectId: "soluva-1abd4",
-          storageBucket: "soluva-1abd4.firebasestorage.app",
-          messagingSenderId: "67676164290",
-          appId: "1:67676164290:web:58d35ac987693810826b5b",
+          apiKey: "AIzaSyCF1JXi_z9kLbIOcthLSzZOeFab-lc5RN0",
+          authDomain: "solluvanotifications.firebaseapp.com",
+          projectId: "solluvanotifications",
+          storageBucket: "solluvanotifications.firebasestorage.app",
+          messagingSenderId: "296702582098",
+          appId: "1:296702582098:web:0f3716684c19b577bcee8b",
+          measurementId: "G-2E1GWYP8WP",
         ),
       );
 
@@ -40,7 +41,7 @@ class FirebaseService {
       // 🔹 Obtiene token FCM
       final token = await _messaging.getToken(
         vapidKey:
-            "BL-nJ6djtl7Qlb_rreERRnfSeeG0_cXQYhDs4ttP20tOPN4JooUdgxmCdXV7LMy-AI81x8SwMPDoFE-0t1P4k3Y",
+            "BJDJkQvLz5N8nNP_8d6NMwKAHhs3JBr6L27i6rRxsHu8tUBnl1HCC8jI3yEbSLue6IziHJGsGi67c6cK3WUqTFA",
       );
       print("✅ Token FCM Web: $token");
 

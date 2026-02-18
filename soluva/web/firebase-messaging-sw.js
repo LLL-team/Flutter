@@ -3,13 +3,13 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 
 // Configuración de Firebase (debe coincidir con la de index.html)
 firebase.initializeApp({
-    apiKey: "AIzaSyBydFW3DPVO1E8YE3GziH2kWaA57y9ejC0",
-    authDomain: "soluva-1abd4.firebaseapp.com",
-    projectId: "soluva-1abd4",
-    storageBucket: "soluva-1abd4.firebasestorage.app",
-    messagingSenderId: "67676164290",
-    appId: "1:67676164290:web:58d35ac987693810826b5b",
-
+    apiKey: "AIzaSyCF1JXi_z9kLbIOcthLSzZOeFab-lc5RN0",
+    authDomain: "solluvanotifications.firebaseapp.com",
+    projectId: "solluvanotifications",
+    storageBucket: "solluvanotifications.firebasestorage.app",
+    messagingSenderId: "296702582098",
+    appId: "1:296702582098:web:0f3716684c19b577bcee8b",
+    measurementId: "G-2E1GWYP8WP",
 });
 
 const messaging = firebase.messaging();
