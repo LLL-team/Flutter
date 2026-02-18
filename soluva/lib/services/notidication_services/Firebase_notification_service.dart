@@ -10,6 +10,7 @@ class FirebaseService {
 
   static Future<void> initialize() async {
     if (_initialized) return;
+
     if (!kIsWeb) {
       print(" Este servicio solo se usa en Web.");
       return;
@@ -30,6 +31,7 @@ class FirebaseService {
 
       // 🔹 Pide permisos de notificación al navegador
       final permission = await html.Notification.requestPermission();
+
       if (permission != "granted") {
         print(" Permiso de notificaciones denegado");
         return;
@@ -59,7 +61,7 @@ class FirebaseService {
       _initialized = true;
       print(" Firebase Messaging Web inicializado correctamente");
     } catch (e) {
-      //  print(" Error al inicializar Firebase Messaging: $e");
+      print(" Error al inicializar Firebase Messaging: $e");
     }
   }
 }
