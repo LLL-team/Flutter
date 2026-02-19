@@ -3,11 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../api_services/api_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class FirebaseService {
   static bool _initialized = false;
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-
   static Future<void> initialize() async {
     if (_initialized) return;
 
@@ -40,8 +40,7 @@ class FirebaseService {
 
       // 🔹 Obtiene token FCM
       final token = await _messaging.getToken(
-        vapidKey:
-            "BJDJkQvLz5N8nNP_8d6NMwKAHhs3JBr6L27i6rRxsHu8tUBnl1HCC8jI3yEbSLue6IziHJGsGi67c6cK3WUqTFA",
+        vapidKey: dotenv.env['ENV_VAPID'],
       );
       print("✅ Token FCM Web: $token");
 

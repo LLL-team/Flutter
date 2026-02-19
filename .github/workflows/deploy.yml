@@ -24,7 +24,8 @@ jobs:
       - name: Create temporary .env
         run: |
           echo "BASE_URL=${{ secrets.ENV_API_URL }}" >> soluva/.env
-          echo "ENV_DEBUG=${{ secrets.ENV_OTHER_KEY }}" >> soluva/.env
+          echo "ENV_DEBUG=${{ secrets.ENV_DEBUG }}" >> soluva/.env
+          echo "ENV_VAPID=${{ secrets.VAPID_KEY }}" >> soluva/.env
 
       - name: Build Flutter Web
         run: flutter build web --release
