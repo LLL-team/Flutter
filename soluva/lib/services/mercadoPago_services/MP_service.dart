@@ -6,8 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 String get baseUrl => dotenv.env['BASE_URL'] ?? '';
 // const String baseUrl = "http://127.0.0.1:8000/api";
-const String publicKey =
-    "TEMPORAL_PUBLIC_KEY"; // Reemplaza con tu clave pública de MercadoPago
+const String publicKey = "APP_USR-2e90a051-50d1-4bd7-836d-0d91834af576";
 
 Future<void> crearTransaccion({
   required String solicitudId,
