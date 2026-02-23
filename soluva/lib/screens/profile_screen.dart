@@ -8,7 +8,7 @@ import 'package:soluva/widgets/profile/profile_menu.dart';
 import 'package:soluva/widgets/profile/profile_card_container.dart';
 import 'package:soluva/widgets/profile/profile_mis_datos.dart';
 import 'package:soluva/widgets/profile/profile_solicitudes.dart';
-import 'package:soluva/widgets/profile/profile_pagos.dart';
+import 'package:soluva/widgets/profile/ProfilePayments.dart';
 import 'package:soluva/widgets/profile/profile_notifications.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -79,7 +79,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
-    final fullName = "${user!['name'] ?? ''} ${user!['last_name'] ?? ''}".trim();
+    final fullName = "${user!['name'] ?? ''} ${user!['last_name'] ?? ''}"
+        .trim();
     final email = user!['email'] ?? '';
     final avatar = _imageBytes != null ? MemoryImage(_imageBytes!) : null;
 
@@ -87,7 +88,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isMobile = screenWidth < 650;
 
     return Scaffold(
-      backgroundColor: viewingAsWorker ? AppColors.secondary : AppColors.background,
+      backgroundColor: viewingAsWorker
+          ? AppColors.secondary
+          : AppColors.background,
       appBar: const HeaderWidget(),
       body: isMobile
           ? _buildMobileLayout(fullName, email, avatar)
@@ -96,7 +99,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildDesktopLayout(
-      String fullName, String email, ImageProvider? avatar) {
+    String fullName,
+    String email,
+    ImageProvider? avatar,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -137,15 +143,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             }
           },
         ),
-        Expanded(
-          child: _buildContent(),
-        ),
+        Expanded(child: _buildContent()),
       ],
     );
   }
 
   Widget _buildMobileLayout(
-      String fullName, String email, ImageProvider? avatar) {
+    String fullName,
+    String email,
+    ImageProvider? avatar,
+  ) {
     return Column(
       children: [
         ProfileMenu(
@@ -232,15 +239,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case 3:
         // Formas de pago/cobro - sin tabs
         return ProfileCardContainer(
-          contentBuilder: (selectedTab) => const ProfilePagos(),
+          contentBuilder: (selectedTab) =>
+              ProfilePayments(trabajadorId: user?['uuid'] ?? ''),
         );
 
       case 4:
         // Notificaciones - sin tabs
         return ProfileCardContainer(
-          contentBuilder: (selectedTab) => ProfileNotifications(
-            viewingAsWorker: viewingAsWorker,
-          ),
+          contentBuilder: (selectedTab) =>
+              ProfileNotifications(viewingAsWorker: viewingAsWorker),
         );
 
       case 5:
