@@ -202,14 +202,21 @@ class _RequestCard extends StatelessWidget {
     Color borderColor = Colors.grey[200]!;
     double borderWidth = 1;
 
-    if (status == 'completed' || status == 'cancelled') {
+    if (status == 'completed' || status == 'cancelled' || status == 'rejected') {
       backgroundColor = const Color(0xFFEAE6DB).withOpacity(0.8);
-    } else if (status == 'worker_completed' || status == 'provider_completed') {
-      backgroundColor = const Color(
-        0xFFFFF4E6,
-      ); // Color naranja claro para llamar la atención
-      borderColor =
-          AppColors.secondary; // Borde naranja para llamar más la atención
+    } else if (!viewingAsWorker &&
+        (status == 'assigned' ||
+            status == 'worker_completed' ||
+            status == 'provider_completed')) {
+      // Usuario necesita confirmar finalización
+      backgroundColor = const Color(0xFFFFF4E6);
+      borderColor = AppColors.secondary;
+      borderWidth = 2;
+    } else if (viewingAsWorker &&
+        (status == 'pending' || status == 'user_completed')) {
+      // Trabajador necesita actuar
+      backgroundColor = const Color(0xFFFFF4E6);
+      borderColor = AppColors.secondary;
       borderWidth = 2;
     }
 
@@ -219,7 +226,10 @@ class _RequestCard extends StatelessWidget {
             status != 'cancelled' &&
             status != 'completed' &&
             status != 'rejected') ||
-        (!viewingAsWorker && (status == 'accepted' || status == 'pending'));
+        (!viewingAsWorker &&
+            status != 'completed' &&
+            status != 'cancelled' &&
+            status != 'rejected');
 
     return GestureDetector(
       onTap: canTap ? () => _showRequestDialog(context) : null,
@@ -302,129 +312,14 @@ class _RequestCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            _StatusProgress(status: status, isRejected: isRejected),
+            _StatusProgress(
+              status: status,
+              isRejected: isRejected,
+              viewingAsWorker: viewingAsWorker,
+            ),
             const SizedBox(height: 16),
-            // Mostrar botón de estado según el estado de la solicitud
-            if (isRejected)
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A4A),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Text(
-                    'Solicitud rechazada',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              )
-            else if (status == 'completed')
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.text,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Text(
-                    'Finalizado',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              )
-            else if (status == 'cancelled')
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.text,
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Text(
-                    'Cancelada',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-            if ((status == 'provider_completed' ||
-                    status == 'worker_completed') &&
-                !viewingAsWorker)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => _showConfirmationDialog(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.secondary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: const Text(
-                        'Si, ya está finalizado',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    OutlinedButton(
-                      onPressed: () => _showConfirmationDialog(context, false),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                          color: AppColors.secondary,
-                          width: 2,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: const Text(
-                        'No, todavía no',
-                        style: TextStyle(
-                          color: AppColors.secondary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            // Mostrar etiqueta de estado según rol y estado actual
+            _buildStatusBadge(status, isRejected),
           ],
         ),
       ),
@@ -432,48 +327,267 @@ class _RequestCard extends StatelessWidget {
   }
 
   void _showRequestDialog(BuildContext context) {
-    // DEBUG: Imprimir todos los datos de la solicitud
-    print('DEBUG: Datos completos de la solicitud:');
-    print(request);
-
     final status = request['status']?.toString().toLowerCase() ?? 'pending';
 
-    // Si es usuario y el estado es 'pending', mostrar diálogo de cancelación
-    if (!viewingAsWorker && status == 'pending') {
-      _showCancelDialog(context);
+    if (!viewingAsWorker) {
+      // Flujo del usuario
+      if (status == 'pending') {
+        _showCancelDialog(context);
+      } else if (status == 'accepted') {
+        showDialog(
+          context: context,
+          builder: (context) => UserAssignDialog(
+            request: request,
+            onPaymentFinished: onUpdate,
+          ),
+        );
+      } else if (status == 'assigned' ||
+          status == 'worker_completed' ||
+          status == 'provider_completed') {
+        _showUserStep3Dialog(context);
+      } else if (status == 'user_completed') {
+        _showUserWaitingDialog(context);
+      }
       return;
     }
 
-    // Si es usuario y el estado es 'accepted', mostrar diálogo de asignación
-    if (!viewingAsWorker && status == 'accepted') {
-      showDialog(
-        context: context,
-        builder: (context) => UserAssignDialog(
-          request: request,
-          onPaymentFinished: () {
-            onUpdate();
-          },
-        ),
-      );
-      return;
-    }
-
-    // Para trabajadores: mostrar el popup correspondiente según el estado
+    // Flujo del trabajador
     if (status == 'pending') {
-      // Nueva solicitud (sin aceptar)
       showDialog(
         context: context,
         builder: (context) =>
             NewRequestDialog(request: request, onUpdate: onUpdate),
       );
     } else {
-      // Solicitud aceptada, en progreso o completada
       showDialog(
         context: context,
         builder: (context) =>
             RequestDetailDialog(request: request, onUpdate: onUpdate),
       );
     }
+  }
+
+  Widget _buildStatusBadge(String status, bool isRejected) {
+    String label;
+    Color bgColor;
+
+    if (isRejected) {
+      label = 'Solicitud rechazada';
+      bgColor = const Color(0xFF1E3A4A);
+    } else if (status == 'cancelled') {
+      label = 'Cancelada';
+      bgColor = AppColors.text;
+    } else if (status == 'completed') {
+      label = 'Trabajo finalizado';
+      bgColor = AppColors.text;
+    } else if (!viewingAsWorker) {
+      if (status == 'pending') {
+        label = 'Pendiente de confirmación';
+        bgColor = AppColors.text;
+      } else if (status == 'accepted') {
+        label = 'Esperando pago';
+        bgColor = AppColors.secondary;
+      } else if (status == 'assigned' ||
+          status == 'worker_completed' ||
+          status == 'provider_completed') {
+        label = 'Confirmar finalización';
+        bgColor = AppColors.button;
+      } else if (status == 'user_completed') {
+        label = 'Esperando confirmación del prestador';
+        bgColor = AppColors.text;
+      } else {
+        return const SizedBox.shrink();
+      }
+    } else {
+      // viewingAsWorker
+      if (status == 'pending') {
+        label = 'Nueva solicitud';
+        bgColor = AppColors.secondary;
+      } else if (status == 'accepted') {
+        label = 'Esperando pago';
+        bgColor = AppColors.text;
+      } else if (status == 'assigned' || status == 'user_completed') {
+        label = 'Confirmar finalización';
+        bgColor = AppColors.button;
+      } else if (status == 'worker_completed' ||
+          status == 'provider_completed') {
+        label = 'Esperando confirmación del usuario';
+        bgColor = AppColors.text;
+      } else {
+        return const SizedBox.shrink();
+      }
+    }
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  void _showUserStep3Dialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF1E3A4A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '¿Qué deseas hacer?',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showRatingDialog(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text(
+                    'Confirmar y clasificar',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showProblemDialog(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text(
+                    'Reportar problema',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showCancelDialog(context);
+                  },
+                  child: const Text(
+                    'Cancelar solicitud',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showUserWaitingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF1E3A4A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.hourglass_empty,
+                color: AppColors.secondary,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Esperando confirmación del prestador.\nTe notificaremos cuando confirme.',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _showProblemDialog(context);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.white, width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: const Text(
+                    'Reportar problema',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'Cerrar',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showCancelDialog(BuildContext context) {
@@ -914,40 +1028,39 @@ class _RatingRow extends StatelessWidget {
 class _StatusProgress extends StatelessWidget {
   final String status;
   final bool isRejected;
+  final bool viewingAsWorker;
 
-  const _StatusProgress({required this.status, this.isRejected = false});
+  const _StatusProgress({
+    required this.status,
+    this.isRejected = false,
+    this.viewingAsWorker = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     int currentStep = 0;
-    if (status == 'confirmed' || status == 'accepted' || status == 'assigned')
-      currentStep = 1;
-    if (status == 'in_progress') currentStep = 2;
-    if (status == 'provider_completed' ||
+    if (status == 'accepted') currentStep = 1;
+    if (status == 'assigned' ||
         status == 'worker_completed' ||
-        status == 'user_completed')
+        status == 'provider_completed' ||
+        status == 'user_completed') {
       currentStep = 2;
+    }
     if (status == 'completed') currentStep = 3;
 
-    // Determinar el texto del paso 3 según quién completó primero
-    String step3Label;
-    if (status == 'user_completed') {
-      step3Label = 'Usuario confirmó\nla prestación\ndel servicio';
-    } else if (status == 'worker_completed' || status == 'provider_completed') {
-      step3Label = 'Prestador\ncomunica la finalización\ndel servicio';
-    } else {
-      step3Label = 'Prestador\ncomunica la finalización\ndel servicio';
-    }
-
-    final steps = [
-      {'label': 'Pendiente de\nconfirmación', 'icon': Icons.schedule},
-      {
-        'label': 'Confirmado,\nEsperando visita',
-        'icon': Icons.check_circle_outline,
-      },
-      {'label': step3Label, 'icon': Icons.verified_outlined},
-      {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
-    ];
+    final List<Map<String, dynamic>> steps = viewingAsWorker
+        ? [
+            {'label': 'Nueva\nsolicitud', 'icon': Icons.schedule},
+            {'label': 'Esperando\npago', 'icon': Icons.check_circle_outline},
+            {'label': 'Confirmar\nfinalización', 'icon': Icons.verified_outlined},
+            {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
+          ]
+        : [
+            {'label': 'Pendiente de\nconfirmación', 'icon': Icons.schedule},
+            {'label': 'Esperando\npago', 'icon': Icons.check_circle_outline},
+            {'label': 'Confirmar\nfinalización', 'icon': Icons.verified_outlined},
+            {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
+          ];
 
     return Row(
       children: List.generate(steps.length, (index) {
