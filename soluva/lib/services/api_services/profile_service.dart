@@ -62,6 +62,38 @@ class ProfileService {
     return response.statusCode == 200;
   }
 
+  /// Solicita el borrado de cuenta (envía email de confirmación)
+  static Future<bool> requestAccountDeletion() async {
+    final token = await _getToken();
+    if (token == null) return false;
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/account/delete'),
+      headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    return response.statusCode == 200;
+  }
+
+  /// Confirma el borrado de cuenta usando el token del email
+  static Future<Map<String, dynamic>> confirmAccountDeletion(
+    String token,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/account/confirm-delete'),
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"token": token}),
+    );
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   static Future<List<Map<String, dynamic>>> getNotifications() async {
     final token = await _getToken();
 

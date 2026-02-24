@@ -85,6 +85,18 @@ class ApiService {
     );
   }
 
+  /// Solicita el borrado de cuenta (envía email de confirmación al usuario)
+  static Future<bool> requestAccountDeletion() async {
+    return await ProfileService.requestAccountDeletion();
+  }
+
+  /// Confirma el borrado de cuenta usando el token recibido por email
+  static Future<Map<String, dynamic>> confirmAccountDeletion(
+    String token,
+  ) async {
+    return await ProfileService.confirmAccountDeletion(token);
+  }
+
   ///Obtiene las notificaciones (Como esta en el perfil lo pongo aca sino lo movemos a otro servicio)
   static Future<List<Map<String, dynamic>>> getNotifications() async {
     return await ProfileService.getNotifications();

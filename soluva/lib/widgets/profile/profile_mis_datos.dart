@@ -96,7 +96,71 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
           const SizedBox(height: 16),
           _buildField("Descripción", userData!['description'] ?? ''),
         ],
+        const SizedBox(height: 32),
+        _buildDeleteAccountButton(),
       ],
+    );
+  }
+
+  Widget _buildDeleteAccountButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.error,
+          side: const BorderSide(color: AppColors.error),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        icon: const Icon(Icons.delete_forever_outlined),
+        label: const Text(
+          'Borrar cuenta',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+        onPressed: _confirmDeleteAccountRequest,
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccountRequest() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Borrar tu cuenta?'),
+        content: const Text(
+          'Te enviaremos un email de confirmación. '
+          'Desde ahí vas a poder confirmar el borrado.\n\n'
+          'Esta acción es irreversible.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Enviar email'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final ok = await ApiService.requestAccountDeletion();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Te enviamos un email de confirmación. Revisá tu bandeja de entrada.'
+              : 'Ocurrió un error. Intentá de nuevo más tarde.',
+        ),
+        backgroundColor: ok ? AppColors.button : AppColors.error,
+      ),
     );
   }
 
