@@ -5,12 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MercadoPagoService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
+
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('auth_token');
   }
 
-  static Future<Map<String, dynamic>?> verifyLinkedAccount() async {
+  static Future<bool> verifyLinkedAccount() async {
     final token = await _getToken();
 
     final response = await http.get(
@@ -25,14 +26,10 @@ class MercadoPagoService {
     final Map<String, dynamic> decoded =
         json.decode(response.body) as Map<String, dynamic>;
 
-    if (decoded['linked'] == true) {
-      return decoded['account'] as Map<String, dynamic>;
-    }
-
-    return null;
+    return decoded['vinculado'] == true;
   }
 
-  static Future<String> getMercadoPagoConnectUrl(String trabajadorId) async {
+  static Future<String?> getMercadoPagoConnectUrl(String trabajadorId) async {
     final token = await _getToken();
 
     final response = await http.get(
