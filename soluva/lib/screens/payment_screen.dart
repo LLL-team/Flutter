@@ -25,6 +25,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final addressController = TextEditingController();
   final postalCodeController = TextEditingController();
 
+  List<dynamic> paymentMethods = [];
+  String? selectedPaymentMethodId;
+  bool isLoadingMethods = true;
+
   @override
   void dispose() {
     cardHolderController.dispose();
@@ -74,6 +78,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> _confirmPaymentAndAssign() async {
+    if (selectedPaymentMethodId == null) {
+      _showErrorDialog(context, 'Seleccione un método de pago');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     final uuid = widget.request['id']?.toString();
@@ -111,7 +120,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final result = await ApiService.processPayment(
       requestUuid: uuid,
       cardToken: cardToken,
-      paymentMethodId: 'master', //temporal, hay que obtenerlo de la api de mercadopago o permitir elegir al usuario
+      paymentMethodId: selectedPaymentMethodId!,
     );
 
     if (!mounted) return;
@@ -131,6 +140,35 @@ class _PaymentScreenState extends State<PaymentScreen> {
         context,
         result['message'] ?? 'Error al asignar el trabajo',
       );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPaymentMethods();
+  }
+
+  Future<void> _loadPaymentMethods() async {
+    try {
+      final methods = await obtenerMetodosDePago();
+
+      methods.sort(
+        (a, b) => a['name'].toString().toLowerCase().compareTo(
+          b['name'].toString().toLowerCase(),
+        ),
+      );
+
+      setState(() {
+        paymentMethods = methods;
+        if (methods.isNotEmpty) {
+          selectedPaymentMethodId = methods.first['id'];
+        }
+        isLoadingMethods = false;
+      });
+    } catch (e) {
+      setState(() => isLoadingMethods = false);
+      _showErrorDialog(context, 'Error cargando métodos de pago');
     }
   }
 
@@ -401,6 +439,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 16),
+
+                if (isLoadingMethods)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  DropdownButtonFormField<String>(
+                    value: selectedPaymentMethodId,
+                    decoration: const InputDecoration(
+                      labelText: 'Método de pago',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: paymentMethods.map<DropdownMenuItem<String>>((
+                      method,
+                    ) {
+                      return DropdownMenuItem<String>(
+                        value: method['id'],
+                        child: Text(method['name']),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedPaymentMethodId = value;
+                      });
+                    },
+                    validator: (value) =>
+                        value == null ? 'Seleccione un método de pago' : null,
+                  ),
 
                 const SizedBox(height: 24),
 
