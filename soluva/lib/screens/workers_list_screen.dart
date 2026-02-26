@@ -167,6 +167,7 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                       .map((w) => _WorkerCard(
                                             worker: w,
                                             category: widget.category,
+                                            selectedTask: _selectedTask,
                                           ))
                                       .toList(),
                           ),
@@ -330,7 +331,8 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
 class _WorkerCard extends StatefulWidget {
   final Map<String, dynamic> worker;
   final String category;
-  const _WorkerCard({required this.worker, required this.category});
+  final String? selectedTask;
+  const _WorkerCard({required this.worker, required this.category, this.selectedTask});
 
   @override
   State<_WorkerCard> createState() => _WorkerCardState();
@@ -467,12 +469,15 @@ class _WorkerCardState extends State<_WorkerCard> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  _buildPriceLabel(services),
                 ],
               ),
             ),
 
-            Container(
-              width: 190,
+            Flexible(
+              child: Container(
+              constraints: const BoxConstraints(maxWidth: 190),
               padding: const EdgeInsets.only(left: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,6 +558,7 @@ class _WorkerCardState extends State<_WorkerCard> {
                 ],
               ),
             ),
+            ), // Flexible
           ],
         ),
       ),
@@ -640,6 +646,59 @@ class _WorkerCardState extends State<_WorkerCard> {
         ),
       ),
     );
+  }
+
+  Widget _buildPriceLabel(List<Map<String, dynamic>> services) {
+    final cat = widget.category.toLowerCase().trim();
+    final categoryServices = services.where((s) {
+      return (s['category']?.toString() ?? '').toLowerCase().trim() == cat;
+    }).toList();
+
+    if (categoryServices.isEmpty) return const SizedBox.shrink();
+
+    String label;
+
+    if (widget.selectedTask != null) {
+      final match = categoryServices.firstWhere(
+        (s) => s['service']?.toString() == widget.selectedTask,
+        orElse: () => {},
+      );
+      if (match.isEmpty) return const SizedBox.shrink();
+      label = '\$${_formatPrice(_parseCost(match['price']))}';
+    } else {
+      final costs = categoryServices.map((s) => _parseCost(s['price'])).toList();
+      final min = costs.reduce((a, b) => a < b ? a : b);
+      final max = costs.reduce((a, b) => a > b ? a : b);
+      label = min == max
+          ? '\$${_formatPrice(min)}'
+          : '\$${_formatPrice(min)} - \$${_formatPrice(max)}';
+    }
+
+    return Text(
+      label,
+      style: const TextStyle(
+        color: AppColors.secondary,
+        fontWeight: FontWeight.bold,
+        fontSize: 15,
+      ),
+    );
+  }
+
+  double _parseCost(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw.toString()) ?? 0;
+  }
+
+  String _formatPrice(double price) {
+    final rounded = price.roundToDouble();
+    if (price == rounded) {
+      return price.toInt().toString().replaceAllMapped(
+            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+            (m) => '${m[1]}.',
+          );
+    }
+    return price.toStringAsFixed(2);
   }
 
   // Helpers

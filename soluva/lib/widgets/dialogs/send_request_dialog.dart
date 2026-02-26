@@ -25,8 +25,9 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  List<String> _tasks = [];
+  List<Map<String, dynamic>> _workerTasks = [];
   String? _selectedTask;
+  double? _selectedTaskCost;
   bool _loadingTasks = true;
 
   @override
@@ -46,39 +47,38 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
     setState(() => _loadingTasks = true);
 
     try {
-      final data = await ApiService.getServices();
-      final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
-      List<String> foundTasks = [];
+      final workerUuid = widget.worker['uuid']?.toString() ?? '';
+      final allServices = await ApiService.getWorkerServices(workerUuid);
 
-      for (final category in categories) {
-        final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
-        for (final subcategory in subcategories) {
-          final subcategoryName = subcategory['name'] ?? '';
-          if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
-            final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
-            foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
-            break;
-          }
-        }
-        if (foundTasks.isNotEmpty) break;
-      }
+      // Filtrar los servicios del trabajador que correspondan a la categoría seleccionada
+      final filtered = allServices.where((s) {
+        final cat = s['category']?.toString() ?? '';
+        return cat.toLowerCase().trim() == widget.category.toLowerCase().trim();
+      }).toList();
 
       setState(() {
-        _tasks = foundTasks;
-        if (_tasks.isNotEmpty) {
-          _selectedTask = _tasks[0];
+        _workerTasks = filtered;
+        if (_workerTasks.isNotEmpty) {
+          _selectedTask = _workerTasks[0]['service']?.toString();
+          _selectedTaskCost = _parseCost(_workerTasks[0]['cost']);
         }
         _loadingTasks = false;
       });
     } catch (e) {
+      debugPrint('Error loading worker tasks: $e');
       setState(() => _loadingTasks = false);
     }
+  }
+
+  double _parseCost(dynamic raw) {
+    if (raw == null) return 0;
+    if (raw is num) return raw.toDouble();
+    return double.tryParse(raw.toString()) ?? 0;
   }
 
   @override
   Widget build(BuildContext context) {
     final workerName = "${widget.worker['name'] ?? ''} ${widget.worker['last_name'] ?? ''}".trim();
-    final price = widget.worker['price'] ?? 0;
 
     return Dialog(
       backgroundColor: AppColors.text,
@@ -144,7 +144,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
               // Dropdown de subcategorías
               if (_loadingTasks)
                 const Center(child: CircularProgressIndicator())
-              else if (_tasks.isNotEmpty)
+              else if (_workerTasks.isNotEmpty)
                 DropdownButtonFormField<String>(
                   value: _selectedTask,
                   decoration: InputDecoration(
@@ -159,15 +159,21 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
                   ),
                   dropdownColor: AppColors.text,
                   style: const TextStyle(color: Colors.white),
-                  items: _tasks.map((subcat) {
+                  items: _workerTasks.map((task) {
+                    final name = task['service']?.toString() ?? '';
                     return DropdownMenuItem<String>(
-                      value: subcat,
-                      child: Text(subcat),
+                      value: name,
+                      child: Text(name),
                     );
                   }).toList(),
                   onChanged: (value) {
+                    final task = _workerTasks.firstWhere(
+                      (t) => t['service']?.toString() == value,
+                      orElse: () => {},
+                    );
                     setState(() {
                       _selectedTask = value;
+                      _selectedTaskCost = task.isNotEmpty ? _parseCost(task['cost']) : null;
                     });
                   },
                 ),
@@ -197,11 +203,13 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Precio
+              // Precio de la tarea seleccionada
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  '\$${price.toStringAsFixed(3)}',
+                  _selectedTaskCost != null
+                      ? '\$${_selectedTaskCost!.toStringAsFixed(2)}'
+                      : '\$-',
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 28,
@@ -337,7 +345,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
         subtype: _selectedTask!,
         workerUuid: widget.worker['uuid'],
         startAt: widget.selectedTime,
-        amount: widget.worker['price'] ?? 0,
+        amount: _selectedTaskCost ?? 0,
         description: description.isNotEmpty ? description : null,
       );
 
