@@ -202,7 +202,9 @@ class _RequestCard extends StatelessWidget {
     Color borderColor = Colors.grey[200]!;
     double borderWidth = 1;
 
-    if (status == 'completed' || status == 'cancelled' || status == 'rejected') {
+    if (status == 'completed' ||
+        status == 'cancelled' ||
+        status == 'rejected') {
       backgroundColor = const Color(0xFFEAE6DB).withOpacity(0.8);
     } else if (!viewingAsWorker &&
         (status == 'assigned' ||
@@ -336,10 +338,8 @@ class _RequestCard extends StatelessWidget {
       } else if (status == 'accepted') {
         showDialog(
           context: context,
-          builder: (context) => UserAssignDialog(
-            request: request,
-            onPaymentFinished: onUpdate,
-          ),
+          builder: (context) =>
+              UserAssignDialog(request: request, onPaymentFinished: onUpdate),
         );
       } else if (status == 'assigned' ||
           status == 'worker_completed' ||
@@ -829,7 +829,10 @@ class _RequestCard extends StatelessWidget {
 
                       // Cerrar el diálogo de calificación
                       Navigator.pop(ctx);
-
+                      ApiService.changeRequestStatus(
+                        uuid: uuid,
+                        status: 'completed',
+                      );
                       // Enviar calificación
                       final result = await ApiService.createRating(
                         requestUuid: uuid,
@@ -1052,13 +1055,19 @@ class _StatusProgress extends StatelessWidget {
         ? [
             {'label': 'Nueva\nsolicitud', 'icon': Icons.schedule},
             {'label': 'Esperando\npago', 'icon': Icons.check_circle_outline},
-            {'label': 'Confirmar\nfinalización', 'icon': Icons.verified_outlined},
+            {
+              'label': 'Confirmar\nfinalización',
+              'icon': Icons.verified_outlined,
+            },
             {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
           ]
         : [
             {'label': 'Pendiente de\nconfirmación', 'icon': Icons.schedule},
             {'label': 'Esperando\npago', 'icon': Icons.check_circle_outline},
-            {'label': 'Confirmar\nfinalización', 'icon': Icons.verified_outlined},
+            {
+              'label': 'Confirmar\nfinalización',
+              'icon': Icons.verified_outlined,
+            },
             {'label': 'Trabajo\nfinalizado', 'icon': Icons.done_all},
           ];
 
