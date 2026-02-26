@@ -3,6 +3,7 @@ import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/services/api_services/api_service.dart';
 import 'package:soluva/widgets/header_widget.dart';
 import 'package:soluva/widgets/dialogs/send_request_dialog.dart';
+import 'package:soluva/screens/auth_screen.dart';
 
 class WorkersByCategoryScreen extends StatefulWidget {
   final String category;
@@ -558,12 +559,23 @@ class _WorkerCardState extends State<_WorkerCard> {
     );
   }
 
-  void _showRequestDialog(
+  Future<void> _showRequestDialog(
     BuildContext context,
     Map<String, dynamic> worker,
     String time,
     String date,
-  ) {
+  ) async {
+    final isAuth = await ApiService.isAuthenticated();
+    if (!context.mounted) return;
+
+    if (!isAuth) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthScreen()),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => SendRequestDialog(
