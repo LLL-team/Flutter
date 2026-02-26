@@ -212,26 +212,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  void _showSuccessDialog(BuildContext context, String title, String message) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    print("--...---");
-    print(widget.request);
+    debugPrint("--...---");
+    debugPrint(widget.request.toString());
     final service = widget.request['service'] ?? 'Servicio';
     final cost = widget.request['cost']?.toString() ?? '0';
     final worker = widget.request['worker_name'] ?? 'Trabajador';
@@ -276,9 +260,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     final description = workerData?['description'] ?? '';
     final email = workerUser?['email'];
-    final status = widget.request['status'] ?? '';
     final date = widget.request['scheduled_date'];
-    final shortId = widget.request['id']?.toString().substring(0, 8);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

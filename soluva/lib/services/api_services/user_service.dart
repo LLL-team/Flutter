@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,8 +59,6 @@ class UserService {
   }
 
   static Future<void> sendFCMTokenToServer(String token) async {
-    final url = Uri.parse('$baseUrl/user/fcm-token');
-
     final sectoken = await _getToken();
 
     final response = await http.post(
@@ -73,9 +72,9 @@ class UserService {
     );
 
     if (response.statusCode == 200) {
-      print('Token FCM enviado al servidor correctamente');
+      debugPrint('Token FCM enviado al servidor correctamente');
     } else {
-      print('Error al enviar el token FCM: ${response.statusCode}');
+      debugPrint('Error al enviar el token FCM: ${response.statusCode}');
     }
   }
 }

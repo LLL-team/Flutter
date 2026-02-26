@@ -125,7 +125,7 @@ class _EditWorkerScheduleScreenState extends State<EditWorkerScheduleScreen> {
       }).toList();
     }
 
-    print('DEBUG - Sending schedules: $schedulesByDayFormatted');
+    debugPrint('DEBUG - Sending schedules: $schedulesByDayFormatted');
 
     // Mostrar indicador de carga
     showDialog(

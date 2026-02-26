@@ -28,7 +28,7 @@ class _SearchWorkersScreenState extends State<SearchWorkersScreen> {
         _loading = false;
       });
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,

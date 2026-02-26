@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,8 +22,8 @@ class ScheduleService {
         },
       );
 
-      print('DEBUG getSchedules - Response status: ${response.statusCode}');
-      print('DEBUG getSchedules - Response body: ${response.body}');
+      debugPrint('DEBUG getSchedules - Response status: ${response.statusCode}');
+      debugPrint('DEBUG getSchedules - Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -34,7 +35,7 @@ class ScheduleService {
         return {"success": false, "schedules": []};
       }
     } catch (e) {
-      print('DEBUG getSchedules - Error: $e');
+      debugPrint('DEBUG getSchedules - Error: $e');
       return {"success": false, "schedules": []};
     }
   }
@@ -49,7 +50,7 @@ class ScheduleService {
 
     try {
       final body = jsonEncode(schedulesByDay);
-      print('DEBUG replaceSchedules - Body: $body');
+      debugPrint('DEBUG replaceSchedules - Body: $body');
 
       final response = await http.put(
         Uri.parse('$baseUrl/schedule/replace'),
@@ -60,8 +61,8 @@ class ScheduleService {
         body: body,
       );
 
-      print('DEBUG replaceSchedules - Response status: ${response.statusCode}');
-      print('DEBUG replaceSchedules - Response body: ${response.body}');
+      debugPrint('DEBUG replaceSchedules - Response status: ${response.statusCode}');
+      debugPrint('DEBUG replaceSchedules - Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         return {"success": true, "message": "Horarios actualizados correctamente"};
@@ -73,7 +74,7 @@ class ScheduleService {
         };
       }
     } catch (e) {
-      print('DEBUG replaceSchedules - Error: $e');
+      debugPrint('DEBUG replaceSchedules - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }
@@ -87,7 +88,7 @@ class ScheduleService {
 
     try {
       final body = jsonEncode({"schedule": schedules});
-      print('DEBUG createSchedules - Body: $body');
+      debugPrint('DEBUG createSchedules - Body: $body');
 
       final response = await http.post(
         Uri.parse('$baseUrl/schedule/new'),
@@ -98,8 +99,8 @@ class ScheduleService {
         body: body,
       );
 
-      print('DEBUG createSchedules - Response status: ${response.statusCode}');
-      print('DEBUG createSchedules - Response body: ${response.body}');
+      debugPrint('DEBUG createSchedules - Response status: ${response.statusCode}');
+      debugPrint('DEBUG createSchedules - Response body: ${response.body}');
 
       if (response.statusCode == 201) {
         final decoded = jsonDecode(response.body);
@@ -115,7 +116,7 @@ class ScheduleService {
         };
       }
     } catch (e) {
-      print('DEBUG createSchedules - Error: $e');
+      debugPrint('DEBUG createSchedules - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }

@@ -2,10 +2,9 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../notidication_services/Firebase_notification_service.dart';
+import '../notidication_services/firebase_notification_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'api_service.dart';
 
 class AuthService {
   static String get baseUrl => dotenv.env['BASE_URL'] ?? '';
@@ -13,13 +12,18 @@ class AuthService {
   static final ValueNotifier<bool> isLoggedIn = ValueNotifier(false);
 
   static Future<void> initialize() async {
-    final bool tokenValido = await ApiService.verifyToken();
+    final bool tokenValido = await AuthService.verifyToken();
 
     if (tokenValido) {
       handleAuthenticated();
     } else {
       await clearAuthData();
     }
+  }
+
+  static Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
   }
 
   static Future<Map<String, dynamic>?> login({
@@ -40,6 +44,7 @@ class AuthService {
       if (token != null) {
         await _saveToken(token);
         await _saveUserName(name, lastName);
+        await handleAuthenticated();
       }
       return data;
     } else {
@@ -70,8 +75,8 @@ class AuthService {
 
       if (token != null) {
         await _saveToken(token);
-        // 🔽 Esto es lo que faltaba:
         await _saveUserName(name, lastName);
+        await handleAuthenticated();
       }
 
       return data;
@@ -84,7 +89,7 @@ class AuthService {
   static Future<Map<String, dynamic>?> loginWithGoogle() async {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: '67676164290-gittfb5s4ra3ggidqnkeqmtf3avtm6sg.apps.googleusercontent.com',
+        clientId: dotenv.env['GOOGLE_CLIENT_ID'] ?? '',
         scopes: ['email', 'profile'],
       );
 
@@ -130,6 +135,7 @@ class AuthService {
         if (token != null) {
           await _saveToken(token);
           await _saveUserName(name, lastName);
+          await handleAuthenticated();
         }
 
         return data;
@@ -137,9 +143,7 @@ class AuthService {
         return null;
       }
     } catch (e) {
-      if (kDebugMode) {
-        print('Error en login con Google: $e');
-      }
+      debugPrint('Error en login con Google: $e');
       return null;
     }
   }
@@ -156,23 +160,25 @@ class AuthService {
   }
 
   static Future<void> logout() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    if (token == null) return;
+    final token = await _getToken();
 
-    final response = await http.post(
-      Uri.parse("$baseUrl/auth/logout"),
-      headers: {"Authorization": "Bearer $token"},
-    );
-    if (response.statusCode == 200) {
-      await prefs.remove('auth_token');
-    } else {
-      // print("Logout failed: ${response.statusCode} - ${response.body}");
-    }
+    // Intentar notificar al servidor (best-effort)
+    try {
+      if (token != null) {
+        await http.post(
+          Uri.parse("$baseUrl/auth/logout"),
+          headers: {"Authorization": "Bearer $token"},
+        );
+      }
+    } catch (_) {}
+
+    // Siempre borrar datos locales
+    await clearAuthData();
+    isLoggedIn.value = false;
   }
 
   static Future<bool> verifyToken() async {
-    final token = await ApiService.getToken();
+    final token = await _getToken();
     if (token == null) return false;
 
     final response = await http.get(
@@ -187,9 +193,7 @@ class AuthService {
   }
 
   static Future<void> handleAuthenticated() async {
-    //final controller = NotificationController();
-    //controller.init();
-    //isLoggedIn.value = true;
+    isLoggedIn.value = true;
     await FirebaseService.initialize();
   }
 
@@ -197,5 +201,6 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('user_name');
+    isLoggedIn.value = false;
   }
 }

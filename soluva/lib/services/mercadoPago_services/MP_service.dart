@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -32,10 +33,8 @@ Future<void> crearTransaccion({
     }),
   );
 
-  if (response.statusCode == 201) {
-    final data = jsonDecode(response.body);
-  } else {
-    print('Error: ${response.body}');
+  if (response.statusCode != 201) {
+    debugPrint('Error: ${response.body}');
   }
 }
 

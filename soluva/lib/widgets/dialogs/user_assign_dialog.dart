@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
-import '../../services/api_services/api_service.dart';
 import '../../screens/payment_screen.dart';
 
 class UserAssignDialog extends StatelessWidget {
@@ -109,63 +108,4 @@ class UserAssignDialog extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmAssign(BuildContext context) async {
-    final uuid = request['id']?.toString();
-    if (uuid == null) {
-      _showErrorDialog(context, 'No se pudo identificar la solicitud');
-      return;
-    }
-
-    // Cerrar el diálogo principal
-    Navigator.pop(context);
-
-    final result = await ApiService.changeRequestStatus(
-      uuid: uuid,
-      status: 'assigned',
-    );
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            result['message'] ??
-                (result['success'] == true
-                    ? 'Trabajo asignado'
-                    : 'Error al asignar'),
-          ),
-          backgroundColor: result['success'] == true
-              ? Colors.green
-              : AppColors.secondary,
-        ),
-      );
-    }
-
-    // Actualizar la lista
-    onUpdate?.call();
-  }
-
-  void _showErrorDialog(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.background,
-        title: Text(
-          'Error',
-          style: AppTextStyles.heading2.copyWith(color: AppColors.secondary),
-        ),
-        content: Text(message, style: AppTextStyles.bodyText),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'OK',
-              style: AppTextStyles.buttonText.copyWith(
-                color: AppColors.secondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

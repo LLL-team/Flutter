@@ -8,7 +8,7 @@ import 'package:soluva/widgets/profile/profile_menu.dart';
 import 'package:soluva/widgets/profile/profile_card_container.dart';
 import 'package:soluva/widgets/profile/profile_mis_datos.dart';
 import 'package:soluva/widgets/profile/profile_solicitudes.dart';
-import 'package:soluva/widgets/profile/ProfilePayments.dart';
+import 'package:soluva/widgets/profile/profile_payments.dart';
 import 'package:soluva/widgets/profile/profile_notifications.dart';
 
 class ProfileScreen extends StatefulWidget {

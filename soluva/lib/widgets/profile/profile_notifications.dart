@@ -73,7 +73,7 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
                 : n['data'];
             requestId = dataObj['request_uuid']?.toString();
           } catch (e) {
-            print('Error parsing notification data: $e');
+            debugPrint('Error parsing notification data: $e');
           }
         }
 

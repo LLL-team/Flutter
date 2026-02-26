@@ -1,7 +1,7 @@
 import 'dart:html' as html;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import '../api_services/api_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -12,7 +12,7 @@ class FirebaseService {
     if (_initialized) return;
 
     if (!kIsWeb) {
-      print(" Este servicio solo se usa en Web.");
+      debugPrint(" Este servicio solo se usa en Web.");
       return;
     }
 
@@ -34,7 +34,7 @@ class FirebaseService {
       final permission = await html.Notification.requestPermission();
 
       if (permission != "granted") {
-        print(" Permiso de notificaciones denegado");
+        debugPrint(" Permiso de notificaciones denegado");
         return;
       }
 
@@ -42,14 +42,14 @@ class FirebaseService {
       final token = await _messaging.getToken(
         vapidKey: dotenv.env['ENV_VAPID'],
       );
-      print("✅ Token FCM Web: $token");
+      debugPrint("✅ Token FCM Web: $token");
 
       if (token != null) ApiService.sendFCMTokenToServer(token);
       // 🔹 Escucha mensajes en primer plano
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print("Notificación recibida:");
-        print("Título: ${message.notification?.title}");
-        print("Cuerpo: ${message.notification?.body}");
+        debugPrint("Notificación recibida:");
+        debugPrint("Título: ${message.notification?.title}");
+        debugPrint("Cuerpo: ${message.notification?.body}");
 
         // Mostrar notificación del navegador
         html.Notification(
@@ -59,9 +59,9 @@ class FirebaseService {
       });
 
       _initialized = true;
-      print(" Firebase Messaging Web inicializado correctamente");
+      debugPrint(" Firebase Messaging Web inicializado correctamente");
     } catch (e) {
-      print(" Error al inicializar Firebase Messaging: $e");
+      debugPrint(" Error al inicializar Firebase Messaging: $e");
     }
   }
 }

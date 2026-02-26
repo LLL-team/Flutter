@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:soluva/services/api_services/auth_service.dart';
+import 'package:soluva/services/api_services/api_service.dart';
 import '../screens/profile_screen.dart';
 import '../screens/auth_screen.dart';
 import '../screens/home_screen.dart';
@@ -25,6 +27,19 @@ class _HeaderWidgetState extends State<HeaderWidget> {
   void initState() {
     super.initState();
     _checkToken();
+    AuthService.isLoggedIn.addListener(_onAuthStateChanged);
+  }
+
+  void _onAuthStateChanged() {
+    if (mounted) {
+      _checkToken();
+    }
+  }
+
+  @override
+  void dispose() {
+    AuthService.isLoggedIn.removeListener(_onAuthStateChanged);
+    super.dispose();
   }
 
   Future<void> _checkToken() async {
@@ -133,13 +148,11 @@ class _HeaderWidgetState extends State<HeaderWidget> {
         const PopupMenuDivider(),
         PopupMenuItem<String>(
           onTap: () async {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.remove('auth_token');
-            await prefs.remove('user_name');
+            await ApiService.logout();
             if (mounted) {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (_) => const AuthScreen()),
+                MaterialPageRoute(builder: (_) => const HomePage()),
                 (route) => false,
               );
             }

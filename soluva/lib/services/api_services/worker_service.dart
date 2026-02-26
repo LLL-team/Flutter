@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
@@ -267,7 +268,7 @@ class WorkerService {
       return true;
     } else {
       // Mostrar el error del servidor para depuración
-      print('ERROR del servidor (${response.statusCode}): ${response.body}');
+      debugPrint('ERROR del servidor (${response.statusCode}): ${response.body}');
       throw Exception('Error ${response.statusCode}: ${response.body}');
     }
   }

@@ -390,7 +390,7 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
         return '$year-$month-$day';
       }
     } catch (e) {
-      print('Error parsing date: $e');
+      debugPrint('Error parsing date: $e');
     }
     // Fallback: devolver fecha actual
     final now = DateTime.now();

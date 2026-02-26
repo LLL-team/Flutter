@@ -709,14 +709,6 @@ class _RequestCard extends StatelessWidget {
     );
   }
 
-  void _showConfirmationDialog(BuildContext context, bool isFinished) {
-    if (isFinished) {
-      _showRatingDialog(context);
-    } else {
-      _showProblemDialog(context);
-    }
-  }
-
   void _showRatingDialog(BuildContext context) {
     int qualityRating = 0;
     int punctualityRating = 0;

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:soluva/screens/auth_screen.dart';
 import 'package:soluva/screens/worker_application_screen.dart';
 import 'package:soluva/screens/workers_list_screen.dart';
@@ -41,7 +40,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      print('Error loading categories: $e');
+      debugPrint('Error loading categories: $e');
       if (mounted) {
         setState(() => _loadingCategories = false);
       }
@@ -98,8 +97,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleOfferService() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    final token = await ApiService.getToken();
 
     if (token != null && token.isNotEmpty) {
       try {

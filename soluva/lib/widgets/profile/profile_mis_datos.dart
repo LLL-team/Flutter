@@ -46,7 +46,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
       try {
         services = await ApiService.getWorkerServices(data['uuid']);
       } catch (e) {
-        print('Error cargando servicios del trabajador: $e');
+        debugPrint('Error cargando servicios del trabajador: $e');
       }
     }
 
@@ -184,7 +184,7 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
     for (var service in services) {
       final category = service['category'] ?? 'Sin categoría';
       serviciosPorCategoria.putIfAbsent(category, () => []);
-      serviciosPorCategoria[category]!.add(service as Map<String, dynamic>);
+      serviciosPorCategoria[category]!.add(service);
     }
 
     final categorias = serviciosPorCategoria.keys.toList();

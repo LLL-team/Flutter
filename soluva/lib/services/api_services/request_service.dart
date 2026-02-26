@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -145,13 +146,13 @@ class RequestService {
     final token = prefs.getString('auth_token');
     if (token == null) return {"success": false, "message": "No autenticado"};
 
-    print('DEBUG changeStatus - UUID: $uuid');
-    print('DEBUG changeStatus - Status: $status');
-    print('DEBUG changeStatus - URL: $baseUrl/request/changeStatus');
+    debugPrint('DEBUG changeStatus - UUID: $uuid');
+    debugPrint('DEBUG changeStatus - Status: $status');
+    debugPrint('DEBUG changeStatus - URL: $baseUrl/request/changeStatus');
 
     try {
       final body = jsonEncode({'uuid': uuid, 'status': status});
-      print('DEBUG changeStatus - Body: $body');
+      debugPrint('DEBUG changeStatus - Body: $body');
 
       final response = await http.post(
         Uri.parse('$baseUrl/request/changeStatus'),
@@ -162,8 +163,8 @@ class RequestService {
         body: body,
       );
 
-      print('DEBUG changeStatus - Response status: ${response.statusCode}');
-      print('DEBUG changeStatus - Response body: ${response.body}');
+      debugPrint('DEBUG changeStatus - Response status: ${response.statusCode}');
+      debugPrint('DEBUG changeStatus - Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
@@ -185,7 +186,7 @@ class RequestService {
         return {"success": false, "message": message};
       }
     } catch (e) {
-      print('DEBUG changeStatus - Error: $e');
+      debugPrint('DEBUG changeStatus - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }
@@ -238,7 +239,7 @@ class RequestService {
       }
       return null;
     } catch (e) {
-      print('Error getting request by ID: $e');
+      debugPrint('Error getting request by ID: $e');
       return null;
     }
   }
@@ -255,8 +256,8 @@ class RequestService {
     final token = prefs.getString('auth_token');
     if (token == null) return {"success": false, "message": "No autenticado"};
 
-    print('DEBUG createRating - Request UUID: $requestUuid');
-    print(
+    debugPrint('DEBUG createRating - Request UUID: $requestUuid');
+    debugPrint(
       'DEBUG createRating - Ratings: work_quality=$workQuality, punctuality=$punctuality, friendliness=$friendliness',
     );
 
@@ -268,7 +269,7 @@ class RequestService {
         'friendliness': friendliness,
         if (review != null && review.isNotEmpty) 'review': review,
       });
-      print('DEBUG createRating - Body: $body');
+      debugPrint('DEBUG createRating - Body: $body');
 
       final response = await http.post(
         Uri.parse('$baseUrl/ratings'),
@@ -279,8 +280,8 @@ class RequestService {
         body: body,
       );
 
-      print('DEBUG createRating - Response status: ${response.statusCode}');
-      print('DEBUG createRating - Response body: ${response.body}');
+      debugPrint('DEBUG createRating - Response status: ${response.statusCode}');
+      debugPrint('DEBUG createRating - Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return {
@@ -300,7 +301,7 @@ class RequestService {
         return {"success": false, "message": message};
       }
     } catch (e) {
-      print('DEBUG createRating - Error: $e');
+      debugPrint('DEBUG createRating - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }
@@ -403,7 +404,7 @@ class RequestService {
         return {"success": false, "message": message};
       }
     } catch (e) {
-      print('DEBUG payment - Error: $e');
+      debugPrint('DEBUG payment - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }

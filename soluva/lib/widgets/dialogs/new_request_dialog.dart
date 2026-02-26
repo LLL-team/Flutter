@@ -28,12 +28,6 @@ class NewRequestDialog extends StatelessWidget {
 
     final address = request['address'] ?? request['location'] ?? 'Dirección no especificada';
 
-    // Datos de precio
-    final amount = request['amount'] ?? request['cost'] ?? 0;
-    final price = amount is String ? (double.tryParse(amount) ?? 0) : (amount as num).toDouble();
-    final commission = price * 0.15; // 15% de comisión
-    final total = price - commission;
-
     return Dialog(
       backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(
