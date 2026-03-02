@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../notidication_services/firebase_notification_service.dart';
+import '../notification_services/Firebase_notification_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -105,7 +105,8 @@ class AuthService {
       }
 
       // Obtener los detalles de autenticación
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
       final String? accessToken = googleAuth.accessToken;
 
@@ -120,10 +121,7 @@ class AuthService {
       final response = await http.post(
         Uri.parse("$baseUrl/auth/google"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "token": tokenToSend,
-          "token_type": tokenType,
-        }),
+        body: jsonEncode({"token": tokenToSend, "token_type": tokenType}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
