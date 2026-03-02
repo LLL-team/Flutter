@@ -42,7 +42,7 @@ class FirebaseService {
       final token = await _messaging.getToken(
         vapidKey: dotenv.env['ENV_VAPID'],
       );
-      debugPrint("✅ Token FCM Web: $token");
+      //debugPrint("Token FCM Web: $token");
 
       if (token != null) ApiService.sendFCMTokenToServer(token);
       // 🔹 Escucha mensajes en primer plano
