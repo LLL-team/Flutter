@@ -37,7 +37,7 @@ class FirebaseService {
         debugPrint(" Permiso de notificaciones denegado");
         return;
       }
-      debugPrint("VAPID FCM Web: $dotenv.env['ENV_VAPID']");
+      debugPrint("VAPID FCM Web: ${dotenv.env['ENV_VAPID']}");
       // 🔹 Obtiene token FCM
       final token = await _messaging.getToken(
         vapidKey: dotenv.env['ENV_VAPID'],
