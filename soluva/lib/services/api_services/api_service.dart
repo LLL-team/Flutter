@@ -272,7 +272,11 @@ class ApiService {
     required String cardToken,
     required String paymentMethodId,
   }) async {
-    return await RequestService.payment(requestUuid, cardToken, paymentMethodId);
+    return await RequestService.payment(
+      requestUuid,
+      cardToken,
+      paymentMethodId,
+    );
   }
 
   /// Crea una nueva solicitud de servicio
@@ -296,6 +300,12 @@ class ApiService {
       amount: amount,
       description: description,
     );
+  }
+
+  static Future<Map<String, dynamic>> getCostSummary({
+    required String requestUuid,
+  }) async {
+    return await RequestService.costSummary(requestUuid);
   }
 
   // ==================== HORARIOS (SCHEDULE SERVICE) ====================

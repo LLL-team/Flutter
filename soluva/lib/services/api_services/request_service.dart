@@ -163,7 +163,9 @@ class RequestService {
         body: body,
       );
 
-      debugPrint('DEBUG changeStatus - Response status: ${response.statusCode}');
+      debugPrint(
+        'DEBUG changeStatus - Response status: ${response.statusCode}',
+      );
       debugPrint('DEBUG changeStatus - Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -280,7 +282,9 @@ class RequestService {
         body: body,
       );
 
-      debugPrint('DEBUG createRating - Response status: ${response.statusCode}');
+      debugPrint(
+        'DEBUG createRating - Response status: ${response.statusCode}',
+      );
       debugPrint('DEBUG createRating - Response body: ${response.body}');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -405,6 +409,36 @@ class RequestService {
       }
     } catch (e) {
       debugPrint('DEBUG payment - Error: $e');
+      return {"success": false, "message": "Error de conexión: $e"};
+    }
+  }
+
+  static Future<Map<String, dynamic>> costSummary(String requestUuid) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token == null) return {"success": false, "message": "No autenticado"};
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/request/costSummary?uuid=$requestUuid'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+
+        return {"success": true, "data": decoded};
+      } else {
+        return {
+          "success": false,
+          "message": "Error al obtener el resumen de costos",
+        };
+      }
+    } catch (e) {
+      debugPrint('DEBUG costSummary - Error: $e');
       return {"success": false, "message": "Error de conexión: $e"};
     }
   }

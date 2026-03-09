@@ -25,6 +25,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final addressController = TextEditingController();
   final postalCodeController = TextEditingController();
 
+  double baseCost = 0;
+  double fixedCommission = 0;
+  double totalCost = 0;
+  bool loadingCost = true;
+
   List<dynamic> paymentMethods = [];
   String? selectedPaymentMethodId;
   bool isLoadingMethods = true;
@@ -147,6 +152,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
   void initState() {
     super.initState();
     _loadPaymentMethods();
+    loadCostSummary();
+  }
+
+  void loadCostSummary() async {
+    final uuid = widget.request['id']?.toString();
+    if (uuid == null) {
+      _showErrorDialog(context, 'No se pudo identificar la solicitud');
+      return;
+    }
+
+    final result = await ApiService.getCostSummary(requestUuid: uuid);
+
+    if (result['success']) {
+      final data = result['data'];
+
+      setState(() {
+        baseCost = _toDouble(data['base_cost']);
+        fixedCommission = _toDouble(data['fixed_commission']);
+        totalCost = _toDouble(data['total_cost']);
+        loadingCost = false;
+      });
+    } else {
+      setState(() {
+        loadingCost = false;
+      });
+    }
+  }
+
+  double _toDouble(dynamic value) {
+    if (value == null) return 0;
+
+    if (value is num) return value.toDouble();
+
+    return double.tryParse(value.toString()) ?? 0;
   }
 
   Future<void> _loadPaymentMethods() async {
@@ -302,18 +341,50 @@ class _PaymentScreenState extends State<PaymentScreen> {
         const SizedBox(height: 16),
 
         _infoCard(
-          title: 'Total a pagar',
+          title: 'Resumen del pago',
           icon: Icons.payments,
           children: [
-            Text(
-              '\$$cost',
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'El monto se cobrará al confirmar',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            if (loadingCost)
+              const CircularProgressIndicator()
+            else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Costo del servicio'),
+                  Text('\$$baseCost'),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Comisión de Soluva'),
+                  Text('\$$fixedCommission'),
+                ],
+              ),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Total',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '\$${totalCost.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'El monto se cobrará al confirmar',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
           ],
         ),
       ],
