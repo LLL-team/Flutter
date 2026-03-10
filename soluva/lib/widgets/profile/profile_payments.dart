@@ -41,6 +41,38 @@ class _ProfilePaymentsState extends State<ProfilePayments> {
     }
   }
 
+  Future<void> _confirmRemoveLink() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Desvincular cuenta'),
+          content: const Text(
+            '¿Está seguro que desea desvincular su cuenta de MercadoPago?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text('Desvincular'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _removeLink();
+    }
+  }
+
   Future<void> _connectAccount() async {
     final url = await MercadoPagoService.getMercadoPagoConnectUrl(
       widget.trabajadorId,
@@ -82,7 +114,7 @@ class _ProfilePaymentsState extends State<ProfilePayments> {
               SizedBox(
                 width: 180,
                 child: ElevatedButton(
-                  onPressed: _isLinked ? _removeLink : _connectAccount,
+                  onPressed: _isLinked ? _confirmRemoveLink : _connectAccount,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF5BC0C8),
                     foregroundColor: Colors.white,
