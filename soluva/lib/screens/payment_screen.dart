@@ -132,6 +132,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     // Cerrar loading
     Navigator.pop(context);
+    Navigator.pop(context);
     setState(() => isProcessing = false);
 
     if (result['success'] == true) {
