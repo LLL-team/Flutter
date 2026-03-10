@@ -51,9 +51,13 @@ class _SendRequestDialogState extends State<SendRequestDialog> {
       final allServices = await ApiService.getWorkerServices(workerUuid);
 
       // Filtrar los servicios del trabajador que correspondan a la categoría seleccionada
+      // y deduplicar por nombre de servicio para evitar DropdownMenuItem con valores repetidos
+      final seen = <String>{};
       final filtered = allServices.where((s) {
         final cat = s['category']?.toString() ?? '';
-        return cat.toLowerCase().trim() == widget.category.toLowerCase().trim();
+        if (cat.toLowerCase().trim() != widget.category.toLowerCase().trim()) return false;
+        final name = s['service']?.toString() ?? '';
+        return seen.add(name);
       }).toList();
 
       setState(() {

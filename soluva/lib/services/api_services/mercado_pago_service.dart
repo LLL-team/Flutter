@@ -47,16 +47,28 @@ class MercadoPagoService {
     return decoded['url'];
   }
 
-  static Future<void> removeMercadoPagoLink() async {
+  static Future<Map<String, dynamic>> removeMercadoPagoLink() async {
     final token = await _getToken();
 
-    final response = await http.delete(
-      Uri.parse('$baseUrl/mercadopago/removeLink'),
-      headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
-    );
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/mercadopago/removeLink'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('Error removing MercadoPago link');
+      final decoded = json.decode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': 'Cuenta desvinculada correctamente'};
+      }
+
+      return {
+        'success': false,
+        'has_pending_job': decoded['has_pending_job'] == true,
+        'message': decoded['message'] ?? 'Error al desvincular',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión'};
     }
   }
 }

@@ -347,6 +347,10 @@ class _RequestCard extends StatelessWidget {
         _showUserStep3Dialog(context);
       } else if (status == 'user_completed') {
         _showUserWaitingDialog(context);
+      } else if (status == 'completed') {
+        if (request['has_rated'] != true) {
+          _showRatingDialog(context);
+        }
       }
       return;
     }
@@ -439,6 +443,11 @@ class _RequestCard extends StatelessWidget {
   }
 
   void _showUserStep3Dialog(BuildContext context) {
+    // Si el trabajador ya confirmó, el usuario finaliza el trabajo y puede calificar.
+    // Si no, solo confirma y queda esperando al trabajador.
+    final status = request['status']?.toString().toLowerCase() ?? '';
+    final workerAlreadyDone = status == 'worker_completed' || status == 'provider_completed';
+
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
@@ -461,9 +470,52 @@ class _RequestCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    _showRatingDialog(context);
+                    final uuid = request['id']?.toString();
+                    if (uuid == null) return;
+
+                    // Mostrar indicador de carga
+                    if (context.mounted) {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    final result = await ApiService.changeRequestStatus(
+                      uuid: uuid,
+                      status: 'completed',
+                    );
+
+                    if (context.mounted) Navigator.pop(context); // cerrar loader
+
+                    if (result['success'] != true) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(result['message'] ?? 'Error al confirmar'),
+                          backgroundColor: AppColors.secondary,
+                        ));
+                      }
+                      return;
+                    }
+
+                    if (workerAlreadyDone) {
+                      // Status es ahora 'completed' → abrir diálogo de calificación
+                      if (context.mounted) _showRatingDialog(context);
+                    } else {
+                      // Status es ahora 'user_completed' → esperando al trabajador
+                      onUpdate();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Trabajo confirmado. Podrás clasificar al trabajador cuando él también confirme.'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
@@ -472,9 +524,9 @@ class _RequestCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
-                    'Confirmar y clasificar',
-                    style: TextStyle(
+                  child: Text(
+                    workerAlreadyDone ? 'Confirmar y clasificar' : 'Confirmar finalización',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
@@ -821,11 +873,7 @@ class _RequestCard extends StatelessWidget {
 
                       // Cerrar el diálogo de calificación
                       Navigator.pop(ctx);
-                      ApiService.changeRequestStatus(
-                        uuid: uuid,
-                        status: 'completed',
-                      );
-                      // Enviar calificación
+                      // Enviar calificación (el status ya es 'completed' al llegar aquí)
                       final result = await ApiService.createRating(
                         requestUuid: uuid,
                         workQuality: qualityRating,

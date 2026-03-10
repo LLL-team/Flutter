@@ -84,8 +84,63 @@ class _ProfilePaymentsState extends State<ProfilePayments> {
   }
 
   Future<void> _removeLink() async {
-    await MercadoPagoService.removeMercadoPagoLink();
-    await _loadAccount();
+    // Confirmación antes de desvincular
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Desvincular MercadoPago'),
+        content: const Text(
+          '¿Estás seguro de que querés desvincular tu cuenta de MercadoPago?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Sí, desvincular',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final result = await MercadoPagoService.removeMercadoPagoLink();
+
+    if (result['success'] == true) {
+      await _loadAccount();
+    } else if (result['has_pending_job'] == true) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('No se puede desvincular'),
+            content: const Text(
+              'Para desvincular MercadoPago primero tenés que finalizar el trabajo que aceptaste o cancelarlo.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Entendido'),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Error al desvincular'),
+          ),
+        );
+      }
+    }
   }
 
   @override

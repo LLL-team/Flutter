@@ -44,6 +44,7 @@ class RequestService {
           "status": status,
           "cost": item["amount"],
           "rejected": status == 'rejected',
+          "has_rated": item["rating"] != null,
           // Datos adicionales para los popups
           "id": item["uuid"] ?? item["id"],
           "uuid": item["uuid"],
@@ -106,6 +107,7 @@ class RequestService {
           "status": status,
           "cost": item["amount"],
           "rejected": status == 'rejected',
+          "has_rated": item["rating"] != null,
           // Datos adicionales para los popups
           "id": item["uuid"] ?? item["id"],
           "uuid": item["uuid"],
@@ -226,6 +228,7 @@ class RequestService {
           "status": status,
           "cost": item["amount"],
           "rejected": status == 'rejected',
+          "has_rated": item["rating"] != null,
           "id": item["uuid"] ?? item["id"],
           "uuid": item["uuid"],
           "user": item["user"],

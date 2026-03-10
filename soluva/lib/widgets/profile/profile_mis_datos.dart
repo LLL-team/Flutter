@@ -754,14 +754,25 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
         List<Map<String, dynamic>> availableTasks = [];
         final costController = TextEditingController();
 
-        // Recopilar todas las subcategorías
+        // Recopilar subcategorías filtrando las tareas que el trabajador ya tiene
         for (final cat in categories) {
           final subcats = List<Map<String, dynamic>>.from(cat['subcategories'] ?? []);
           for (final subcat in subcats) {
-            availableSubcategories.add({
-              'name': subcat['name'],
-              'tasks': subcat['tasks'] ?? [],
-            });
+            final subcatName = subcat['name']?.toString() ?? '';
+            final allTasks = List<Map<String, dynamic>>.from(subcat['tasks'] ?? []);
+            // Excluir tareas que el trabajador ya tiene en esta subcategoría
+            final unownedTasks = allTasks.where((task) {
+              final taskName = task['name']?.toString() ?? '';
+              return !workerServices.any((s) =>
+                  s['service'] == taskName && s['category'] == subcatName);
+            }).toList();
+            // Solo agregar la subcategoría si le quedan tareas disponibles
+            if (unownedTasks.isNotEmpty) {
+              availableSubcategories.add({
+                'name': subcatName,
+                'tasks': unownedTasks,
+              });
+            }
           }
         }
 

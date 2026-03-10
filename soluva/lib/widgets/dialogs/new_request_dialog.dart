@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:soluva/theme/app_colors.dart';
 import 'package:soluva/theme/app_text_styles.dart';
 import 'package:soluva/services/api_services/api_service.dart';
+import 'package:soluva/services/api_services/mercado_pago_service.dart';
 
 class NewRequestDialog extends StatelessWidget {
   final Map<String, dynamic> request;
@@ -349,8 +350,36 @@ class NewRequestDialog extends StatelessWidget {
       return;
     }
 
+    // Verificar si el trabajador tiene MercadoPago vinculado
+    try {
+      final isLinked = await MercadoPagoService.verifyLinkedAccount();
+      if (!isLinked) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: const Text('MercadoPago no vinculado'),
+              content: const Text(
+                'Para aceptar el trabajo tenés que vincular tu cuenta de MercadoPago. '
+                'Podés hacerlo en la sección "Formas de cobro" de tu perfil.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Entendido'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+    } catch (_) {
+      // Si la verificación falla, continuar con el flujo normal
+    }
+
     // Cerrar el diálogo principal
-    Navigator.pop(context);
+    if (context.mounted) Navigator.pop(context);
 
     final result = await ApiService.changeRequestStatus(uuid: uuid, status: 'accepted');
 
