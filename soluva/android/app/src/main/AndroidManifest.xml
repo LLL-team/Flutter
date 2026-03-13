@@ -24,13 +24,23 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep link para confirmación de borrado de cuenta -->
+            <!-- Deep link para confirmación de borrado de cuenta (scheme personalizado) -->
             <!-- Backend .env: APP_FRONTEND_URL=soluva://app -->
             <intent-filter android:autoVerify="false">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="soluva" android:host="app"/>
+            </intent-filter>
+            <!-- App Links HTTPS para soluva.com.ar -->
+            <!-- Requiere https://soluva.com.ar/.well-known/assetlinks.json -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="soluva.com.ar"
+                      android:pathPrefix="/confirm-delete"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

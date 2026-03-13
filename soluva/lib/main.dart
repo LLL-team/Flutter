@@ -60,7 +60,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.path == '/confirm-delete') {
+    // Normalizar path: "//confirm-delete" → "/confirm-delete"
+    final path = '/${uri.path.replaceAll(RegExp(r'^/+'), '')}';
+    if (path == '/confirm-delete') {
       final token = uri.queryParameters['token'];
       if (token != null && token.isNotEmpty) {
         _navigatorKey.currentState?.push(
