@@ -390,40 +390,40 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                  // const SizedBox(height: 32),
-                  // Padding(
-                  //   padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
-                  //   child: Container(
-                  //     decoration: BoxDecoration(
-                  //       color: AppColors.background.withValues(alpha: 0.95),
-                  //       borderRadius: BorderRadius.circular(20),
-                  //     ),
-                  //     padding: EdgeInsets.all(isMobile ? 16 : 24),
-                  //     child: Column(
-                  //       crossAxisAlignment: CrossAxisAlignment.start,
-                  //       children: [
-                  //         Text(
-                  //           '¿Cómo funciona?',
-                  //           style: TextStyle(
-                  //             fontSize: isMobile ? 18 : 20,
-                  //             fontWeight: FontWeight.bold,
-                  //             color: AppColors.text,
-                  //           ),
-                  //         ),
-                  //         const SizedBox(height: 16),
-                  //         _StepItem(number: 1, text: 'Registrate o inicia sesión.'),
-                  //         _StepItem(
-                  //           number: 2,
-                  //           text: 'Elige una categoría y servicio.',
-                  //         ),
-                  //         _StepItem(
-                  //           number: 3,
-                  //           text: 'Contacta y contrata al profesional.',
-                  //         ),
-                  //       ],
-                  //     ),
-                  //   ),
-                  // ),
+                  const SizedBox(height: 32),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.background.withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: EdgeInsets.all(isMobile ? 16 : 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '¿Cómo funciona?',
+                            style: TextStyle(
+                              fontSize: isMobile ? 18 : 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _StepItem(number: 1, text: 'Registrate o inicia sesión.'),
+                          _StepItem(
+                            number: 2,
+                            text: 'Elige una categoría y servicio.',
+                          ),
+                          _StepItem(
+                            number: 3,
+                            text: 'Contacta y contrata al profesional.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 32),
                   // Buscador
                   Padding(
@@ -653,44 +653,44 @@ class _MainImageButton extends StatelessWidget {
   }
 }
 
-// class _StepItem extends StatelessWidget {
-//   final int number;
-//   final String text;
-//
-//   const _StepItem({required this.number, required this.text});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         Container(
-//           width: 32,
-//           height: 32,
-//           decoration: BoxDecoration(
-//             color: AppColors.secondary,
-//             borderRadius: BorderRadius.circular(16),
-//           ),
-//           alignment: Alignment.center,
-//           child: Text(
-//             '$number.',
-//             style: const TextStyle(
-//               color: AppColors.white,
-//               fontWeight: FontWeight.bold,
-//               fontSize: 18,
-//             ),
-//           ),
-//         ),
-//         const SizedBox(width: 12),
-//         Expanded(
-//           child: Text(
-//             text,
-//             style: TextStyle(color: AppColors.text, fontSize: 16),
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+class _StepItem extends StatelessWidget {
+  final int number;
+  final String text;
+
+  const _StepItem({required this.number, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$number.',
+            style: const TextStyle(
+              color: AppColors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(color: AppColors.text, fontSize: 16),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class _CategoryCard extends StatelessWidget {
   final String categoryName;
