@@ -268,27 +268,47 @@ class _PaymentScreenState extends State<PaymentScreen> {
         backgroundColor: AppColors.text,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: isWide
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: _buildSummary(service, worker, cost)),
-                    const SizedBox(width: 32),
-                    Expanded(child: _buildPaymentForm()),
-                  ],
-                )
-              : Column(
-                  children: [
-                    _buildSummary(service, worker, cost),
-                    const SizedBox(height: 32),
-                    _buildPaymentForm(),
-                  ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+
+          final isDesktop = width > 900;
+          final isTablet = width > 600;
+
+          Widget content;
+
+          if (isDesktop) {
+            content = Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _buildSummary(service, worker, cost)),
+                const SizedBox(width: 32),
+                Expanded(child: _buildPaymentForm()),
+              ],
+            );
+          } else {
+            content = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildSummary(service, worker, cost),
+                const SizedBox(height: 32),
+                _buildPaymentForm(),
+              ],
+            );
+          }
+
+          return SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(key: _formKey, child: content),
                 ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -449,114 +469,99 @@ class _PaymentScreenState extends State<PaymentScreen> {
   /// ---------------- RIGHT ----------------
   Widget _buildPaymentForm() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Datos de pago',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
+        const Text(
+          'Datos de pago',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
 
-                _input(cardHolderController, 'Nombre del titular'),
-                const SizedBox(height: 12),
+        _input(cardHolderController, 'Nombre del titular'),
+        const SizedBox(height: 12),
 
-                _input(
-                  cardNumberController,
-                  'Número de tarjeta',
-                  keyboard: TextInputType.number,
-                  minLength: 16,
-                ),
-                const SizedBox(height: 12),
+        _input(
+          cardNumberController,
+          'Número de tarjeta',
+          keyboard: TextInputType.number,
+          minLength: 16,
+        ),
+        const SizedBox(height: 12),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _input(
-                        expiryController,
-                        'MM/AA',
-                        keyboard: TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _input(
-                        cvvController,
-                        'CVV',
-                        keyboard: TextInputType.number,
-                        minLength: 3,
-                        obscure: true,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                if (isLoadingMethods)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  DropdownButtonFormField<String>(
-                    value: selectedPaymentMethodId,
-                    decoration: const InputDecoration(
-                      labelText: 'Método de pago',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: paymentMethods.map<DropdownMenuItem<String>>((
-                      method,
-                    ) {
-                      return DropdownMenuItem<String>(
-                        value: method['id'],
-                        child: Text(method['name']),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedPaymentMethodId = value;
-                      });
-                    },
-                    validator: (value) =>
-                        value == null ? 'Seleccione un método de pago' : null,
-                  ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  'Datos de facturación',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-
-                _input(documentController, 'Documento'),
-                const SizedBox(height: 12),
-
-                _input(
-                  emailController,
-                  'Email',
-                  keyboard: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 12),
-
-                _input(addressController, 'Dirección'),
-                const SizedBox(height: 12),
-
-                _input(
-                  postalCodeController,
-                  'Código postal',
-                  keyboard: TextInputType.number,
-                ),
-
-                const SizedBox(height: 80),
-              ],
+        Row(
+          children: [
+            Expanded(
+              child: _input(
+                expiryController,
+                'MM/AA',
+                keyboard: TextInputType.number,
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _input(
+                cvvController,
+                'CVV',
+                keyboard: TextInputType.number,
+                minLength: 3,
+                obscure: true,
+              ),
+            ),
+          ],
         ),
 
-        Align(
-          alignment: Alignment.bottomCenter,
+        const SizedBox(height: 16),
+
+        if (isLoadingMethods)
+          const Center(child: CircularProgressIndicator())
+        else
+          DropdownButtonFormField<String>(
+            value: selectedPaymentMethodId,
+            decoration: const InputDecoration(
+              labelText: 'Método de pago',
+              border: OutlineInputBorder(),
+            ),
+            items: paymentMethods.map<DropdownMenuItem<String>>((method) {
+              return DropdownMenuItem<String>(
+                value: method['id'],
+                child: Text(method['name']),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedPaymentMethodId = value;
+              });
+            },
+            validator: (value) =>
+                value == null ? 'Seleccione un método de pago' : null,
+          ),
+
+        const SizedBox(height: 24),
+
+        const Text(
+          'Datos de facturación',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+
+        _input(documentController, 'Documento'),
+        const SizedBox(height: 12),
+
+        _input(emailController, 'Email', keyboard: TextInputType.emailAddress),
+        const SizedBox(height: 12),
+
+        _input(addressController, 'Dirección'),
+        const SizedBox(height: 12),
+
+        _input(
+          postalCodeController,
+          'Código postal',
+          keyboard: TextInputType.number,
+        ),
+
+        const SizedBox(height: 32),
+
+        Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -586,7 +591,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Botón de testeo
+
               SizedBox(
                 width: 280,
                 child: OutlinedButton(
