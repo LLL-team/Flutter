@@ -141,10 +141,14 @@ class WorkerService {
       '$baseUrl/workers?trade=${Uri.encodeComponent(category)}',
     );
 
-    final response = await http.get(
-      url,
-      headers: {'Accept': 'application/json'},
-    );
+    final token = await _getToken();
+
+    final headers = {
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.get(url, headers: headers);
 
     if (response.statusCode == 200) {
       return json.decode(response.body) as List<dynamic>;
@@ -268,7 +272,9 @@ class WorkerService {
       return true;
     } else {
       // Mostrar el error del servidor para depuración
-      debugPrint('ERROR del servidor (${response.statusCode}): ${response.body}');
+      debugPrint(
+        'ERROR del servidor (${response.statusCode}): ${response.body}',
+      );
       throw Exception('Error ${response.statusCode}: ${response.body}');
     }
   }
@@ -291,9 +297,7 @@ class WorkerService {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      body: json.encode({
-        'schedule': schedule,
-      }),
+      body: json.encode({'schedule': schedule}),
     );
 
     return response.statusCode == 201;
