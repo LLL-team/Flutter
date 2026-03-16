@@ -226,14 +226,15 @@ class _HeaderWidgetState extends State<HeaderWidget> {
                     ],
                   ),
                 )
-              : Text(
-                  '¿Cómo funciona?',
-                  style: TextStyle(
-                    color: AppColors.secondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
+              : const SizedBox.shrink(),
+          // : Text(
+          //     '¿Cómo funciona?',
+          //     style: TextStyle(
+          //       color: AppColors.secondary,
+          //       fontWeight: FontWeight.w500,
+          //       fontSize: 16,
+          //     ),
+          //   ),
           const SizedBox(width: 24),
           // Botón Ingresar si no está autenticado
           if (!isAuthenticated)

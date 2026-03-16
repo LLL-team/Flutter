@@ -335,11 +335,11 @@ class _HomePageState extends State<HomePage> {
 
   String _getCategoryImage(String categoryName) {
     final nameLower = categoryName.toLowerCase();
-    if (nameLower.contains('hogar')) return 'assets/icons/servicios/Boton-I.Electricidad.png';
-    if (nameLower.contains('construcci')) return 'assets/icons/servicios/Boton-I.Albanileria.png';
-    if (nameLower.contains('limpieza')) return 'assets/icons/servicios/Boton-I.Limpieza.png';
-    if (nameLower.contains('vehículo') || nameLower.contains('vehiculo') || nameLower.contains('transporte')) return 'assets/icons/servicios/Boton-I.Auto.png';
-    if (nameLower.contains('seguridad')) return 'assets/icons/servicios/Boton-I.Cerrajeria.png';
+    if (nameLower.contains('hogar')) return 'assets/icons/servicios/Hogar.png';
+    if (nameLower.contains('construcci')) return 'assets/icons/servicios/Construccion y oficios.png';
+    if (nameLower.contains('limpieza')) return 'assets/icons/servicios/Limpieza y mantenimiento.png';
+    if (nameLower.contains('vehículo') || nameLower.contains('vehiculo') || nameLower.contains('transporte')) return 'assets/icons/servicios/Vehiculos y trasporte.png';
+    if (nameLower.contains('seguridad')) return 'assets/icons/servicios/Seguridad y acceso.png';
     if (nameLower.contains('bienestar')) return 'assets/icons/servicios/Boton-I.Bienestar.png';
     return 'assets/icons/servicios/Boton-I.Service.png';
   }
@@ -373,69 +373,57 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   const SizedBox(height: 24),
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
-                    child: isMobile
-                        ? Column(
-                            children: [
-                              _MainImageButton(
-                                image: offerServiceBtn,
-                                onTap: () => _handleOfferService(),
-                              ),
-                              const SizedBox(height: 12),
-                              _MainImageButton(
-                                image: searchServiceBtn,
-                                onTap: _scrollToCategories,
-                              ),
-                            ],
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _MainImageButton(
-                                image: offerServiceBtn,
-                                onTap: () => _handleOfferService(),
-                              ),
-                              _MainImageButton(
-                                image: searchServiceBtn,
-                                onTap: _scrollToCategories,
-                              ),
-                            ],
-                          ),
-                  ),
-                  const SizedBox(height: 32),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.background.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.all(isMobile ? 16 : 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '¿Cómo funciona?',
-                            style: TextStyle(
-                              fontSize: isMobile ? 18 : 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.text,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _StepItem(number: 1, text: 'Registrate o inicia sesión.'),
-                          _StepItem(
-                            number: 2,
-                            text: 'Elige una categoría y servicio.',
-                          ),
-                          _StepItem(
-                            number: 3,
-                            text: 'Contacta y contrata al profesional.',
-                          ),
-                        ],
-                      ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _MainImageButton(
+                          image: offerServiceBtn,
+                          onTap: () => _handleOfferService(),
+                          availableWidth: screenWidth,
+                        ),
+                        _MainImageButton(
+                          image: searchServiceBtn,
+                          onTap: _scrollToCategories,
+                          availableWidth: screenWidth,
+                        ),
+                      ],
                     ),
                   ),
+                  // const SizedBox(height: 32),
+                  // Padding(
+                  //   padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
+                  //   child: Container(
+                  //     decoration: BoxDecoration(
+                  //       color: AppColors.background.withValues(alpha: 0.95),
+                  //       borderRadius: BorderRadius.circular(20),
+                  //     ),
+                  //     padding: EdgeInsets.all(isMobile ? 16 : 24),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         Text(
+                  //           '¿Cómo funciona?',
+                  //           style: TextStyle(
+                  //             fontSize: isMobile ? 18 : 20,
+                  //             fontWeight: FontWeight.bold,
+                  //             color: AppColors.text,
+                  //           ),
+                  //         ),
+                  //         const SizedBox(height: 16),
+                  //         _StepItem(number: 1, text: 'Registrate o inicia sesión.'),
+                  //         _StepItem(
+                  //           number: 2,
+                  //           text: 'Elige una categoría y servicio.',
+                  //         ),
+                  //         _StepItem(
+                  //           number: 3,
+                  //           text: 'Contacta y contrata al profesional.',
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
                   const SizedBox(height: 32),
                   // Buscador
                   Padding(
@@ -636,25 +624,19 @@ class _HomePageState extends State<HomePage> {
 class _MainImageButton extends StatelessWidget {
   final String image;
   final VoidCallback onTap;
+  final double availableWidth;
 
-  const _MainImageButton({required this.image, required this.onTap});
+  const _MainImageButton({
+    required this.image,
+    required this.onTap,
+    required this.availableWidth,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 650;
-
-    final double finalWidth;
-    final double finalHeight;
-
-    if (isMobile) {
-      finalWidth = (screenWidth - 48).clamp(200.0, 400.0);
-      finalHeight = finalWidth * 0.55;
-    } else {
-      final buttonWidth = (screenWidth - 48) * 0.45;
-      finalWidth = buttonWidth.clamp(150.0, 250.0);
-      finalHeight = (finalWidth * 1.02).clamp(153.0, 255.0);
-    }
+    // Cada botón ocupa ~45% del ancho total de pantalla, con límites min/max
+    final finalWidth = ((availableWidth - 48) * 0.45).clamp(120.0, 250.0);
+    final finalHeight = (finalWidth * 1.02).clamp(122.0, 255.0);
 
     return GestureDetector(
       onTap: onTap,
@@ -671,44 +653,44 @@ class _MainImageButton extends StatelessWidget {
   }
 }
 
-class _StepItem extends StatelessWidget {
-  final int number;
-  final String text;
-
-  const _StepItem({required this.number, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: AppColors.secondary,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '$number.',
-            style: const TextStyle(
-              color: AppColors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(color: AppColors.text, fontSize: 16),
-          ),
-        ),
-      ],
-    );
-  }
-}
+// class _StepItem extends StatelessWidget {
+//   final int number;
+//   final String text;
+//
+//   const _StepItem({required this.number, required this.text});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Row(
+//       children: [
+//         Container(
+//           width: 32,
+//           height: 32,
+//           decoration: BoxDecoration(
+//             color: AppColors.secondary,
+//             borderRadius: BorderRadius.circular(16),
+//           ),
+//           alignment: Alignment.center,
+//           child: Text(
+//             '$number.',
+//             style: const TextStyle(
+//               color: AppColors.white,
+//               fontWeight: FontWeight.bold,
+//               fontSize: 18,
+//             ),
+//           ),
+//         ),
+//         const SizedBox(width: 12),
+//         Expanded(
+//           child: Text(
+//             text,
+//             style: TextStyle(color: AppColors.text, fontSize: 16),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
 
 class _CategoryCard extends StatelessWidget {
   final String categoryName;
@@ -737,7 +719,7 @@ class _CategoryCard extends StatelessWidget {
         final totalSpacing = 16 * (columns - 1);
         final cardWidth = (availableWidth - totalSpacing) / columns;
 
-        final cardHeight = cardWidth * 1.1; // Slightly taller to fit text
+        final cardHeight = cardWidth;
 
         return GestureDetector(
           onTap: onTap,
@@ -755,48 +737,22 @@ class _CategoryCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        imagePath,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.home_repair_service,
-                            color: AppColors.secondary,
-                            size: 48,
-                          );
-                        },
-                      ),
-                    ),
-                  ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.home_repair_service,
+                      color: AppColors.secondary,
+                      size: 48,
+                    );
+                  },
                 ),
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      categoryName,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.text,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-              ],
+              ),
             ),
           ),
         );
