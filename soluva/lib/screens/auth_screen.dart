@@ -17,6 +17,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool isSignIn = false; // Por defecto mostrar registro
   bool _showBackgroundImage = false;
+  bool _isLoading = false;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
@@ -112,14 +113,16 @@ class _AuthScreenState extends State<AuthScreen> {
                         _CustomTextField(
                           controller: emailController,
                           hint: 'Email',
-                          onSubmitted: (_) => isSignIn ? _handleLogin() : _handleRegister(),
+                          onSubmitted: (_) =>
+                              isSignIn ? _handleLogin() : _handleRegister(),
                         ),
                         const SizedBox(height: 16),
                         _CustomTextField(
                           controller: passwordController,
                           hint: 'Contraseña',
                           obscure: true,
-                          onSubmitted: (_) => isSignIn ? _handleLogin() : _handleRegister(),
+                          onSubmitted: (_) =>
+                              isSignIn ? _handleLogin() : _handleRegister(),
                         ),
                         if (!isSignIn) ...[
                           const SizedBox(height: 8),
@@ -161,9 +164,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: isSignIn
-                                ? _handleLogin
-                                : _handleRegister,
+                            onPressed: _isLoading
+                                ? null
+                                : (isSignIn ? _handleLogin : _handleRegister),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.secondary,
                               foregroundColor: AppColors.white,
@@ -172,20 +175,31 @@ class _AuthScreenState extends State<AuthScreen> {
                                 borderRadius: BorderRadius.circular(24),
                               ),
                             ),
-                            child: Text(
-                              isSignIn ? 'Iniciar sesión' : 'Crear cuenta',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    isSignIn
+                                        ? 'Iniciar sesión'
+                                        : 'Crear cuenta',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: _handleGoogleLogin,
+                            onPressed: _isLoading ? null : _handleGoogleLogin,
                             icon: Icon(
                               Icons.g_mobiledata,
                               color: AppColors.secondary,
@@ -242,6 +256,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _handleRegister() async {
+    setState(() => _isLoading = true);
     final name = nameController.text.trim();
     final lastName = lastNameController.text.trim();
     final email = emailController.text.trim();
@@ -253,6 +268,8 @@ class _AuthScreenState extends State<AuthScreen> {
       name: name,
       lastName: lastName,
     );
+
+    setState(() => _isLoading = false);
     if (data != null) {
       Navigator.pushReplacement(
         context,
@@ -275,9 +292,14 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _handleLogin() async {
+    setState(() => _isLoading = true);
+
     final email = emailController.text.trim();
     final password = passwordController.text;
     final data = await ApiService.login(email: email, password: password);
+
+    setState(() => _isLoading = false);
+
     if (data != null) {
       Navigator.pushReplacement(
         context,
@@ -300,51 +322,41 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
-    // Mostrar loading mientras se procesa el login
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
+    setState(() => _isLoading = true);
 
     try {
       final data = await ApiService.loginWithGoogle();
 
-      if (mounted) {
-        Navigator.pop(context); // Cerrar loading
+      if (!mounted) return;
 
-        if (data != null) {
-          // Login exitoso
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => widget.redirectTo ?? const HomePage(),
-            ),
-          );
-        } else {
-          // Login fallido o cancelado
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No se pudo iniciar sesión con Google.'),
-              backgroundColor: Colors.redAccent,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context); // Cerrar loading
+      setState(() => _isLoading = false);
+
+      if (data != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => widget.redirectTo ?? const HomePage(),
+          ),
+        );
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al iniciar sesión: ${e.toString()}'),
+          const SnackBar(
+            content: Text('No se pudo iniciar sesión con Google.'),
             backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
     }
   }
 }
