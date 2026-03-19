@@ -47,41 +47,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     super.dispose();
   }
 
-  // Método de testeo: asignar sin validar formulario ni pagar
-  Future<void> _testAssignWithoutPayment() async {
-    final uuid = widget.request['id']?.toString();
-    if (uuid == null) {
-      _showErrorDialog(context, 'No se pudo identificar la solicitud');
-      return;
-    }
-
-    setState(() => isProcessing = true);
-
-    final result = await ApiService.changeRequestStatus(
-      uuid: uuid,
-      status: 'assigned',
-    );
-
-    if (!mounted) return;
-
-    setState(() => isProcessing = false);
-
-    if (result['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🧪 Test: Trabajo asignado sin pago'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      _showErrorDialog(
-        context,
-        result['message'] ?? 'Error al asignar el trabajo',
-      );
-    }
-  }
-
   Future<void> _confirmPaymentAndAssign() async {
     if (selectedPaymentMethodId == null) {
       _showErrorDialog(context, 'Seleccione un método de pago');
@@ -588,28 +553,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             color: Colors.white,
                           ),
                         ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              SizedBox(
-                width: 280,
-                child: OutlinedButton(
-                  onPressed: isProcessing
-                      ? null
-                      : () => _testAssignWithoutPayment(),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey[600],
-                    side: BorderSide(color: Colors.grey[400]!),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: const Text(
-                    '🧪 Test: Asignar sin pagar',
-                    style: TextStyle(fontSize: 14),
-                  ),
                 ),
               ),
             ],
