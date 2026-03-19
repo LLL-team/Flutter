@@ -18,7 +18,10 @@ Future<void> main() async {
   }
 
   await initializeDateFormatting('es', null);
-  await AuthService.initialize();
+
+  // Iniciamos auth en segundo plano — la UI arranca de inmediato.
+  // isLoggedIn es un ValueNotifier, los widgets se actualizan solos cuando resuelve.
+  AuthService.initialize();
 
   runApp(const MyApp());
 }

@@ -28,7 +28,7 @@ jobs:
           echo "ENV_VAPID=${{ secrets.VAPID_KEY }}" >> soluva/.env
 
       - name: Build Flutter Web
-        run: flutter build web --release
+        run: flutter build web --web-renderer html --release
         working-directory: soluva
 
       - name: Deploy via FTP/FTPS

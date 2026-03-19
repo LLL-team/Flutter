@@ -1,0 +1,18 @@
+# Cache de larga duración para assets estáticos con hash en el nombre
+<IfModule mod_headers.c>
+  <FilesMatch "\.(js|css|wasm|png|webp|jpg|jpeg|ico|woff2|ttf)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # Sin cache para HTML, manifest y service workers (cambian con cada deploy)
+  <FilesMatch "\.(html|json)$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
+# Compresión gzip para reducir payload en tránsito
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/wasm
+</IfModule>
