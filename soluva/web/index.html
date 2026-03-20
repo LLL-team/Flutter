@@ -35,6 +35,23 @@
 </head>
 
 <body>
+  <div id="splash" style="
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #ffffff; z-index: 9999;">
+    <img src="assets/assets/images/Logo_Header.webp"
+         width="220" height="auto"
+         alt="Soluva">
+  </div>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('splash');
+      if (splash) splash.style.display = 'none';
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 
   <script>
