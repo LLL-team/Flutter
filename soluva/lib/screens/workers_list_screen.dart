@@ -34,17 +34,27 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
 
     try {
       final data = await ApiService.getServices();
-      final categories = List<Map<String, dynamic>>.from(data['categories'] ?? []);
+      final categories = List<Map<String, dynamic>>.from(
+        data['categories'] ?? [],
+      );
       List<String> foundTasks = [];
 
       // Buscar las tareas de esta subcategoría en la nueva estructura
       for (final category in categories) {
-        final subcategories = List<Map<String, dynamic>>.from(category['subcategories'] ?? []);
+        final subcategories = List<Map<String, dynamic>>.from(
+          category['subcategories'] ?? [],
+        );
         for (final subcategory in subcategories) {
           final subcategoryName = subcategory['name'] ?? '';
-          if (subcategoryName.toLowerCase().trim() == widget.category.toLowerCase().trim()) {
-            final tasks = List<Map<String, dynamic>>.from(subcategory['tasks'] ?? []);
-            foundTasks = tasks.map((t) => t['name']?.toString() ?? '').where((n) => n.isNotEmpty).toList();
+          if (subcategoryName.toLowerCase().trim() ==
+              widget.category.toLowerCase().trim()) {
+            final tasks = List<Map<String, dynamic>>.from(
+              subcategory['tasks'] ?? [],
+            );
+            foundTasks = tasks
+                .map((t) => t['name']?.toString() ?? '')
+                .where((n) => n.isNotEmpty)
+                .toList();
             break;
           }
         }
@@ -88,7 +98,8 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
         _workers = _allWorkers.where((worker) {
           final services = worker['services'] as List<dynamic>? ?? [];
           return services.any((service) {
-            final serviceName = service['service']?.toString().toLowerCase() ?? '';
+            final serviceName =
+                service['service']?.toString().toLowerCase() ?? '';
             return serviceName.contains(task.toLowerCase());
           });
         }).toList();
@@ -164,11 +175,13 @@ class _WorkersByCategoryScreenState extends State<WorkersByCategoryScreen> {
                                     ),
                                   ]
                                 : _workers
-                                      .map((w) => _WorkerCard(
-                                            worker: w,
-                                            category: widget.category,
-                                            selectedTask: _selectedTask,
-                                          ))
+                                      .map(
+                                        (w) => _WorkerCard(
+                                          worker: w,
+                                          category: widget.category,
+                                          selectedTask: _selectedTask,
+                                        ),
+                                      )
                                       .toList(),
                           ),
                         ),
@@ -332,7 +345,11 @@ class _WorkerCard extends StatefulWidget {
   final Map<String, dynamic> worker;
   final String category;
   final String? selectedTask;
-  const _WorkerCard({required this.worker, required this.category, this.selectedTask});
+  const _WorkerCard({
+    required this.worker,
+    required this.category,
+    this.selectedTask,
+  });
 
   @override
   State<_WorkerCard> createState() => _WorkerCardState();
@@ -403,15 +420,28 @@ class _WorkerCardState extends State<_WorkerCard> {
           int end = sched['end'];
 
           List<String> slots = [];
+
           DateTime t = DateTime(
             schedDate.year,
             schedDate.month,
             schedDate.day,
             start,
-            0,
           );
 
-          while (t.hour < end) {
+          // armamos el final correctamente
+          DateTime endTime = DateTime(
+            schedDate.year,
+            schedDate.month,
+            schedDate.day,
+            end == 24 ? 0 : end,
+          );
+
+          // si es 24 → pasa al día siguiente
+          if (end == 24) {
+            endTime = endTime.add(const Duration(days: 1));
+          }
+
+          while (t.isBefore(endTime)) {
             slots.add(_formatHour(t));
             t = t.add(const Duration(minutes: 30));
           }
@@ -477,51 +507,52 @@ class _WorkerCardState extends State<_WorkerCard> {
 
             Flexible(
               child: Container(
-              constraints: const BoxConstraints(maxWidth: 190),
-              padding: const EdgeInsets.only(left: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: dias
-                        .map(
-                          (d) => Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 4,
-                              ),
-                              child: Text(
-                                d,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: AppColors.text,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                constraints: const BoxConstraints(maxWidth: 190),
+                padding: const EdgeInsets.only(left: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: dias
+                          .map(
+                            (d) => Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: Text(
+                                  d,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: AppColors.text,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                  const SizedBox(height: 10),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 10),
 
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(horarios.length, (i) {
-                      final list = horarios[i];
-                      final dateFormatted = diasFormatted[i];
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: List.generate(horarios.length, (i) {
+                        final list = horarios[i];
+                        final dateFormatted = diasFormatted[i];
 
-                      return Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          height: expanded ? null : 150,
-                          clipBehavior: Clip.hardEdge,
-                          decoration: const BoxDecoration(),
-                          child: expanded
-                              ? Column(
-                                  children: list
-                                      .map((h) => _HorarioItem(
+                        return Expanded(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            height: expanded ? null : 150,
+                            clipBehavior: Clip.hardEdge,
+                            decoration: const BoxDecoration(),
+                            child: expanded
+                                ? Column(
+                                    children: list
+                                        .map(
+                                          (h) => _HorarioItem(
                                             h,
                                             onTap: () => _showRequestDialog(
                                               context,
@@ -529,35 +560,40 @@ class _WorkerCardState extends State<_WorkerCard> {
                                               h,
                                               dateFormatted,
                                             ),
-                                          ))
-                                      .toList(),
-                                )
-                              : _CollapsedScheduleColumn(list, dateFormatted, worker),
-                        ),
-                      );
-                    }),
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  TextButton.icon(
-                    onPressed: () => setState(() => expanded = !expanded),
-                    icon: Icon(
-                      expanded ? Icons.expand_less : Icons.expand_more,
-                      size: 18,
+                                          ),
+                                        )
+                                        .toList(),
+                                  )
+                                : _CollapsedScheduleColumn(
+                                    list,
+                                    dateFormatted,
+                                    worker,
+                                  ),
+                          ),
+                        );
+                      }),
                     ),
-                    label: Text(
-                      expanded ? "Mostrar menos" : "Mostrar más",
-                      style: const TextStyle(
-                        color: AppColors.text,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
+
+                    const SizedBox(height: 6),
+
+                    TextButton.icon(
+                      onPressed: () => setState(() => expanded = !expanded),
+                      icon: Icon(
+                        expanded ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                      ),
+                      label: Text(
+                        expanded ? "Mostrar menos" : "Mostrar más",
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
             ), // Flexible
           ],
         ),
@@ -593,7 +629,11 @@ class _WorkerCardState extends State<_WorkerCard> {
     );
   }
 
-  Widget _CollapsedScheduleColumn(List<String> list, String dateFormatted, Map<String, dynamic> worker) {
+  Widget _CollapsedScheduleColumn(
+    List<String> list,
+    String dateFormatted,
+    Map<String, dynamic> worker,
+  ) {
     return ClipRect(
       child: SizedBox(
         height: 150,
@@ -604,15 +644,13 @@ class _WorkerCardState extends State<_WorkerCard> {
             child: Column(
               children: list
                   .take(5)
-                  .map((h) => _HorarioItem(
-                        h,
-                        onTap: () => _showRequestDialog(
-                          context,
-                          worker,
-                          h,
-                          dateFormatted,
-                        ),
-                      ))
+                  .map(
+                    (h) => _HorarioItem(
+                      h,
+                      onTap: () =>
+                          _showRequestDialog(context, worker, h, dateFormatted),
+                    ),
+                  )
                   .toList(),
             ),
           ),
@@ -666,7 +704,9 @@ class _WorkerCardState extends State<_WorkerCard> {
       if (match.isEmpty) return const SizedBox.shrink();
       label = '\$${_formatPrice(_parseCost(match['price']))}';
     } else {
-      final costs = categoryServices.map((s) => _parseCost(s['price'])).toList();
+      final costs = categoryServices
+          .map((s) => _parseCost(s['price']))
+          .toList();
       final min = costs.reduce((a, b) => a < b ? a : b);
       final max = costs.reduce((a, b) => a > b ? a : b);
       label = min == max
@@ -694,9 +734,9 @@ class _WorkerCardState extends State<_WorkerCard> {
     final rounded = price.roundToDouble();
     if (price == rounded) {
       return price.toInt().toString().replaceAllMapped(
-            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-            (m) => '${m[1]}.',
-          );
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (m) => '${m[1]}.',
+      );
     }
     return price.toStringAsFixed(2);
   }
