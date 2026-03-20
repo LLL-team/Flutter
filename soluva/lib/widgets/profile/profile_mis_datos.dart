@@ -68,17 +68,19 @@ class _ProfileMisDatosState extends State<ProfileMisDatos> {
 
     final selectedTab = widget.selectedTab ?? 'Perfil';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Contenido según tab
-        if (selectedTab == "Perfil")
-          _buildPerfilTab()
-        else if (selectedTab == "Servicios")
-          _buildServiciosTab()
-        else
-          _buildHorariosTab(),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Contenido según tab
+          if (selectedTab == "Perfil")
+            _buildPerfilTab()
+          else if (selectedTab == "Servicios")
+            _buildServiciosTab()
+          else
+            _buildHorariosTab(),
+        ],
+      ),
     );
   }
 

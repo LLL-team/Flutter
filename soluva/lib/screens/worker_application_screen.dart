@@ -23,6 +23,13 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
       TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  final _dniFieldKey = GlobalKey();
+  final _categoryFieldKey = GlobalKey();
+  final _subcategoryFieldKey = GlobalKey();
+  final _tasksFieldKey = GlobalKey();
+  final _descriptionFieldKey = GlobalKey();
+  final _photoFieldKey = GlobalKey();
+
   File? _facePhoto;
   Uint8List? _webImageBytes;
   bool _isAuthenticated = false;
@@ -139,9 +146,40 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
     }
   }
 
+  void _scrollToKey(GlobalKey key) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+    }
+  }
+
+  void _scrollToFirstError() {
+    if (_dniController.text.isEmpty || _dniController.text.length != 8) {
+      _scrollToKey(_dniFieldKey);
+    } else if (_selectedCategory == null) {
+      _scrollToKey(_categoryFieldKey);
+    } else if (_selectedSubcategory == null) {
+      _scrollToKey(_subcategoryFieldKey);
+    } else if (_selectedTasks.isEmpty) {
+      _scrollToKey(_tasksFieldKey);
+    } else if (_descriptionController.text.isEmpty) {
+      _scrollToKey(_descriptionFieldKey);
+    } else if (_facePhoto == null && _webImageBytes == null) {
+      _scrollToKey(_photoFieldKey);
+    }
+  }
+
   void _submitApplication() async {
-    if (_formKey.currentState!.validate() &&
-        (_facePhoto != null || _webImageBytes != null) &&
+    final isFormValid = _formKey.currentState!.validate();
+    final hasPhoto = _facePhoto != null || _webImageBytes != null;
+
+    if (isFormValid &&
+        hasPhoto &&
         _selectedSubcategory != null &&
         _selectedTasks.isNotEmpty) {
       final token = await ApiService.getToken();
@@ -185,6 +223,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
         );
       }
     } else {
+      _scrollToFirstError();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -346,6 +385,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       const _InfoDisclaimer(),
                       const SizedBox(height: 18),
                       _CustomField(
+                        key: _dniFieldKey,
                         label: "DNI:",
                         child: TextFormField(
                           controller: _dniController,
@@ -365,6 +405,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
 
                       // Selección de CATEGORÍA
                       _CustomField(
+                        key: _categoryFieldKey,
                         label: "Categoría:",
                         child: DropdownButtonFormField<Map<String, dynamic>>(
                           decoration: _inputDecoration(),
@@ -392,6 +433,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       // Selección de SUBCATEGORÍA
                       if (_selectedCategory != null)
                         _CustomField(
+                          key: _subcategoryFieldKey,
                           label: "Subcategoría:",
                           child: DropdownButtonFormField<Map<String, dynamic>>(
                             decoration: _inputDecoration(),
@@ -418,6 +460,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       // Selección de TAREAS (múltiple)
                       if (_selectedSubcategory != null)
                         _CustomField(
+                          key: _tasksFieldKey,
                           label: "Tareas que realizas:",
                           child: Container(
                             decoration: BoxDecoration(
@@ -516,6 +559,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                       ),
                       const SizedBox(height: 12),
                       _CustomField(
+                        key: _descriptionFieldKey,
                         label: "Descripción de tus servicios:",
                         child: TextFormField(
                           controller: _descriptionController,
@@ -527,8 +571,10 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                         ),
                       ),
                       const SizedBox(height: 18),
-                      Row(
-                        children: [
+                      KeyedSubtree(
+                        key: _photoFieldKey,
+                        child: Row(
+                          children: [
                           Expanded(
                             child: GestureDetector(
                               onTap: _pickImage,
@@ -630,6 +676,7 @@ class _WorkerApplicationScreenState extends State<WorkerApplicationScreen> {
                             ),
                           ),
                         ],
+                        ),
                       ),
                       const SizedBox(height: 24),
                       SizedBox(
@@ -714,7 +761,7 @@ class _CustomField extends StatelessWidget {
   final String label;
   final Widget child;
 
-  const _CustomField({required this.label, required this.child});
+  const _CustomField({super.key, required this.label, required this.child});
 
   @override
   Widget build(BuildContext context) {
