@@ -60,7 +60,9 @@ class _ProfileNotificationsState extends State<ProfileNotifications> {
 
     await Future.delayed(const Duration(seconds: 1));
 
-    final notifs = await ApiService.getNotifications();
+    String Role = widget.viewingAsWorker ? 'worker' : 'user';
+
+    final notifs = await ApiService.getNotifications(role: Role);
 
     setState(() {
       _notifications = notifs.map((n) {

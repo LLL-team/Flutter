@@ -98,8 +98,10 @@ class ApiService {
   }
 
   ///Obtiene las notificaciones (Como esta en el perfil lo pongo aca sino lo movemos a otro servicio)
-  static Future<List<Map<String, dynamic>>> getNotifications() async {
-    return await ProfileService.getNotifications();
+  static Future<List<Map<String, dynamic>>> getNotifications({
+    String? role,
+  }) async {
+    return await ProfileService.getNotifications(role: role);
   }
 
   // ==================== IMÁGENES ====================

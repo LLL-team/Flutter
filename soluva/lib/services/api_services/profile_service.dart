@@ -69,10 +69,7 @@ class ProfileService {
 
     final response = await http.post(
       Uri.parse('$baseUrl/account/delete'),
-      headers: {
-        "Accept": "application/json",
-        "Authorization": "Bearer $token",
-      },
+      headers: {"Accept": "application/json", "Authorization": "Bearer $token"},
     );
 
     return response.statusCode == 200;
@@ -94,11 +91,17 @@ class ProfileService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  static Future<List<Map<String, dynamic>>> getNotifications() async {
+  static Future<List<Map<String, dynamic>>> getNotifications({
+    String? role,
+  }) async {
     final token = await _getToken();
 
+    final uri = Uri.parse(
+      '$baseUrl/notification/getNotifications',
+    ).replace(queryParameters: {if (role != null) 'role': role});
+
     final response = await http.get(
-      Uri.parse('$baseUrl/notification/getNotifications'),
+      uri,
       headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
     );
 
@@ -108,10 +111,6 @@ class ProfileService {
 
     final List<dynamic> decoded = json.decode(response.body);
 
-    final List<Map<String, dynamic>> notis = decoded
-        .map((e) => e as Map<String, dynamic>)
-        .toList();
-
-    return notis;
+    return decoded.map((e) => e as Map<String, dynamic>).toList();
   }
 }
