@@ -103,15 +103,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
     setState(() => isProcessing = false);
 
     if (result['success'] == true) {
-      _showSuccessDialogAndExit(
-        context,
-        'Trabajo asignado',
-        result['message'] ?? 'El trabajo ha sido asignado correctamente.',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message'] ?? 'El trabajo ha sido asignado correctamente.',
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
       );
+
+      Navigator.pop(context); // o los que necesites
     } else {
-      _showErrorDialog(
-        context,
-        result['message'] ?? 'Error al asignar el trabajo',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Error al asignar el trabajo'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
       );
     }
   }
