@@ -508,23 +508,8 @@ class _RequestCard extends StatelessWidget {
                       return;
                     }
 
-                    if (workerAlreadyDone) {
-                      // Status es ahora 'completed' → abrir diálogo de calificación
-                      if (context.mounted) _showRatingDialog(context);
-                    } else {
-                      // Status es ahora 'user_completed' → esperando al trabajador
-                      onUpdate();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Trabajo confirmado. Podrás clasificar al trabajador cuando él también confirme.',
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    }
+                    // Status es ahora 'completed' → abrir diálogo de calificación
+                    if (context.mounted) _showRatingDialog(context);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.secondary,
