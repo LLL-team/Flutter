@@ -32,6 +32,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   List<dynamic> paymentMethods = [];
   String? selectedPaymentMethodId;
+  String? selectedPaymentMethodName;
   bool isLoadingMethods = true;
 
   @override
@@ -91,6 +92,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       requestUuid: uuid,
       cardToken: cardToken,
       paymentMethodId: selectedPaymentMethodId!,
+      metodoDePago: selectedPaymentMethodName ?? '',
     );
 
     if (!mounted) return;
@@ -168,6 +170,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         paymentMethods = methods;
         if (methods.isNotEmpty) {
           selectedPaymentMethodId = methods.first['id'];
+          selectedPaymentMethodName = methods.first['name'];
         }
         isLoadingMethods = false;
       });
@@ -493,8 +496,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
               );
             }).toList(),
             onChanged: (value) {
+              final method = paymentMethods.firstWhere((m) => m['id'] == value);
               setState(() {
                 selectedPaymentMethodId = value;
+                selectedPaymentMethodName = method['name'];
               });
             },
             validator: (value) =>

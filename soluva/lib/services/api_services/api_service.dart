@@ -273,11 +273,13 @@ class ApiService {
     required String requestUuid,
     required String cardToken,
     required String paymentMethodId,
+    required String metodoDePago,
   }) async {
     return await RequestService.payment(
       requestUuid,
       cardToken,
       paymentMethodId,
+      metodoDePago,
     );
   }
 

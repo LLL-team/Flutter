@@ -374,6 +374,7 @@ class RequestService {
     String requestUuid,
     String cardToken,
     String paymentMethodId,
+    String metodoDePago,
   ) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
@@ -382,7 +383,7 @@ class RequestService {
     try {
       final body = jsonEncode({
         'request_uuid': requestUuid,
-        'metodo_de_pago': "mercadopago", //temp
+        'metodo_de_pago': metodoDePago,
         'token': cardToken,
         'payment_method_id': paymentMethodId,
       });
@@ -396,7 +397,7 @@ class RequestService {
         body: body,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         return {"success": true, "message": "Pago realizado correctamente"};
       } else {
         final decoded = jsonDecode(response.body);

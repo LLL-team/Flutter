@@ -446,7 +446,8 @@ class _RequestCard extends StatelessWidget {
     // Si el trabajador ya confirmó, el usuario finaliza el trabajo y puede calificar.
     // Si no, solo confirma y queda esperando al trabajador.
     final status = request['status']?.toString().toLowerCase() ?? '';
-    final workerAlreadyDone = status == 'worker_completed' || status == 'provider_completed';
+    final workerAlreadyDone =
+        status == 'worker_completed' || status == 'provider_completed';
 
     showDialog(
       context: context,
@@ -480,7 +481,8 @@ class _RequestCard extends StatelessWidget {
                       showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (_) => const Center(child: CircularProgressIndicator()),
+                        builder: (_) =>
+                            const Center(child: CircularProgressIndicator()),
                       );
                     }
 
@@ -489,14 +491,19 @@ class _RequestCard extends StatelessWidget {
                       status: 'completed',
                     );
 
-                    if (context.mounted) Navigator.pop(context); // cerrar loader
+                    if (context.mounted)
+                      Navigator.pop(context); // cerrar loader
 
                     if (result['success'] != true) {
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text(result['message'] ?? 'Error al confirmar'),
-                          backgroundColor: AppColors.secondary,
-                        ));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              result['message'] ?? 'Error al confirmar',
+                            ),
+                            backgroundColor: AppColors.secondary,
+                          ),
+                        );
                       }
                       return;
                     }
@@ -510,7 +517,9 @@ class _RequestCard extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Trabajo confirmado. Podrás clasificar al trabajador cuando él también confirme.'),
+                            content: Text(
+                              'Trabajo confirmado. Podrás clasificar al trabajador cuando él también confirme.',
+                            ),
                             backgroundColor: Colors.green,
                           ),
                         );
@@ -525,7 +534,8 @@ class _RequestCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    workerAlreadyDone ? 'Confirmar y clasificar' : 'Confirmar finalización',
+                    //workerAlreadyDone ? 'Confirmar y clasificar' : 'Confirmar finalización',
+                    'Confirmar y clasificar',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
